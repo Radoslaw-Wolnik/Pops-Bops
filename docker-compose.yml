@@ -24,6 +24,13 @@ services:
       - mongo-data:/data/db
       - ./backend/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
 
+  redis:
+    image: redis:6.2
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
   backend:
     build:
       context: ./backend
@@ -33,7 +40,6 @@ services:
       - '5000:5000'
     depends_on:
       - mongo
-      - redis
     env_file:
       - ./backend/.env  # Path to the .env file
     volumes:
@@ -41,8 +47,10 @@ services:
       - ./backend/nodemon.json:/app/nodemon.json
       - /app/node_modules
       - ./backend/uploads:/app/uploads  # profilepictures
+      - audio-samples:/app/audio_samples
 
 volumes:
   mongo-data:
   uploads:
-
+  audio-samples:
+  redis-data:

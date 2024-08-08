@@ -3,7 +3,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 
 import userRoutes from './routes/userRoutes.js';
-import tripRoutes from './routes/tripRoutes.js';
+import audioRoutes from './routes/audioRoutes.js';
 
 dotenv.config();
 
@@ -19,7 +19,7 @@ app.use(express.json());
 app.use('/uploads', express.static('uploads'));
 
 app.use('/api/users', userRoutes);
-app.use('/api/trips', tripRoutes);
+app.use('/api/audio', audioRoutes);
 
 
 export default app;

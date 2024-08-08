@@ -1,6 +1,6 @@
 // frontend/src/services/api.ts
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosHeaders, AxiosError, AxiosResponse, AxiosRequestConfig } from 'axios';
-import { User, FullUser, Credentials, UserData } from '../types';
+import { User, FullUser, Credentials, UserData, AudioSettings, Collection, Preset, AudioSample } from '../types';
 
 const API_URL = "http://localhost:5000/api";
 
@@ -146,5 +146,35 @@ export const verifyEmail = (token: string): Promise<AxiosResponse<void>> =>
   typedApi.get(`/users/verify-email/${token}`);
 
 
+
+export const savePreset = (preset: { name: string; settings: AudioSettings }): Promise<AxiosResponse<Preset>> =>
+  typedApi.post('/presets', preset);
+
+export const getCollections = (): Promise<AxiosResponse<Collection[]>> =>
+  typedApi.get('/collections');
+
+export const createCollection = (collection: { name: string }): Promise<AxiosResponse<Collection>> =>
+  typedApi.post('/collections', collection);
+
+export const addToCollection = (collectionId: string, sampleIds: string[]): Promise<AxiosResponse<Collection>> =>
+  typedApi.post(`/collections/${collectionId}/add`, { sampleIds });
+
+export const saveAudioSample = (audioBlob: Blob, settings: AudioSettings): Promise<AxiosResponse<AudioSample>> => {
+  const formData = new FormData();
+  formData.append('audio', audioBlob, 'sample.wav');
+  formData.append('settings', JSON.stringify(settings));
+  return typedApi.post('/samples', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+};
+
+export const getAudioSamples = (): Promise<AxiosResponse<AudioSample[]>> =>
+  typedApi.get('/samples');
+
+export const getPresets = (): Promise<AxiosResponse<Preset[]>> =>
+  typedApi.get('/presets');
+
+export const deletePreset = (presetId: string): Promise<AxiosResponse<void>> =>
+  typedApi.delete(`/presets/${presetId}`);
 
 export default typedApi;

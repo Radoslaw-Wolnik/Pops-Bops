@@ -11,7 +11,6 @@ const userSchema = new mongoose.Schema({
   verificationToken: { type: String },
   verificationTokenExpires: Date,
   
-  main: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Main' }]
 });
 
 export default mongoose.model('User', userSchema);
