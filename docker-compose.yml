@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      target: dev-stage
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
+    environment:
+      NODE_ENV: development
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - '27017:27017'
+    env_file:
+      - .env.main
+    volumes:
+      - mongo-data:/data/db
+      - ./backend/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
+
+  backend:
+    build:
+      context: ./backend
+      target: ${NODE_ENV:-development}
+    container_name: backend
+    ports:
+      - '5000:5000'
+    depends_on:
+      - mongo
+      - redis
+    env_file:
+      - ./backend/.env  # Path to the .env file
+    volumes:
+      - ./backend/src:/app/src:delegated
+      - ./backend/nodemon.json:/app/nodemon.json
+      - /app/node_modules
+      - ./backend/uploads:/app/uploads  # profilepictures
+
+volumes:
+  mongo-data:
+  uploads:
+
