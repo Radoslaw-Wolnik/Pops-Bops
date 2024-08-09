@@ -8,9 +8,9 @@ import sendEmail from '../utils/sendEmail.js';
 import extractToken from '../utils/tokenExtractor.js';
 
 import RevokedToken from '../models/RevokedToken.js';
-import uploadProfilePicture from '../middleware/upload.js';
+//import uploadProfilePicture from '../middleware/upload.js';
 
-import { generateToken } from '../utils/auth.js';
+import { generateToken } from '../middleware/auth.js'; // although now im thinking it mby should be in utils ?? 
 
 export const register = async (req, res) => {
   try {
@@ -97,7 +97,7 @@ export const login = async (req, res) => {
     const token = generateToken(user);
 
     res.json({ token, user: { id: user._id, username: user.username, role: user.role } });
-    
+
   } catch (error) {
     console.error(error.message);
     res.status(500).send('Server error');

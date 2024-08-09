@@ -1,5 +1,5 @@
 // src/controllers/authController.js
-import { generateToken } from '../utils/auth.js';
+import { generateToken } from '../middleware/auth.js';
 
 export const refreshToken = async (req, res) => {
   // The user object is attached to the request by the authenticateToken middleware

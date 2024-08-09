@@ -1,6 +1,6 @@
 //import DefaultAudioSample from '../models/DefaultAudioSample.js';
 import UserAudioSample from '../models/UserAudioSample.js';
-import { uploadAudioIcon } from "../middleware/uploadAudioIcon";
+import { uploadAudioIcon } from "../middleware/uploadAudioIcon.js";
 
 export const handleIconUpload = (req, res, next) => {
   uploadIcon(req, res, (err) => {

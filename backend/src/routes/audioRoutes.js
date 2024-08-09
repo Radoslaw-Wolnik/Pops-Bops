@@ -1,6 +1,6 @@
 //src/routes/audioRoutes.js
 import express from 'express';
-import { authenticateToken, authenticateAdmin } from '../middleware/auth.js';
+import authenticateToken, { authenticateAdmin } from '../middleware/auth.js';
 import {
   handleAudioUpload,
   saveAudioToStorage,
@@ -17,7 +17,7 @@ import {
   saveDefaultAudioSampleWithIcon
 } from '../controllers/audioController.js';
 
-import { updateUserAudioSampleIcon } from '../controllers/iconControllers.js';
+import { updateUserAudioSampleIcon } from '../controllers/iconController.js';
 
 const router = express.Router();
 

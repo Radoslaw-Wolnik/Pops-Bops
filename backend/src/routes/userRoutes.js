@@ -7,6 +7,9 @@ import {
   getUserProfile, 
   changePassword,
 
+  handleProfilePictureUpload,
+  saveProfilePicture,
+
   sendVerificationEmail, 
   verifyEmail 
 } from '../controllers/userController.js';
