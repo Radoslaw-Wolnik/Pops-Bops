@@ -12,9 +12,9 @@ import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import AudioGenerator from './pages/AudioGeneratorPage';
-// import SampleList from './pages/SampleList';
-// import PresetManager from './pages/PresetManager';
+import PresetManagerPage from './pages/PresetManagerPage';
 import CollectionPage from './pages/CollectionPage';
+
 
 import './style/All.css'
 import './style/Modal.css'
@@ -32,7 +32,8 @@ const router = createBrowserRouter([
         element: <ProtectedRoute><Profile /></ProtectedRoute>
       },
       { path: '/generate', element: <ProtectedRoute><AudioGenerator /></ProtectedRoute> },
-      { path: '/collections', element: <ProtectedRoute><CollectionPage /></ProtectedRoute> }
+      { path: '/collections', element: <ProtectedRoute><CollectionPage /></ProtectedRoute> },
+      { path: '/preset-manage', element: <ProtectedRoute><PresetManagerPage /></ProtectedRoute> }
     ],
   },
 ]);

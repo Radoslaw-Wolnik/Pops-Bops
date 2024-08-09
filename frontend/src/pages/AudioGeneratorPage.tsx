@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
-import { AudioSettings } from '../types';
-import { savePreset, saveAudioSample } from '../services/api';
-
-import { generateAudio } from '../utils/audioUtils';
+/*import React, { useState } from 'react';
+import { AudioSettings } from '../../types';
+import { savePreset, saveAudioSample } from '../../services/api';
+import { generateAudio } from '../../utils/audioUtils';
+import Slider from './Slider';
+import WaveformSelector from './WaveformSelector';
 
 const AudioGenerator: React.FC = () => {
   const [settings, setSettings] = useState<AudioSettings>({
@@ -42,69 +43,45 @@ const AudioGenerator: React.FC = () => {
   };
 
 
-  return (
-    <div className="audio-generator">
-      <h1>Pop and Bob Generator</h1>
-      
-      <div className="slider-container">
-        <label>
-          Frequency: {settings.frequency}Hz
-          <input 
-            type="range" 
-            min="20" 
-            max="20000" 
-            value={settings.frequency} 
-            onChange={(e) => handleSettingChange('frequency', Number(e.target.value))}
-          />
-        </label>
-      </div>
 
-      <div className="slider-container">
-        <label>
-          Volume: {settings.volume}
-          <input 
-            type="range" 
-            min="0" 
-            max="1" 
-            step="0.01"
-            value={settings.volume} 
-            onChange={(e) => handleSettingChange('volume', Number(e.target.value))}
-          />
-        </label>
-      </div>
+return (
+  <div className="audio-generator">
+    <h1>Pop and Bob Generator</h1>
 
-      <div className="slider-container">
-        <label>
-          Duration: {settings.duration}s
-          <input 
-            type="range" 
-            min="0.1" 
-            max="5" 
-            step="0.1"
-            value={settings.duration} 
-            onChange={(e) => handleSettingChange('duration', Number(e.target.value))}
-          />
-        </label>
-      </div>
+    <Slider
+      label="Frequency"
+      value={settings.frequency}
+      min={20}
+      max={20000}
+      onChange={(value) => handleSettingChange('frequency', value)}
+    />
 
-      <div className="waveform-selector">
-        <label>
-          Waveform:
-          <select 
-            value={settings.waveform} 
-            onChange={(e) => handleSettingChange('waveform', e.target.value)}
-          >
-            <option value="sine">Sine</option>
-            <option value="square">Square</option>
-            <option value="sawtooth">Sawtooth</option>
-            <option value="triangle">Triangle</option>
-          </select>
-        </label>
-      </div>
+    <Slider
+      label="Volume"
+      value={settings.volume}
+      min={0}
+      max={1}
+      step={0.01}
+      onChange={(value) => handleSettingChange('volume', value)}
+    />
 
-      <button onClick={handleGenerate}>Generate Audio</button>
+    <Slider
+      label="Duration"
+      value={settings.duration}
+      min={0.1}
+      max={5}
+      step={0.1}
+      onChange={(value) => handleSettingChange('duration', value)}
+    />
 
-      <div className="save-preset">
+    <WaveformSelector
+      value={settings.waveform}
+      onChange={(value) => handleSettingChange('waveform', value)}
+    />
+
+    <button onClick={handleGenerate}>Generate Audio</button>
+
+    <div className="save-preset">
         <input 
           type="text" 
           value={presetName} 
@@ -129,5 +106,20 @@ const AudioGenerator: React.FC = () => {
     </div>
   );
 };
+
+*/
+
+import React from 'react';
+
+const AudioGenerator: React.FC = () => {
+
+
+  return(
+    <div className="audio-generator">
+      <h1>Pops and Bops Sound Generator</h1>
+    </div>
+
+  );
+}
 
 export default AudioGenerator;
