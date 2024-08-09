@@ -1,13 +1,14 @@
-import AudioSample from '../models/AudioSample.js';
-import Preset from '../models/Preset.js';
+import DefaultAudioSample from '../models/DefaultAudioSample.js';
+import UserAudioSample from '../models/UserAudioSample.js';
 import Collection from '../models/Collection.js';
+
+import { uploadAudioIcon } from '../middleware/uploadAudioIcon.js';
+
+
+/* for future audio generating ( also save preset settings )
 import CacheService from '../services/CacheService.js';
-import path from 'path';
-import fs from 'fs';
-import audioUpload from '../middleware/audioUpload.js';
 
 const cacheService = new CacheService();
-
 export const generateAudioSample = async (req, res) => {
   try {
     const { settings } = req.body;
@@ -31,42 +32,70 @@ export const generateAudioSample = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+*/
 
-export const getSamples = async (req, res) => {
+// --------- helper functions ------------
+
+export const handleAudioUpload = (req, res, next) => {
+  uploadAudio(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  });
+};
+
+export const saveAudioToStorage = async (req, res) => {
   try {
-    const samples = await AudioSample.find({ user: req.user.id });
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+
+    const relativePath = `/uploads/audio/${req.file.filename}`;
+    // Save the audio file information to your database here
+
+    res.json({
+      message: 'Audio file uploaded successfully',
+      audioPath: relativePath
+    });
+  } catch (error) {
+    console.error('Error saving audio:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// functions gets
+export const getUserCollections = async (req, res) => {
+  try {
+    const collections = await Collection.find({ user: req.user.id }).populate('samples');
+    res.json(collections);
+  } catch (error) {
+    console.error('Error fetching user collections:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const getMainPageSamples = async (req, res) => {
+  try {
+    const samples = await DefaultAudioSample.find();
     res.json(samples);
   } catch (error) {
-    console.error('Error fetching samples:', error);
+    console.error('Error fetching main page samples:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-export const savePreset = async (req, res) => {
+export const getUserSamples = async (req, res) => {
   try {
-    const { name, settings } = req.body;
-    const newPreset = new Preset({
-      user: req.user.id,
-      name,
-      settings
-    });
-    await newPreset.save();
-    res.status(201).json(newPreset);
+    const samples = await UserAudioSample.find({ user: req.user.id });
+    res.json(samples);
   } catch (error) {
-    console.error('Error saving preset:', error);
+    console.error('Error fetching user samples:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-export const getPresets = async (req, res) => {
-  try {
-    const presets = await Preset.find({ user: req.user.id });
-    res.json(presets);
-  } catch (error) {
-    console.error('Error fetching presets:', error);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
+// save/create/add
 
 export const createCollection = async (req, res) => {
   try {
@@ -85,7 +114,25 @@ export const createCollection = async (req, res) => {
 
 export const addToCollection = async (req, res) => {
   try {
-    const { sampleId } = req.body;
+    const { sampleId, sampleType } = req.body;
+
+    // Validate sampleType
+    if (!['Default', 'User'].includes(sampleType)) {
+      return res.status(400).json({ message: 'Invalid sample type' });
+    }
+
+    // Check if the sample exists in the respective collection
+    let sampleExists = false;
+    if (sampleType === 'Default') {
+      sampleExists = await DefaultAudioSample.exists({ _id: sampleId });
+    } else if (sampleType === 'User') {
+      sampleExists = await UserAudioSample.exists({ _id: sampleId });
+    }
+
+    if (!sampleExists) {
+      return res.status(404).json({ message: 'Sample not found' });
+    }
+
     const collection = await Collection.findById(req.params.id);
     if (!collection) {
       return res.status(404).json({ message: 'Collection not found' });
@@ -99,80 +146,81 @@ export const addToCollection = async (req, res) => {
   }
 };
 
-export const getCollections = async (req, res) => {
+
+
+// save audio plus icon
+export const saveUserAudioSampleWithIcon = async (req, res) => {
   try {
-    const collections = await Collection.find({ user: req.user.id }).populate('samples');
-    res.json(collections);
+    await new Promise((resolve, reject) => {
+      uploadAudioIcon(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+    const { name, settings, forMainPage } = req.body;
+    
+    if (!req.files['audio'] || !req.files['icon']) {
+      return res.status(400).json({ message: 'Both audio and icon files are required' });
+    }
+
+    const audioFile = req.files['audio'][0];
+    const iconFile = req.files['icon'][0];
+
+    const audioUrl = `/uploads/audio/user/${audioFile.filename}`;
+    const iconUrl = `/uploads/icons/user/${iconFile.filename}`;
+
+    const audioSample = new UserAudioSample({
+      user: req.user._id,
+      name,
+      audioUrl,
+      iconUrl,
+      forMainPage: forMainPage === 'true',
+      settings: JSON.parse(settings)
+    });
+
+    await audioSample.save();
+    res.status(201).json(audioSample);
   } catch (error) {
-    console.error('Error fetching collections:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Error saving audio sample with icon:', error);
+    res.status(500).json({ message: 'Error saving audio sample with icon' });
   }
 };
 
 
-export const saveAudioSample = async (req, res) => {
-    try {
-      await audioUpload.single('audio')(req, res, async (err) => {
-        if (err) {
-          return res.status(400).json({ message: err.message });
-        }
-  
-        const { settings } = req.body;
-        const audioFile = req.file;
-  
-        // Save the audio file to your storage (e.g., local filesystem, S3, etc.)
-        const audioUrl = await saveAudioToStorage(audioFile);
-  
-        // Create a new AudioSample document
-        const audioSample = new AudioSample({
-          user: req.user._id,
-          name: `Sample_${Date.now()}`,
-          audioUrl,
-          settings: JSON.parse(settings)
-        });
-  
-        await audioSample.save();
-  
-        res.status(201).json(audioSample);
+export const saveDefaultAudioSampleWithIcon = async (req, res) => {
+  try {
+    await new Promise((resolve, reject) => {
+      uploadAudioIcon(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
       });
-    } catch (error) {
-      console.error('Error saving audio sample:', error);
-      res.status(500).json({ message: 'Error saving audio sample' });
-    }
-  };
-  
-  const saveAudioToStorage = async (audioFile) => {
-    // Generate a unique filename
-    const filename = `${Date.now()}-${Math.round(Math.random() * 1E9)}.${path.extname(audioFile.originalname).slice(1)}`;
-    const filepath = path.join(process.cwd(), 'uploads', 'audio', filename);
-  
-    // Move the file to the uploads/audio directory
-    await fs.promises.rename(audioFile.path, filepath);
-  
-    // Return the public URL of the saved file
-    return `/uploads/audio/${filename}`;
-  };
+    });
 
+    const { name, settings, forMainPage } = req.body;
+    
+    if (!req.files['audio'] || !req.files['icon']) {
+      return res.status(400).json({ message: 'Both audio and icon files are required' });
+    }
 
-// additional to think about
-  export const deletePreset = async (req, res) => {
-    try {
-      const { id } = req.params;
-      await Preset.findByIdAndDelete(id);
-      res.status(204).json();
-    } catch (error) {
-      console.error('Error deleting preset:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  };
-  
-  export const deleteAudioSample = async (req, res) => {
-    try {
-      const { id } = req.params;
-      await AudioSample.findByIdAndDelete(id);
-      res.status(204).json();
-    } catch (error) {
-      console.error('Error deleting audio sample:', error);
-      res.status(500).json({ message: 'Server error' });
-    }
-  };
+    const audioFile = req.files['audio'][0];
+    const iconFile = req.files['icon'][0];
+
+    const audioUrl = `/uploads/audio/default/${audioFile.filename}`;
+    const iconUrl = `/uploads/icons/default/${iconFile.filename}`;
+
+    const audioSample = new DefaultAudioSample({
+      name,
+      audioUrl,
+      iconUrl,
+      forMainPage: forMainPage === 'true',
+      settings: JSON.parse(settings)
+    });
+
+    await audioSample.save();
+    res.status(201).json(audioSample);
+  } catch (error) {
+    console.error('Error saving default audio sample with icon:', error);
+    res.status(500).json({ message: 'Error saving default audio sample with icon' });
+  }
+};
