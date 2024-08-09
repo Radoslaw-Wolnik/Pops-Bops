@@ -8,6 +8,9 @@ import sendEmail from '../utils/sendEmail.js';
 import extractToken from '../utils/tokenExtractor.js';
 
 import RevokedToken from '../models/RevokedToken.js';
+import uploadProfilePicture from '../middleware/upload.js';
+
+import { generateToken } from '../utils/auth.js';
 
 export const register = async (req, res) => {
   try {
@@ -91,16 +94,10 @@ export const login = async (req, res) => {
     }
 
     // Create and return JWT token
-    const payload = {
-      user: {
-        id: user.id
-      }
-    };
+    const token = generateToken(user);
 
-    jwt.sign(payload, env.JWT_SECRET, { expiresIn: '1h' }, (err, token) => {
-      if (err) throw err;
-      res.json({ token });
-    });
+    res.json({ token, user: { id: user._id, username: user.username, role: user.role } });
+    
   } catch (error) {
     console.error(error.message);
     res.status(500).send('Server error');
@@ -156,7 +153,16 @@ export const getUserProfile = async (req, res) => {
   }
 };
 
-export const uploadProfilePicture = async (req, res) => {
+export const handleProfilePictureUpload = (req, res, next) => {
+  uploadProfilePicture(req, res, (err) => {
+    if (err) {
+      return res.status(400).json({ message: err.message });
+    }
+    next();
+  });
+};
+
+export const saveProfilePicture = async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ message: 'No file uploaded' });
@@ -167,17 +173,16 @@ export const uploadProfilePicture = async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Store the relative path in the database
-    const relativePath = `/uploads/${req.file.filename}`;
+    const relativePath = `/uploads/profile-picture/${req.file.filename}`;
     user.profilePicture = relativePath;
     await user.save();
 
-    res.json({ 
-      message: 'Profile picture updated successfully', 
-      profilePicture: relativePath 
+    res.json({
+      message: 'Profile picture updated successfully',
+      profilePicture: relativePath
     });
   } catch (error) {
-    console.error('Error uploading profile picture:', error);
+    console.error('Error saving profile picture:', error);
     res.status(500).json({ message: 'Server error' });
   }
 };
