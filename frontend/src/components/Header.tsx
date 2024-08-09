@@ -41,14 +41,19 @@ const Header: React.FC = () => {
       <Link to='/Main'>
         <h4>Main Function</h4>
       </Link>
-      <Link to='/trips'>
-        <h4>Trips</h4>
-      </Link>
-      <Link to='/profile'>
-        <h4>My profile</h4>
-      </Link>
+      
       {user ? (
-        <div className="user-info">
+        <div className="protected-user">
+          <Link to='/profile'>
+            <h4>My profile</h4>
+          </Link>
+          <Link to='/'>
+            <h4>My popos</h4>
+          </Link>
+          <Link to='/'>
+            <h4>My collections</h4>
+          </Link>
+
           <img 
             src={getFullImageUrl(user.profilePicture)} 
             alt={user.username} 

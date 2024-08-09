@@ -2,13 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   getMe, 
-  getOtherUserProfile, 
-  getUserTrips, 
+  getOtherUserProfile,
   updateUserProfile, 
   changePassword, 
   sendVerificationEmail 
 } from '../services/api';
-import TripList from '../components/TripList';
 import { useAuth } from '../hooks/useAuth';
 import { User, FullUser } from '../types';
 import { getFullImageUrl } from '../utils/imageUtils';
@@ -23,7 +21,6 @@ const Profile: React.FC = () => {
     const navigate = useNavigate();
   
     const [user, setUser] = useState<User | FullUser | null>(null);
-    const [trips, setTrips] = useState<any[]>([]);
     const [profilePicture, setProfilePicture] = useState<File | null>(null);
     const [newPassword, setNewPassword] = useState('');
     const [currentPassword, setCurrentPassword] = useState('');
@@ -59,9 +56,7 @@ const Profile: React.FC = () => {
             userData = await getOtherUserProfile(userId!);
           }
           setUser(userData.data);
-  
-          const tripsData = await getUserTrips(userId || currentUser._id);
-          setTrips(tripsData.data);
+
         } catch (error) {
           console.error('Error fetching data:', error);
           navigate('/');
@@ -167,8 +162,6 @@ const Profile: React.FC = () => {
           </>
         )}
   
-        <h2>Trips</h2>
-        <TripList userId={userId || currentUser._id} trips={trips} />
       </div>
     );
   };
