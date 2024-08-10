@@ -131,9 +131,13 @@ So now
 - [ ] create admin acc (in populate db script)
 - [ ] add some (5) sounds and icons (either in populate or in admin add page)
 - [ ] create homepage with title and bops, pops
-- [ ] create make pop bop with simple icon creator
+- [ ] create make pop bop with simple icon creator (make it pop)
 - [ ] create my pops
 
 - [ ] create collections
 - [ ] add to collections
 - [ ] custom font for collections
+
+- [ ] loading spinner
+- [ ] styles for login singup
+- [ ] mini icon maker canva for bops (make it pop page)
