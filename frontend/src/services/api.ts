@@ -1,6 +1,6 @@
 // frontend/src/services/api.ts
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosHeaders, AxiosError, AxiosResponse, AxiosRequestConfig } from 'axios';
-import { User, FullUser, LoginCredentials, RegisterUserData, Collection, AudioSample } from '../types';
+import { User, FullUser, LoginCredentials, RegisterUserData, Collection, AudioSample, RegisterAdminData } from '../types';
 
 const API_URL = "http://localhost:5000/api";
 
@@ -175,13 +175,13 @@ export const addDefaultAudioSample = (formData: FormData): Promise<AxiosResponse
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 
-export const getAdmins = (): Promise<AxiosResponse<Admin[]>> =>
+export const getAdmins = (): Promise<AxiosResponse<User[]>> =>
   typedApi.get('/admin/users');
 
 export const deleteAdmin = (id: string): Promise<AxiosResponse<void>> =>
   typedApi.delete(`/admin/users/${id}`);
 
-export const addAdmin = (adminData: { username: string; password: string; email: string }): Promise<AxiosResponse<Admin>> =>
+export const addAdmin = (adminData: RegisterAdminData ): Promise<AxiosResponse<User>> =>
   typedApi.post('/admin/users', adminData);
 
 export default typedApi;
