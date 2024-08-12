@@ -18,7 +18,7 @@ import CreateSamplePage from './pages/CreateSamplePage';
 
 import AdminAddDefaultSoundPage from './pages/AdminAddDefaultSoundPage';
 import AdminManagementPage from './pages/AdminManagementPage';
-
+import TokenRefresh from './components/TokenRefresh';
 
 import './style/All.css'
 import './style/Modal.css'
@@ -46,6 +46,24 @@ const router = createBrowserRouter([
   },
 ]);
 
-const App: React.FC = () => <RouterProvider router={router} />;
+// prev
+//const App: React.FC = () => <RouterProvider router={router} />;
+
+// now
+const App: React.FC = () => (
+  <>
+    <TokenRefresh />
+    <RouterProvider router={router} />
+  </>
+);
+
+/* The normal AuthProvider context folded app look
+ * const App: React.FC = () => (
+ *   <AuthProvider>
+ *     <TokenRefresh />
+ *     <RouterProvider router={router} />
+ *   </AuthProvider>
+ * );
+ */
 
 export default App;
