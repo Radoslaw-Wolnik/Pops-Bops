@@ -4,6 +4,7 @@ export interface User {
   _id: string;
   username: string;
   profilePicture?: string;
+  // role: 'user' | 'admin'; mby here
 }
   
 export interface FullUser extends User {
@@ -25,6 +26,11 @@ export interface RegisterUserData {
   password: string;
 }
 
+export interface RegisterAdminData {
+  username: string;
+  email: string;
+  password: string;
+}
 
 //  --- audio related ---
 
@@ -52,3 +58,19 @@ export interface Collection {
   name: string;
   samples: AudioSample[];
 }
+
+/*
+// New type for admin list response
+export type AdminListResponse = User[];
+
+// New type for API responses
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+}
+
+// Error response type
+export interface ErrorResponse {
+  message: string;
+}
+  */
