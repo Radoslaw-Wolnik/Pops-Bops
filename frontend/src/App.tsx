@@ -4,7 +4,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 
 import LandingPageLayout from './layouts/LandingPageLayout'
 
-import Home from './pages/Home';
+import HomePage from './pages/HomePage';
 import About from './pages/About';
 import VerifyEmail from './pages/VerifyEmail';
 import Profile from './pages/Profile';
@@ -24,7 +24,7 @@ const router = createBrowserRouter([
     path: '/',
     element: <LandingPageLayout />,
     children: [
-      { path: '/', element: <Home /> },
+      { path: '/', element: <HomePage /> },
       { path: '/about', element: <About /> },
       { path: '/verify-email/:token', element: <VerifyEmail /> },
       {
