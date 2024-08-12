@@ -1,5 +1,5 @@
 // src/components/Header.tsx
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useModal } from '../hooks/useModal';
 import { useAuth } from '../hooks/useAuth';
@@ -15,12 +15,13 @@ import { getFullImageUrl } from '../utils/imageUtils';
 const Header: React.FC = () => {
   const { openModal } = useModal();
   const { user, logout } = useAuth();
-  const [, setUpdate] = useState({});
 
+  /* const [, setUpdate] = useState({});
   useEffect(() => {
     console.log(user);
     setUpdate({});
   }, [user]);
+  */
 
   const handleOpenLogin = () => {
     openModal(<LoginForm />);
@@ -44,15 +45,12 @@ const Header: React.FC = () => {
       
       {user ? (
         <div className="protected-user">
-          <Link to='/profile'>
-            <h4>My profile</h4>
-          </Link>
-          <Link to='/'>
-            <h4>My popos</h4>
-          </Link>
-          <Link to='/'>
-            <h4>My collections</h4>
-          </Link>
+          <Link to='/profile' className='mr-4'>My profile</Link>
+          <Link to='/' className='mr-4'>My popos</Link>
+          <Link to='/' className='mr-4'>My collections</Link>
+          {user.role === 'admin' && (
+            <Link to="/preset-manage" className="mr-4">Admin</Link>
+          )}
 
           <img 
             src={getFullImageUrl(user.profilePicture)} 
