@@ -1,5 +1,5 @@
 // src/pages/CreateSamplePage.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 //import { useAuth } from '../hooks/useAuth';
 import { createAudioSample } from '../services/api';
 
@@ -8,11 +8,29 @@ const CreateSamplePage: React.FC = () => {
   const [name, setName] = useState('');
   const [audio, setAudio] = useState<File | null>(null);
   const [isRecording, setIsRecording] = useState(false);
-  const [iconColor, setIconColor] = useState('#000000');
-  const [iconText, setIconText] = useState('');
+  const [color, setColor] = useState('#000000');
+  const [tool, setTool] = useState<'brush' | 'pencil'>('pencil');
+  const [brushSize, setBrushSize] = useState(5);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const contextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      canvas.width = 200;
+      canvas.height = 200;
+      const context = canvas.getContext('2d');
+      if (context) {
+        context.lineCap = 'round';
+        context.strokeStyle = color;
+        context.lineWidth = brushSize;
+        contextRef.current = context;
+      }
+    }
+  }, []);
 
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
@@ -42,19 +60,49 @@ const CreateSamplePage: React.FC = () => {
     }
   };
 
-  const createIcon = () => {
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.fillStyle = iconColor;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#ffffff';
-        ctx.font = '24px Arial';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(iconText, canvas.width / 2, canvas.height / 2);
-      }
+  const startDrawing = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
+    const { offsetX, offsetY } = nativeEvent;
+    if (contextRef.current) {
+      contextRef.current.beginPath();
+      contextRef.current.moveTo(offsetX, offsetY);
+      setIsDrawing(true);
+    }
+  };
+
+  const draw = ({ nativeEvent }: React.MouseEvent<HTMLCanvasElement>) => {
+    if (!isDrawing) return;
+    const { offsetX, offsetY } = nativeEvent;
+    if (contextRef.current) {
+      contextRef.current.lineTo(offsetX, offsetY);
+      contextRef.current.stroke();
+    }
+  };
+
+  const stopDrawing = () => {
+    if (contextRef.current) {
+      contextRef.current.closePath();
+      setIsDrawing(false);
+    }
+  };
+
+  const clearCanvas = () => {
+    if (contextRef.current) {
+      contextRef.current.clearRect(0, 0, 200, 200);
+    }
+  };
+
+  const handleColorChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setColor(e.target.value);
+    if (contextRef.current) {
+      contextRef.current.strokeStyle = e.target.value;
+    }
+  };
+
+  const handleBrushSizeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const size = parseInt(e.target.value);
+    setBrushSize(size);
+    if (contextRef.current) {
+      contextRef.current.lineWidth = size;
     }
   };
 
@@ -119,36 +167,58 @@ const CreateSamplePage: React.FC = () => {
           </button>
         </div>
         <div>
-          <label htmlFor="iconColor" className="block mb-1">Icon Color</label>
+          <label htmlFor="color" className="block mb-1">Color</label>
           <input
             type="color"
-            id="iconColor"
-            value={iconColor}
-            onChange={(e) => setIconColor(e.target.value)}
+            id="color"
+            value={color}
+            onChange={handleColorChange}
             className="w-full p-2 border rounded"
           />
         </div>
         <div>
-          <label htmlFor="iconText" className="block mb-1">Icon Text</label>
+          <label htmlFor="brushSize" className="block mb-1">Brush Size</label>
           <input
-            type="text"
-            id="iconText"
-            value={iconText}
-            onChange={(e) => setIconText(e.target.value)}
-            className="w-full p-2 border rounded"
-            maxLength={2}
+            type="range"
+            id="brushSize"
+            min="1"
+            max="20"
+            value={brushSize}
+            onChange={handleBrushSizeChange}
+            className="w-full"
           />
         </div>
         <div>
           <button
             type="button"
-            onClick={createIcon}
-            className="p-2 rounded bg-green-500 text-white"
+            onClick={() => setTool('pencil')}
+            className={`p-2 rounded ${tool === 'pencil' ? 'bg-blue-500' : 'bg-gray-300'} text-white mr-2`}
           >
-            Preview Icon
+            Ołówek
+          </button>
+          <button
+            type="button"
+            onClick={() => setTool('brush')}
+            className={`p-2 rounded ${tool === 'brush' ? 'bg-blue-500' : 'bg-gray-300'} text-white`}
+          >
+            Pędzel
           </button>
         </div>
-        <canvas ref={canvasRef} width="100" height="100" className="border"></canvas>
+        <canvas
+          ref={canvasRef}
+          onMouseDown={startDrawing}
+          onMouseMove={draw}
+          onMouseUp={stopDrawing}
+          onMouseLeave={stopDrawing}
+          className="border"
+        ></canvas>
+        <button
+          type="button"
+          onClick={clearCanvas}
+          className="p-2 rounded bg-red-500 text-white"
+        >
+          Clear Canvas
+        </button>
         <button type="submit" className="w-full p-2 rounded bg-blue-500 text-white">Create Sample</button>
       </form>
     </div>
