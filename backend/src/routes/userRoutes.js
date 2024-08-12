@@ -4,7 +4,7 @@ import {
   login, 
   logout, 
   
-  getUserProfile, 
+  getUserOwnProfile, 
   changePassword,
 
   handleProfilePictureUpload,
@@ -23,7 +23,7 @@ router.post('/login', login);
 router.post('/logout', authenticateToken, logout);
 
 // it first executes authenticateToken then getUserProfile so in auth we decode the token to id of user
-router.get('/me', authenticateToken, getUserProfile);
+router.get('/me', authenticateToken, getUserOwnProfile);
 
 //router.put('/upload-profile-picture', authenticateToken, upload.single('profilePicture'), saveProfilePicture);
 router.put('/upload-profile-picture', authenticateToken, handleProfilePictureUpload, saveProfilePicture);

@@ -42,7 +42,8 @@ export const register = async (req, res) => {
       email,
       password: hashedPassword,
       verificationToken,
-      verificationTokenExpires
+      verificationTokenExpires,
+      role: 'user'
     });
 
     await user.save();
@@ -134,7 +135,7 @@ export const logout = async (req, res) => {
 };
 
 
-export const getUserProfile = async (req, res) => {
+export const getUserOwnProfile = async (req, res) => {
   console.log("backend is trying");
   //console.log('data: ', req.user);
 
