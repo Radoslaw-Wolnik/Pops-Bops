@@ -3,17 +3,17 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { getAdmins, deleteAdmin, addAdmin } from '../services/api';
 import { Navigate } from 'react-router-dom';
+import { User, RegisterAdminData } from '../types';
 
-interface Admin {
-  id: string;
-  username: string;
-  email: string;
-}
 
 const AdminManagementPage: React.FC = () => {
   const { user } = useAuth();
-  const [admins, setAdmins] = useState<Admin[]>([]);
-  const [newAdmin, setNewAdmin] = useState({ username: '', password: '', email: '' });
+  const [admins, setAdmins] = useState<User[]>([]);
+  const [newAdmin, setNewAdmin] = useState<RegisterAdminData>({
+    username: '',
+    email: '',
+    password: ''
+  });
 
   useEffect(() => {
     fetchAdmins();
@@ -22,6 +22,11 @@ const AdminManagementPage: React.FC = () => {
   if (!user || user.role !== 'admin') {
     return <Navigate to="/" replace />;
   }
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setNewAdmin(prev => ({ ...prev, [id]: value }));
+  };
 
   const fetchAdmins = async () => {
     try {
@@ -48,29 +53,32 @@ const AdminManagementPage: React.FC = () => {
 
   const handleAddAdmin = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await addAdmin(newAdmin);
-      alert('Admin added successfully');
-      setNewAdmin({ username: '', password: '', email: '' });
-      fetchAdmins();
-    } catch (error) {
-      console.error('Error adding admin:', error);
-      alert('Error adding admin');
+    if (Object.values(newAdmin).every(field => field !== '')) {
+      try {
+        await addAdmin(newAdmin);
+        alert('Admin added successfully');
+        setNewAdmin({ username: '', email: '', password: ''});
+        fetchAdmins();
+      } catch (error) {
+        console.error('Error adding admin:', error);
+        alert('Error adding admin');
+      }
+    } else {
+      alert('Please fill in all fields');
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6">Admin Management</h1>
-      <div className="mb-8">
-        <h2 className="text-2xl font-bold mb-4">Current Admins</h2>
+    <div>
+      <div>
+        <h2 className="text-2xl font-bold mb-4">Existing Admins</h2>
         <ul>
           {admins.map((admin) => (
-            <li key={admin.id} className="flex justify-between items-center mb-2">
-              <span>{admin.username} ({admin.email})</span>
+            <li key={admin._id} className="flex justify-between items-center mb-2">
+              <span>{admin.username} (admin.email mby idk)</span>
               <button
-                onClick={() => handleDeleteAdmin(admin.id)}
-                className="bg-red-500 text-white px-2 py-1 rounded"
+                onClick={() => handleDeleteAdmin(admin._id)}
+                className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 transition-colors"
               >
                 Delete
               </button>
@@ -78,43 +86,46 @@ const AdminManagementPage: React.FC = () => {
           ))}
         </ul>
       </div>
-      <div>
+      <div className="mt-8">
         <h2 className="text-2xl font-bold mb-4">Add New Admin</h2>
         <form onSubmit={handleAddAdmin} className="space-y-4">
           <div>
-            <label htmlFor="username" className="block mb-1">Username</label>
+            <label htmlFor="username" className="block mb-1 font-medium">Username</label>
             <input
               type="text"
               id="username"
               value={newAdmin.username}
-              onChange={(e) => setNewAdmin({ ...newAdmin, username: e.target.value })}
-              className="w-full p-2 border rounded"
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
             />
           </div>
           <div>
-            <label htmlFor="password" className="block mb-1">Password</label>
-            <input
-              type="password"
-              id="password"
-              value={newAdmin.password}
-              onChange={(e) => setNewAdmin({ ...newAdmin, password: e.target.value })}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <div>
-            <label htmlFor="email" className="block mb-1">Email</label>
+            <label htmlFor="email" className="block mb-1 font-medium">Email</label>
             <input
               type="email"
               id="email"
               value={newAdmin.email}
-              onChange={(e) => setNewAdmin({ ...newAdmin, email: e.target.value })}
-              className="w-full p-2 border rounded"
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               required
             />
           </div>
-          <button type="submit" className="w-full p-2 rounded bg-green-500 text-white">
+          <div>
+            <label htmlFor="password" className="block mb-1 font-medium">Password</label>
+            <input
+              type="password"
+              id="password"
+              value={newAdmin.password}
+              onChange={handleInputChange}
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              required
+            />
+          </div>
+          <button 
+            type="submit" 
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition-colors"
+          >
             Add Admin
           </button>
         </form>
@@ -122,5 +133,6 @@ const AdminManagementPage: React.FC = () => {
     </div>
   );
 };
+
 
 export default AdminManagementPage;
