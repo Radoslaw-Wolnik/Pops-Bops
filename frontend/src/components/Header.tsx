@@ -50,7 +50,10 @@ const Header: React.FC = () => {
           <Link to='/' className='mr-4'>My popos</Link>
           <Link to='/' className='mr-4'>My collections</Link>
           {user.role === 'admin' && (
-            <Link to="/preset-manage" className="mr-4">Admin</Link>
+            <>
+              <Link to="/admin/add-default-sound" className="mr-4">Add Default Sound</Link>
+              <Link to="/admin/manage" className="mr-4">Manage Admins</Link>
+            </>
           )}
 
           <img 

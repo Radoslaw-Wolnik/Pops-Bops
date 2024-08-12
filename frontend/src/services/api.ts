@@ -169,5 +169,19 @@ export const getUserCollections = (): Promise<AxiosResponse<Collection>> =>
   typedApi.get('/audio/collections');
 
 
+// admin ---- TODO
+export const addDefaultAudioSample = (formData: FormData): Promise<AxiosResponse<AudioSample>> =>
+  typedApi.post('/admin/samples', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+
+export const getAdmins = (): Promise<AxiosResponse<Admin[]>> =>
+  typedApi.get('/admin/users');
+
+export const deleteAdmin = (id: string): Promise<AxiosResponse<void>> =>
+  typedApi.delete(`/admin/users/${id}`);
+
+export const addAdmin = (adminData: { username: string; password: string; email: string }): Promise<AxiosResponse<Admin>> =>
+  typedApi.post('/admin/users', adminData);
 
 export default typedApi;
