@@ -1,6 +1,6 @@
 // frontend/src/services/api.ts
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosHeaders, AxiosError, AxiosResponse, AxiosRequestConfig } from 'axios';
-import { User, FullUser, Credentials, UserData, AudioSettings, Collection, Preset, AudioSample } from '../types';
+import { User, FullUser, LoginCredentials, RegisterUserData, Collection, AudioSample } from '../types';
 
 const API_URL = "http://localhost:5000/api";
 
@@ -77,11 +77,9 @@ typedApi.interceptors.response.use(
   }
 );
 
-// API functions with proper typing
-//export const login = (credentials: Credentials): Promise<AxiosResponse<{ token: string; user: User }>> => 
-//  typedApi.post('/users/login', credentials);
+// ---- API functions ----
 
-export const login = async (credentials: Credentials): Promise<AxiosResponse<{ token: string; user: User }>> => {
+export const login = async (credentials: LoginCredentials): Promise<AxiosResponse<{ token: string; user: User }>> => {
   try {
     const response = await typedApi.post<{ token: string; user: User }>('/users/login', credentials);
     return response;
@@ -103,7 +101,7 @@ export const login = async (credentials: Credentials): Promise<AxiosResponse<{ t
 export const logout = (): Promise<AxiosResponse<void>> => 
   typedApi.post('/users/logout');
 
-export const register = async (userData: UserData): Promise<AxiosResponse<{ message: string }>> => {
+export const register = async (userData: RegisterUserData): Promise<AxiosResponse<{ message: string }>> => {
   try {
     const response = await typedApi.post<{ message: string }>('/users/register', userData);
     return response;
@@ -122,15 +120,11 @@ export const register = async (userData: UserData): Promise<AxiosResponse<{ mess
   }
 };
 
-
-export const getMe = (): Promise<AxiosResponse<FullUser>> => 
-  typedApi.get('/users/me');
-
-export const getOtherUserProfile = (userId: string): Promise<AxiosResponse<User>> => 
-  typedApi.get(`/users/${userId}`);
+export const refreshAuthToken = (): Promise<AxiosResponse<{ token: string }>> =>
+  typedApi.post('/auth/refresh-token');
 
 
-// Istnieje opcja że tu FullUser
+
 export const updateUserProfile = (formData: FormData): Promise<AxiosResponse<User>> =>
   typedApi.put<User>('/users/upload-profile-picture', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
@@ -147,34 +141,33 @@ export const verifyEmail = (token: string): Promise<AxiosResponse<void>> =>
 
 
 
-export const savePreset = (preset: { name: string; settings: AudioSettings }): Promise<AxiosResponse<Preset>> =>
-  typedApi.post('/presets', preset);
 
-export const getCollections = (): Promise<AxiosResponse<Collection[]>> =>
-  typedApi.get('/collections');
+export const getMe = (): Promise<AxiosResponse<FullUser>> => 
+  typedApi.get('/users/me');
 
-export const createCollection = (collection: { name: string }): Promise<AxiosResponse<Collection>> =>
-  typedApi.post('/collections', collection);
+export const getOtherUserProfile = (userId: string): Promise<AxiosResponse<User>> => 
+  typedApi.get(`/users/${userId}`);
 
-export const addToCollection = (collectionId: string, sampleIds: string[]): Promise<AxiosResponse<Collection>> =>
-  typedApi.post(`/collections/${collectionId}/add`, { sampleIds });
+export const getMainPageSamples = (): Promise<AxiosResponse<AudioSample[]>> =>
+  typedApi.get('/audio/main-samples');
 
-export const saveAudioSample = (audioBlob: Blob, settings: AudioSettings): Promise<AxiosResponse<AudioSample>> => {
-  const formData = new FormData();
-  formData.append('audio', audioBlob, 'sample.wav');
-  formData.append('settings', JSON.stringify(settings));
-  return typedApi.post('/samples', formData, {
+export const getUserSamples = (): Promise<AxiosResponse<AudioSample[]>> =>
+  typedApi.get('/audio/my-samples/user');
+
+// not sure if it shouldnt be /audio./upload-audio
+export const createAudioSample = (formData: FormData): Promise<AxiosResponse<AudioSample>> =>
+  typedApi.post('audio/user-audio-sample', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
-};
 
-export const getAudioSamples = (): Promise<AxiosResponse<AudioSample[]>> =>
-  typedApi.get('/samples');
+export const updateAudioSampleIcon = (sampleId: string, formData: FormData): Promise<AxiosResponse<AudioSample>> =>
+  typedApi.put(`/audio/user-audio-sample/${sampleId}/icon`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
 
-export const getPresets = (): Promise<AxiosResponse<Preset[]>> =>
-  typedApi.get('/presets');
+export const getUserCollections = (): Promise<AxiosResponse<Collection>> =>
+  typedApi.get('/audio/collections');
 
-export const deletePreset = (presetId: string): Promise<AxiosResponse<void>> =>
-  typedApi.delete(`/presets/${presetId}`);
+
 
 export default typedApi;

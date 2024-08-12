@@ -1,4 +1,4 @@
-// user releted types
+// --- user releted types ---
 
 export interface User {
   _id: string;
@@ -9,48 +9,46 @@ export interface User {
 export interface FullUser extends User {
   email: string;
   isVerified?: boolean;
+  role: 'user' | 'admin';
 }
 
-export interface Credentials {
+// sending user data
+export interface LoginCredentials {
   email: string;
   password: string;
 }
 
-export interface UserData {
+// creating user 
+export interface RegisterUserData {
   username: string;
   email: string;
   password: string;
 }
 
-// Audio releted types
+
+//  --- audio related ---
 
 export interface AudioSample {
   _id: string;
   name: string;
   audioUrl: string;
-  settings: AudioSettings;
-  createdAt: Date;
-  user: string; // User ID
+  iconUrl: string;
+  forMainPage: boolean;
+  settings: AudioSettings; // not sure for settings if we will record most of them
 }
 
 export interface AudioSettings {
-  frequency: number;
+  // Add any specific audio settings here
   volume: number;
-  duration: number;
-  waveform: 'sine' | 'square' | 'sawtooth' | 'triangle';
-  // Add more parameters as needed
+  pitch: number;
+  // ... other settings
 }
 
-export interface Preset {
-  _id: string;
-  name: string;
-  settings: AudioSettings;
-  user: string; // User ID
-}
 
+// collections
 export interface Collection {
   _id: string;
+  user: string;
   name: string;
-  samples: string[]; // Array of AudioSample IDs
-  user: string; // User ID
+  samples: AudioSample[];
 }

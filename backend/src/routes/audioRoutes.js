@@ -22,8 +22,8 @@ import { updateUserAudioSampleIcon } from '../controllers/iconController.js';
 const router = express.Router();
 
 
-router.get('/samples', getMainPageSamples);
-router.get('/samples/:id', authenticateToken, getUserSamples)
+router.get('/main-samples', getMainPageSamples);
+router.get('/my-samples/:id', authenticateToken, getUserSamples)
 
 router.post('/collections', authenticateToken, createCollection);
 router.post('/collections/:id/add', authenticateToken, addToCollection);
