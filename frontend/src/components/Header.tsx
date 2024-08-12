@@ -46,6 +46,7 @@ const Header: React.FC = () => {
       {user ? (
         <div className="protected-user">
           <Link to='/profile' className='mr-4'>My profile</Link>
+          <Link to='/create-sample' className='mr-4'>Make it pop</Link>
           <Link to='/' className='mr-4'>My popos</Link>
           <Link to='/' className='mr-4'>My collections</Link>
           {user.role === 'admin' && (
