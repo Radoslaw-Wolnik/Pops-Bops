@@ -31,3 +31,4 @@ dist-ssr
 # ssl certificates
 private-key.pem
 certificate.pem
+*.pem
