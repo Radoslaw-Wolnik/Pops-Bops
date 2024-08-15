@@ -19,6 +19,11 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface LoginFetch {
+  _id: string;
+  role: 'user' | 'admin';
+}
+
 // creating user 
 export interface RegisterUserData {
   username: string;
