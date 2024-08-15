@@ -9,7 +9,7 @@ export default {
   DB_USER: process.env.DB_USER,
   DB_PASS: process.env.DB_PASS,
   JWT_SECRET: process.env.JWT_SECRET,
-  PORT: process.env.PORT || 5000,
+  PORT: process.env.PORT || 5443, // 5000 http 5443 https
   NODE_ENV: process.env.NODE_ENV || 'development',
   FRONTEND: process.env.FRONTEND || 'http://localhost:5173',
 
