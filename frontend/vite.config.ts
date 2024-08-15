@@ -7,7 +7,8 @@ import path from 'node:path'
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: 'build' // Set the out dir for build
+    outDir: 'build', // Set the out dir for build
+    sourcemap: true  // Ensure source maps are generated
   },
   server: {
     https: {
