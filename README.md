@@ -754,6 +754,35 @@ Pages and Routes: Lazy loading is particularly effective for routes and large co
  --------------------------------------
 
 
+Security measures - https and http only cookies
+
+Obtain an SSL/TLS certificate:
+
+You can get a free certificate from Let's Encrypt or purchase one from a Certificate Authority.
+For development, you can also create a self-signed certificate.
+using openssl
+> openssl genpkey -algorithm RSA -out privkey.pem
+> openssl req -new -x509 -key privkey.pem -out cert.pem -days 365
+
+if i want to simulate the letsencrypt
+create fake private key for certification company
+> openssl genpkey -algorithm RSA -out intermediate-key.pem
+create fake certificate for them
+> openssl req -new -x509 -key intermediate-key.pem -out intermediate-cert.pem -days 365
+join fake certificate from company and my certificate
+> cat cert.pem intermediate-cert.pem > fullchain.pem
+
+
+------------------------ restructure middleware in backend
+src/
+├── controllers/
+│   └── authController.js (login, logout, register, refreshToken, sendVerificationEmail, verifyEmail)
+├── middleware/
+│   └── auth.js (authenticateToken, authenticateAdmin)
+└── utils/
+    └── authUtils.js (generateToken, setTokenCookie)
+
+And from that you can see that other mioddleware / utils functions should propably be restructured too
 
 ## So now - TODO
 - [x] redesigned entire backend
@@ -771,5 +800,7 @@ Pages and Routes: Lazy loading is particularly effective for routes and large co
 - [ ] loading spinner
 - [ ] styles for login singup
 - [ ] mini icon maker canva for bops (make it pop page)
+
+- [ ] restructure middleware/utils in backend
 
 
