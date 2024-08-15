@@ -10,8 +10,7 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - ./frontend/ssl/cert/certificate.pem:/app/cert/certificate.pem
-      - ./frontend/ssl/cert/private-key.pem:/app/cert/private-key.pem
+      - ./frontend/ssl/cert:/app/ssl/cert
     command: npm run dev
     environment:
       NODE_ENV: development
