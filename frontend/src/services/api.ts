@@ -2,7 +2,7 @@
 import axios, { AxiosInstance, AxiosError, AxiosResponse, AxiosRequestConfig } from 'axios';
 import { User, FullUser, LoginCredentials, RegisterUserData, Collection, AudioSample, RegisterAdminData, LoginFetch } from '../types';
 
-const API_URL = "https://localhost:5000/api";
+const API_URL = "https://localhost:5443/api";
 
 // Create a more flexible Axios instance with generics
 const api = axios.create({
@@ -174,8 +174,17 @@ export const updateAudioSampleIcon = (sampleId: string, formData: FormData): Pro
     headers: { 'Content-Type': 'multipart/form-data' }
   });
 
-export const getUserCollections = (): Promise<AxiosResponse<Collection>> =>
+export const getUserCollections = (): Promise<AxiosResponse<Collection[]>> =>
   typedApi.get('/audio/collections');
+
+export const createCollection = (collectionName: string): Promise<AxiosResponse<Collection>> => 
+  typedApi.post('/audio/collections', { name: collectionName });
+
+export const addToCollection = (collectionId: string, audioSampleIds: string[]): Promise<AxiosResponse<void>> => 
+  typedApi.post(`/audio/collections/${collectionId}/add`, { audioSampleIds });
+
+
+
 
 
 // admin ---- TODO
