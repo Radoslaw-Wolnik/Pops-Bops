@@ -20,21 +20,55 @@ const profilePictureStorage = createStorage('profile-picture');
 const audioStorage = createStorage('audio');
 const iconStorage = createStorage('icons');
 
+
+const picturefileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|gif/;
+  const mimetype = allowedTypes.test(file.mimetype);
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+
+  if (mimetype && extname) {
+    return cb(null, true);
+  }
+  cb(new Error("Error: File upload only supports images (jpeg, jpg, png, gif)"));
+};
+
+const audiofileFilter = (req, file, cb) => {
+  const allowedTypes = /wav|mp3|ogg/;
+  const mimetype = allowedTypes.test(file.mimetype);
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  if (mimetype && extname) {
+    return cb(null, true);
+  }
+  cb(new Error("Error: File upload only supports audio files (wav, mp3, ogg)"));
+};
+
+const iconfileFilter = (req, file, cb) => {
+  const allowedTypes = /png/;
+  const mimetype = allowedTypes.test(file.mimetype);
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+
+  if (mimetype && extname) {
+    return cb(null, true);
+  }
+  cb(new Error("Error: File upload only supports images (png)"));
+};
+
+
 const profilePictureUpload = multer({
   storage: profilePictureStorage,
-  fileFilter: fileFilter,
+  fileFilter: picturefileFilter,
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
 const audioUpload = multer({
   storage: audioStorage,
-  fileFilter: audioFileFilter,
+  fileFilter: audiofileFilter,
   limits: { fileSize: 10 * 1024 * 1024 }
 });
 
 const iconUpload = multer({
   storage: iconStorage,
-  fileFilter: fileFilter,
+  fileFilter: iconfileFilter,
   limits: { fileSize: 2 * 1024 * 1024 }
 });
 
