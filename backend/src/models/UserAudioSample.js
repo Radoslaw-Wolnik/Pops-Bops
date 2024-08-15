@@ -1,12 +1,8 @@
-import mongoose from 'mongoose';
+// models/UserAudioSample.js
+import { AudioSample } from './AudioSample.js';
 
-const UserAudioSampleSchema = new mongoose.Schema({
-    user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    name: String,
-    audioUrl: String,
-    iconUrl: String,
-    settings: Object,
-    createdAt: { type: Date, default: Date.now }
-});
-  
-export default mongoose.model('UserAudioSample', UserAudioSampleSchema);
+const UserAudioSample = AudioSample.discriminator('UserAudioSample', new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
+}));
+
+export default UserAudioSample;

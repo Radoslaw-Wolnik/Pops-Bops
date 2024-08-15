@@ -1,12 +1,8 @@
-import mongoose from 'mongoose';
+// models/DefaultAudioSample.js
+import { AudioSample } from './AudioSample.js';
 
-const DefaultAudioSampleSchema = new mongoose.Schema({
-  name: String,
-  audioUrl: String,
-  iconUrl: String,
-  forMainPage: { type: Boolean, default: false },
-  settings: Object,
-  createdAt: { type: Date, default: Date.now }
-});
+const DefaultAudioSample = AudioSample.discriminator('DefaultAudioSample', new mongoose.Schema({
+  forMainPage: { type: Boolean, default: false }
+}));
 
-export default mongoose.model('DefaultAudioSample', DefaultAudioSampleSchema);
+export default DefaultAudioSample;
