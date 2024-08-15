@@ -1,3 +1,4 @@
+import { AudioSample } from '../models/AudioSample.js';
 import DefaultAudioSample from '../models/DefaultAudioSample.js';
 import UserAudioSample from '../models/UserAudioSample.js';
 import Collection from '../models/Collection.js';
@@ -77,7 +78,7 @@ export const getUserCollections = async (req, res) => {
 
 export const getMainPageSamples = async (req, res) => {
   try {
-    const samples = await DefaultAudioSample.find();
+    const samples = await DefaultAudioSample.find({ forMainPage: true });
     res.json(samples);
   } catch (error) {
     console.error('Error fetching main page samples:', error);
@@ -114,31 +115,43 @@ export const createCollection = async (req, res) => {
 
 export const addToCollection = async (req, res) => {
   try {
-    const { sampleId, sampleType } = req.body;
-
-    // Validate sampleType
-    if (!['Default', 'User'].includes(sampleType)) {
-      return res.status(400).json({ message: 'Invalid sample type' });
-    }
-
-    // Check if the sample exists in the respective collection
-    let sampleExists = false;
-    if (sampleType === 'Default') {
-      sampleExists = await DefaultAudioSample.exists({ _id: sampleId });
-    } else if (sampleType === 'User') {
-      sampleExists = await UserAudioSample.exists({ _id: sampleId });
-    }
-
-    if (!sampleExists) {
-      return res.status(404).json({ message: 'Sample not found' });
-    }
+    const { sampleIds } = req.body;
+    const userId = req.user._id;
 
     const collection = await Collection.findById(req.params.id);
     if (!collection) {
       return res.status(404).json({ message: 'Collection not found' });
     }
-    collection.samples.push(sampleId);
+
+    // Check if the authenticated user owns the collection
+    if (collection.user.toString() !== userId.toString()) {
+      return res.status(403).json({ message: 'Not authorized to modify this collection' });
+    }
+
+    // Ensure all sampleIds are valid ObjectIds
+    if (!Array.isArray(sampleIds) || sampleIds.some(id => !mongoose.Types.ObjectId.isValid(id))) {
+      return res.status(400).json({ message: 'Invalid sample IDs' });
+    }
+    
+    // Find all samples in AudioSample (which includes both Default and User samples)
+    const foundSamples = await AudioSample.find({
+      _id: { $in: sampleIds },
+      $or: [
+        { sampleType: 'DefaultAudioSample' },
+        { sampleType: 'UserAudioSample', user: userId }
+      ]
+    });
+
+    const foundSampleIds = foundSamples.map(sample => sample._id);
+    const missingSamples = sampleIds.filter(id => !foundSampleIds.includes(id.toString()));
+
+    if (missingSamples.length > 0) {
+      return res.status(404).json({ message: 'One or more samples not found', missingSamples });
+    }
+
+    collection.samples.push(...foundSampleIds);
     await collection.save();
+
     res.json(collection);
   } catch (error) {
     console.error('Error adding to collection:', error);
@@ -158,7 +171,7 @@ export const saveUserAudioSampleWithIcon = async (req, res) => {
       });
     });
 
-    const { name, settings, forMainPage } = req.body;
+    const { name, settings } = req.body;
     
     if (!req.files['audio'] || !req.files['icon']) {
       return res.status(400).json({ message: 'Both audio and icon files are required' });
@@ -175,7 +188,6 @@ export const saveUserAudioSampleWithIcon = async (req, res) => {
       name,
       audioUrl,
       iconUrl,
-      forMainPage: forMainPage === 'true',
       settings: JSON.parse(settings)
     });
 

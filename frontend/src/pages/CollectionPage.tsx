@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Collection, AudioSample } from '../types';
-import { getCollections, createCollection, addToCollection, getAudioSamples } from '../services/api';
+import { getUserCollections, createCollection, addToCollection, getUserSamples } from '../services/api';
 import CollectionList from '../components/CollectionPage/CollectionList';
 import AudioPlayer from '../components/CollectionPage/AudioPlayer';
 import SampleList from '../components/CollectionPage/SampleList';
@@ -20,7 +20,7 @@ const CollectionPage: React.FC = () => {
 
   const fetchCollections = async () => {
     try {
-      const response = await getCollections();
+      const response = await getUserCollections();
       setCollections(response.data);
     } catch (error) {
       console.error('Error fetching collections:', error);
@@ -29,7 +29,7 @@ const CollectionPage: React.FC = () => {
 
   const fetchAudioSamples = async () => {
     try {
-      const response = await getAudioSamples();
+      const response = await getUserSamples();
       setAvailableSamples(response.data);
     } catch (error) {
       console.error('Error fetching audio samples:', error);
@@ -38,7 +38,7 @@ const CollectionPage: React.FC = () => {
 
   const handleCreateCollection = async () => {
     try {
-      await createCollection({ name: newCollectionName });
+      await createCollection(newCollectionName);
       setNewCollectionName('');
       fetchCollections();
     } catch (error) {
