@@ -1,6 +1,6 @@
 //src/routes/audioRoutes.js
 import express from 'express';
-import authenticateToken, { authenticateAdmin } from '../middleware/auth.js';
+import { authenticateAdmin, authenticateToken } from '../middleware/auth.js';
 import {
   handleAudioUpload,
   saveAudioToStorage,

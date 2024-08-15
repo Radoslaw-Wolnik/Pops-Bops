@@ -1,9 +1,9 @@
 // src/middleware/auth.js
+// although now im thinking it mby should be in utils ?? 
 
 import jwt from 'jsonwebtoken';
 import RevokedToken from '../models/RevokedToken.js';
-import User from '../models/User.js';  // Import your User model
-import extractToken from '../utils/tokenExtractor.js';
+import User from '../models/User.js';
 
 export const generateToken = (user) => {
   return jwt.sign(
@@ -13,8 +13,18 @@ export const generateToken = (user) => {
   );
 };
 
+export const setTokenCookie = (res, token) => {
+  res.cookie('token', token, {
+    httpOnly: true,
+    //secure: process.env.NODE_ENV === 'production', // Use secure in production
+    secure: true,
+    sameSite: 'strict',
+    maxAge: 3600000 // 1 hour in milliseconds
+  });
+};
+
 export const authenticateAdmin = async (req, res, next) => {
-  const token = extractToken(req);
+  const token = req.cookies.token;
 
   if (!token) {
     return res.status(401).json({ message: 'Access denied. No token provided.' });
@@ -50,9 +60,9 @@ export const authenticateAdmin = async (req, res, next) => {
   }
 };
 
-const authenticateToken = async (req, res, next) => {
-  const token = extractToken(req);
-  
+export const authenticateToken = async (req, res, next) => {
+  const token = req.cookies.token;
+
   if (!token) {
     return res.status(401).json({ message: 'Access denied. No token provided.' });
   }
@@ -82,4 +92,26 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-export default authenticateToken;
+export const refreshToken = async (req, res) => {
+  const token = req.cookies.token;
+
+  if (!token) {
+    return res.status(401).json({ message: 'No token provided' });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.user.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const newToken = generateToken(user);
+    setTokenCookie(res, newToken);
+
+    res.json({ message: 'Token refreshed successfully', user: { id: user._id, role: user.role } });
+  } catch (error) {
+    res.status(403).json({ message: 'Invalid token' });
+  }
+};
