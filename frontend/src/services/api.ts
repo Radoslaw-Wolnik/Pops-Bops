@@ -1,8 +1,8 @@
 // frontend/src/services/api.ts
-import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosHeaders, AxiosError, AxiosResponse, AxiosRequestConfig } from 'axios';
-import { User, FullUser, LoginCredentials, RegisterUserData, Collection, AudioSample, RegisterAdminData } from '../types';
+import axios, { AxiosInstance, AxiosError, AxiosResponse, AxiosRequestConfig } from 'axios';
+import { User, FullUser, LoginCredentials, RegisterUserData, Collection, AudioSample, RegisterAdminData, LoginFetch } from '../types';
 
-const API_URL = "http://localhost:5000/api";
+const API_URL = "https://localhost:5000/api";
 
 // Create a more flexible Axios instance with generics
 const api = axios.create({
@@ -10,6 +10,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  withCredentials: true, // This is crucial for sending cookies
 });
 
 // Type assertion for methods
@@ -21,6 +22,7 @@ const typedApi = api as {
 } & AxiosInstance;
 
 // Set up an interceptor for requests
+/*
 typedApi.interceptors.request.use(
   (config: InternalAxiosRequestConfig): InternalAxiosRequestConfig => {
     const token = localStorage.getItem('token');
@@ -36,6 +38,7 @@ typedApi.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+*/
 
 // Custom ApiError class
 export class ApiError extends Error {
@@ -79,9 +82,9 @@ typedApi.interceptors.response.use(
 
 // ---- API functions ----
 
-export const login = async (credentials: LoginCredentials): Promise<AxiosResponse<{ token: string; user: User }>> => {
+export const login = async (credentials: LoginCredentials): Promise<AxiosResponse<{ message: string, user: LoginFetch }>> => {
   try {
-    const response = await typedApi.post<{ token: string; user: User }>('/users/login', credentials);
+    const response = await typedApi.post<{ message: string, user: LoginFetch }>('/auth/login', credentials);
     return response;
   } catch (error) {
     if (error instanceof ApiError) {
@@ -99,11 +102,11 @@ export const login = async (credentials: LoginCredentials): Promise<AxiosRespons
 };
 
 export const logout = (): Promise<AxiosResponse<void>> => 
-  typedApi.post('/users/logout');
+  typedApi.post('/auth/logout');
 
 export const register = async (userData: RegisterUserData): Promise<AxiosResponse<{ message: string }>> => {
   try {
-    const response = await typedApi.post<{ message: string }>('/users/register', userData);
+    const response = await typedApi.post<{ message: string }>('/auth/register', userData);
     return response;
   } catch (error) {
     if (error instanceof ApiError) {
@@ -120,8 +123,23 @@ export const register = async (userData: RegisterUserData): Promise<AxiosRespons
   }
 };
 
-export const refreshAuthToken = (): Promise<AxiosResponse<{ token: string }>> =>
-  typedApi.post('/auth/refresh-token');
+export const refreshAuthToken = async (): Promise<AxiosResponse<{ message: string, user: LoginFetch }>> => {
+  try {
+    const response = await typedApi.post<{ message: string, user: LoginFetch }>('/auth/refresh-token');
+    return response;
+  } catch (error) {
+    throw(error);
+  }
+};
+
+export const changePassword = (data: { currentPassword: string; newPassword: string }): Promise<AxiosResponse<void>> => 
+  typedApi.put('/auth/change-password', data);
+
+export const sendVerificationEmail = (): Promise<AxiosResponse<void>> => 
+  typedApi.post('/auth/send-verification');
+
+export const verifyEmail = (token: string): Promise<AxiosResponse<void>> => 
+  typedApi.get(`/auth/verify-email/${token}`);
 
 
 
@@ -129,15 +147,6 @@ export const updateUserProfile = (formData: FormData): Promise<AxiosResponse<Use
   typedApi.put<User>('/users/upload-profile-picture', formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   });
-
-export const changePassword = (data: { currentPassword: string; newPassword: string }): Promise<AxiosResponse<void>> => 
-  typedApi.put('/users/change-password', data);
-
-export const sendVerificationEmail = (): Promise<AxiosResponse<void>> => 
-  typedApi.post('/users/send-verification');
-
-export const verifyEmail = (token: string): Promise<AxiosResponse<void>> => 
-  typedApi.get(`/users/verify-email/${token}`);
 
 
 
