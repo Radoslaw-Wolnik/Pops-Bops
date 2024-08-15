@@ -12,7 +12,7 @@ import Profile from './pages/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 
 import AudioGenerator from './pages/AudioGeneratorPage';
-import PresetManagerPage from './pages/PresetManagerPage';
+import PresetManagerPage from './pages/SampleManagerPage';
 import CollectionPage from './pages/CollectionPage';
 import CreateSamplePage from './pages/CreateSamplePage';
 

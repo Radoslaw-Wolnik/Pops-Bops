@@ -163,6 +163,15 @@ export const getMainPageSamples = (): Promise<AxiosResponse<AudioSample[]>> =>
 export const getUserSamples = (): Promise<AxiosResponse<AudioSample[]>> =>
   typedApi.get('/audio/my-samples/user');
 
+export const deleteUserSample = (sample: AudioSample): Promise<AxiosResponse<{ message: string }>> =>
+  typedApi.delete(`/audio/sample/${sample._id}`);
+
+export const deleteDefaultSample = (sample: AudioSample): Promise<AxiosResponse<{ message: string }>> =>
+  typedApi.delete(`/audio/default-sample/${sample._id}`);
+
+export const deleteUserCollection = (collection: Collection): Promise<AxiosResponse<{ message: string }>> =>
+  typedApi.delete(`/audio/collection/${collection._id}`);
+
 // not sure if it shouldnt be /audio./upload-audio
 export const createAudioSample = (formData: FormData): Promise<AxiosResponse<AudioSample>> =>
   typedApi.post('audio/user-audio-sample', formData, {
