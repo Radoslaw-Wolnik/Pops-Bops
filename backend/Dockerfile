@@ -24,6 +24,8 @@ COPY --from=builder /app .
 # Copy additional development-specific configuration files
 COPY nodemon.json .
 COPY .env .env
+COPY ssl/cert/certificate.pem /app/cert/certificate.pem
+COPY ssl/cert/private-key.pem /app/cert/private-key.pem
 
 # make uploads dir in development setup
 RUN mkdir -p /app/uploads
@@ -53,6 +55,10 @@ COPY --from=builder /app/src ./src
 
 # Copy production environment configuration
 COPY .env .env
+
+# copy the certificate, private key
+COPY ssl/cert/certificate.pem /app/cert/certificate.pem
+COPY ssl/cert/private-key.pem /app/cert/private-key.pem
 
 # make uploads dir in production
 RUN mkdir -p /app/uploads
