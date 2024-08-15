@@ -9,9 +9,10 @@ export default {
   DB_USER: process.env.DB_USER,
   DB_PASS: process.env.DB_PASS,
   JWT_SECRET: process.env.JWT_SECRET,
-  PORT: process.env.PORT || 5443, // 5000 http 5443 https
+  PORT: process.env.PORT || 5443, // https
+  PORT_HTTP: process.env.PORT_HTTP || 5000,
   NODE_ENV: process.env.NODE_ENV || 'development',
-  FRONTEND: process.env.FRONTEND || 'http://localhost:5173',
+  FRONTEND: process.env.FRONTEND || 'https://localhost:5173',
 
   EMAIL_HOST: process.env.EMAIL_HOST || 'smtp-relay.brevo.com',
   EMAIL_PORT: process.env.EMAIL_PORT || 587,
