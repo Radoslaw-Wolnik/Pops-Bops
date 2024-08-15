@@ -772,6 +772,22 @@ create fake certificate for them
 join fake certificate from company and my certificate
 > cat cert.pem intermediate-cert.pem > fullchain.pem
 
+----------- Firefox trust my cert
+Configuring Firefox to trust your certificate:
+To make Firefox trust your self-signed certificate:
+a. Open Firefox and go to about:config
+b. Search for "security.enterprise_roots.enabled" and set it to true
+c. Search for "security.cert_pinning.enforcement_level" and set it to 0
+d. Restart Firefox
+Then, you need to add your certificate to Firefox:
+a. Go to Firefox Preferences > Privacy & Security > Certificates
+b. Click on "View Certificates"
+c. Go to the "Authorities" tab
+d. Click "Import" and select your certificate file
+e. Check the box that says "Trust this CA to identify websites" and click OK
+Remember
+In production, you should use certificates from a trusted Certificate Authority.
+
 
 ------------------------ restructure middleware in backend
 src/
