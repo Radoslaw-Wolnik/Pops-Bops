@@ -12,9 +12,12 @@ import {
   createCollection,
   addToCollection,
 
-
   saveUserAudioSampleWithIcon,
-  saveDefaultAudioSampleWithIcon
+  saveDefaultAudioSampleWithIcon,
+
+  deleteUserSample,
+  deleteDefaultSample,
+  deleteCollection
 } from '../controllers/audioController.js';
 
 import { updateUserAudioSampleIcon } from '../controllers/iconController.js';
@@ -35,6 +38,10 @@ router.post('/upload-default-audio', authenticateAdmin, handleAudioUpload, saveA
 router.post('/user-audio-sample', authenticateToken, saveUserAudioSampleWithIcon);
 router.put('/user-audio-sample/:id/icon', authenticateToken, updateUserAudioSampleIcon);
 router.post('/default-audio-sample', authenticateAdmin, saveDefaultAudioSampleWithIcon);
+
+router.delete('/sample/:id', authenticateToken, deleteUserSample);
+router.delete('/default-sample/:id', authenticateAdmin, deleteDefaultSample);
+router.delete('/collections/:id', authenticateToken, deleteCollection)
 
 
 export default router;

@@ -4,6 +4,7 @@ import UserAudioSample from '../models/UserAudioSample.js';
 import Collection from '../models/Collection.js';
 
 import { uploadAudioIcon } from '../middleware/uploadAudioIcon.js';
+import { deleteFileFromStorage } from '../utils/deleteFile.js';
 
 
 /* for future audio generating ( also save preset settings )
@@ -159,7 +160,28 @@ export const addToCollection = async (req, res) => {
   }
 };
 
+export const updateUserSample = async (req, res) => {
+  try {
+    const sampleId = req.params.id;
+    const userId = req.user._id;
+    const { name, settings } = req.body;
 
+    const updatedSample = await UserAudioSample.findOneAndUpdate(
+      { _id: sampleId, user: userId },
+      { name, settings: JSON.parse(settings) },
+      { new: true }
+    );
+
+    if (!updatedSample) {
+      return res.status(404).json({ message: 'Sample not found or not authorized to update' });
+    }
+
+    res.json(updatedSample);
+  } catch (error) {
+    console.error('Error updating user sample:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
 
 // save audio plus icon
 export const saveUserAudioSampleWithIcon = async (req, res) => {
@@ -234,5 +256,115 @@ export const saveDefaultAudioSampleWithIcon = async (req, res) => {
   } catch (error) {
     console.error('Error saving default audio sample with icon:', error);
     res.status(500).json({ message: 'Error saving default audio sample with icon' });
+  }
+};
+
+// deletions
+
+export const deleteUserSample = async (req, res) => {
+  try {
+    const sampleId = req.params.id;
+    const userId = req.user._id;
+
+    // Find and delete the user sample
+    const deletedSample = await UserAudioSample.findOneAndDelete({
+      _id: sampleId,
+      user: userId
+    });
+
+    if (!deletedSample) {
+      return res.status(404).json({ message: 'Sample not found or not authorized to delete' });
+    }
+
+    // Remove the sample from all collections
+    await Collection.updateMany(
+      { user: userId },
+      { $pull: { samples: sampleId } }
+    );
+
+    // Here you would also delete the actual audio and icon files from your storage
+    await deleteFileFromStorage(deletedSample.audioUrl);
+    await deleteFileFromStorage(deletedSample.iconUrl);
+
+    res.json({ message: 'Sample deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting user sample:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const deleteDefaultSample = async (req, res) => {
+  try {
+    const sampleId = req.params.id;
+
+    // Ensure the user is an admin before allowing deletion of default samples
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Not authorized to delete default samples' });
+    }
+
+    // Find and delete the default sample
+    const deletedSample = await DefaultAudioSample.findByIdAndDelete(sampleId);
+
+    if (!deletedSample) {
+      return res.status(404).json({ message: 'Default sample not found' });
+    }
+
+    // Remove the sample from all collections
+    await Collection.updateMany(
+      {},
+      { $pull: { samples: sampleId } }
+    );
+
+    // Here you would also delete the actual audio and icon files from your storage
+    await deleteFileFromStorage(deletedSample.audioUrl);
+    await deleteFileFromStorage(deletedSample.iconUrl);
+
+    res.json({ message: 'Default sample deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting default sample:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const deleteCollection = async (req, res) => {
+  try {
+    const collectionId = req.params.id;
+    const userId = req.user._id;
+
+    // Find and delete the collection
+    const deletedCollection = await Collection.findOneAndDelete({
+      _id: collectionId,
+      user: userId
+    });
+
+    if (!deletedCollection) {
+      return res.status(404).json({ message: 'Collection not found or not authorized to delete' });
+    }
+
+    res.json({ message: 'Collection deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting collection:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// just remove
+export const removeFromCollection = async (req, res) => {
+  try {
+    const { collectionId, sampleId } = req.params;
+    const userId = req.user._id;
+
+    const collection = await Collection.findOne({ _id: collectionId, user: userId });
+    if (!collection) {
+      return res.status(404).json({ message: 'Collection not found or not authorized' });
+    }
+
+    collection.samples = collection.samples.filter(sample => sample.toString() !== sampleId);
+    await collection.save();
+
+    res.json({ message: 'Sample removed from collection successfully' });
+  } catch (error) {
+    console.error('Error removing sample from collection:', error);
+    res.status(500).json({ message: 'Server error' });
   }
 };
