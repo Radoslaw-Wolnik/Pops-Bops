@@ -14,17 +14,26 @@ const app = express();
 
 // idk why but process.env.FRONTEND doesnt work but its not the most important thing
 app.use(cors({
-    origin: 'http://localhost:5173',
+    origin: 'https://localhost:5173', // Note the 'https'
     credentials: true,
   }));
 app.use(express.json());
+
+// redirect http to https
+app.use((req, res, next) => {
+  if (req.secure) {
+    next();
+  } else {
+    res.redirect('https://' + req.headers.host + req.url);
+  }
+});
 
 app.use('/uploads', express.static('uploads'));
 
 app.use('/api/users', userRoutes);
 app.use('/api/audio', audioRoutes);
 app.use('/api/icon', iconRoutes);
-app.use('api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 
 export default app;
