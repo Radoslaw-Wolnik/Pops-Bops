@@ -9,7 +9,9 @@ import {
     sendVerificationEmail, 
     verifyEmail, 
     
-    changePassword
+    changePassword,
+    requestPasswordReset,
+    resetPassword
 } from '../controllers/authController.js';
 import { authenticateToken, handlePostRegistrationAuth } from '../middleware/auth.js';
 
@@ -26,5 +28,7 @@ router.post('/send-verification', authenticateToken, sendVerificationEmail);
 router.get('/verify-email/:token', verifyEmail);
 
 router.put('/change-password', authenticateToken, changePassword);
+router.post('/request-password-reset', requestPasswordReset);
+router.post('/reset-password/:token', resetPassword);
 
 export default router;
