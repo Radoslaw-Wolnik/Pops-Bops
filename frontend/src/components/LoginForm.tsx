@@ -1,17 +1,17 @@
 // src/components/LoginForm.tsx
 import React, { useState } from 'react';
-//import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useModal } from '../hooks/useModal';
-import { Credentials } from '../types';
+import { LoginCredentials } from '../types';
 import { ApiError } from '../services/api';
 
+import RegisterForm from './RegisterForm';
+
 const LoginForm: React.FC = () => {
-  const [credentials, setCredentials] = useState<Credentials>({ email: '', password: '' });
+  const [credentials, setCredentials] = useState<LoginCredentials>({ email: '', password: '' });
   const [error, setError] = useState('');
-//  const navigate = useNavigate();
   const { login } = useAuth();
-  const { closeModal } = useModal();
+  const { closeModal, updateModalContent } = useModal();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setCredentials({ ...credentials, [e.target.name]: e.target.value });
@@ -22,8 +22,8 @@ const LoginForm: React.FC = () => {
     try {
       await login(credentials.email, credentials.password);
       // Handle successful login
+      // some timeout mby
       closeModal();
-      // navigate /trips after succesfull login
     } catch (error) {
       if (error instanceof ApiError) {
         setError(error.message);
@@ -34,6 +34,10 @@ const LoginForm: React.FC = () => {
       }
     }
   };
+
+  const handleToRegister = async () => {
+    updateModalContent(<RegisterForm />)
+  }
 
   return (
     <div>
@@ -64,6 +68,7 @@ const LoginForm: React.FC = () => {
         </div>
         <button type="submit">Login</button>
       </form>
+      <button onClick={handleToRegister}>Dont have an account? Register</button>
     </div>
   );
 };

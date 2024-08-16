@@ -4,6 +4,7 @@ import PostRegistration from './PostRegistration';
 import { useAuth } from '../hooks/useAuth';
 import { useModal } from '../hooks/useModal';
 import { ApiError } from '../services/api';
+import LoginForm from './LoginForm';
 
 const RegisterForm: React.FC = () => {
   const [userData, setUserData] = useState({email: '', username: '', password: '' });
@@ -36,6 +37,10 @@ const RegisterForm: React.FC = () => {
       }
     }
   };
+
+  const handleGoToLogin = async () => {
+    updateModalContent(<LoginForm />)
+  }
 
   return (
     <div>
@@ -78,6 +83,7 @@ const RegisterForm: React.FC = () => {
         </div>
         <button type="submit">Sign Up</button>
       </form>
+      <button onClick={handleGoToLogin}>Silly you already have an account? Login</button>
     </div>
   );
 };
