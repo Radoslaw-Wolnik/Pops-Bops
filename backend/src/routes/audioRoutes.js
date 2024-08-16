@@ -26,7 +26,7 @@ const router = express.Router();
 
 
 router.get('/main-samples', getMainPageSamples);
-router.get('/my-samples/:id', authenticateToken, getUserSamples)
+router.get('/my-samples', authenticateToken, getUserSamples)
 
 router.post('/collections', authenticateToken, createCollection);
 router.post('/collections/:id/add', authenticateToken, addToCollection);
