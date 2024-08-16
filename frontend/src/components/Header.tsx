@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import { useModal } from '../hooks/useModal';
 import { useAuth } from '../hooks/useAuth';
 import LoginForm from './LoginForm';
-import SignUpForm from './SignUpForm';
+import RegisterForm from './RegisterForm';
 import { getFullImageUrl } from '../utils/imageUtils';
 
 //interface HeaderProps {
@@ -27,8 +27,8 @@ const Header: React.FC = () => {
     openModal(<LoginForm />);
   };
 
-  const handleOpenSignUp = () => {
-    openModal(<SignUpForm />);
+  const handleOpenRegister = () => {
+    openModal(<RegisterForm />);
   };
 
   return (
@@ -68,7 +68,7 @@ const Header: React.FC = () => {
       ) : (
         <>
           <button onClick={handleOpenLogin}>Login</button>
-          <button onClick={handleOpenSignUp}>Sign Up</button>
+          <button onClick={handleOpenRegister}>Sign Up</button>
         </>
       )}
     </div>
