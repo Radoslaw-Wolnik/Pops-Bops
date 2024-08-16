@@ -35,7 +35,7 @@ const LoginForm: React.FC = () => {
     }
   };
 
-  const handleToRegister = async () => {
+  const handleGoToRegister = async () => {
     updateModalContent(<RegisterForm />)
   }
 
@@ -68,7 +68,7 @@ const LoginForm: React.FC = () => {
         </div>
         <button type="submit">Login</button>
       </form>
-      <button onClick={handleToRegister}>Dont have an account? Register</button>
+      <button onClick={handleGoToRegister}>Dont have an account? Register</button>
     </div>
   );
 };
