@@ -58,9 +58,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const register = useCallback(async (email: string, username: string, password: string) => {
     try {
       const response = await apiRegister({ email, username, password });
-      // You might want to set some state here to indicate successful registration
-      // For example: setRegistrationSuccess(true);
-      // but that would be global and i dont need it i think
+      if (response){
+        await login(email, password);
+      }
       return response;
     } catch (error) {
       if (error instanceof ApiError) {

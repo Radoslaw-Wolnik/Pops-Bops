@@ -5,12 +5,20 @@ import bcrypt from 'bcrypt';
 import RevokedToken from '../models/RevokedToken.js';
 import User from '../models/User.js';
 
-import { generateToken, setTokenCookie, refreshToken as refreshAuthToken } from '../middleware/auth.js';
+import { generateToken, setTokenCookie, refreshToken as refreshAuthToken, generateShortLivedToken, setShortLivedTokenCookie,  } from '../middleware/auth.js';
 import env from '../config/environment.js';
 import sendEmail from '../utils/sendEmail.js';
 
 
 export const login = async (req, res) => {
+  // If user is already authenticated via short-lived token, send success response
+  if (req.user) {
+    return res.json({ 
+      message: 'Login successful', 
+      user: { id: req.user._id, role: req.user.role, isVerified: req.user.isVerified }
+    });
+  }
+
   try {
     const { email, password } = req.body;
 
@@ -20,7 +28,7 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: 'Invalid credentials' });
     }
 
-    // Check if email is verified ------- disable for dev if using multiple accounts that u dont have emails for
+    // Check if email is verified 
     if (!user.isVerified) {
       return res.status(401).json({ message: 'Please verify your email before logging in' });
     }
@@ -113,6 +121,10 @@ export const register = async (req, res) => {
 
     await user.save();
 
+    // Generate a short-lived token and set it as a cookie
+    const shortLivedToken = generateShortLivedToken(user);
+    setShortLivedTokenCookie(res, shortLivedToken);
+
     const verificationUrl = `${env.FRONTEND}/verify-email/${verificationToken}`;
     console.log('Attempting to send email to:', user.email);
     console.log('Verification URL:', verificationUrl);
@@ -128,7 +140,9 @@ export const register = async (req, res) => {
     });
     console.log('Email sent successfully');
 
-    res.status(201).json({ message: 'User registered. Please check your email to verify your account.' });
+    res.status(201).json({ 
+      message: 'User registered. Please check your email to verify your account.'
+    });
   } catch (error) {
     console.error('Error in registration process:', error);
     if (error.response) {
