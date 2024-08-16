@@ -11,6 +11,9 @@ export interface AuthContextType {
   logout: () => Promise<void>;
   updateCurrentUser: (updatedUser: FullUser) => void;
   refreshToken: () => Promise<void>;
+
+  justRegistered: boolean;
+  clearJustRegistered: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -18,6 +21,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<FullUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [justRegistered, setJustRegistered] = useState(false);
 
   /* when storing token in local storage
   useEffect(() => {
@@ -60,6 +64,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await apiRegister({ email, username, password });
       if (response){
         await login(email, password);
+        setJustRegistered(true);
       }
       return response;
     } catch (error) {
@@ -96,6 +101,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(updatedUser);
   }, []);
 
+  const clearJustRegistered = useCallback(() => {
+    setJustRegistered(false);
+  }, []);
+
   const contextValue: AuthContextType = {
     user,
     loading,
@@ -104,6 +113,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     updateCurrentUser,
     refreshToken,
+
+    justRegistered,
+    clearJustRegistered,
   };
 
   return (
