@@ -7,7 +7,7 @@ export interface AuthContextType {
   user: FullUser | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, username: string, password: string) => Promise<string>;
+  register: (email: string, username: string, password: string) => Promise<{ message: string }>;
   logout: () => Promise<void>;
   updateCurrentUser: (updatedUser: FullUser) => void;
   refreshToken: () => Promise<void>;
@@ -33,7 +33,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserData = useCallback(async () => {
     try {
       const response = await getMe();
-      setUser(response.data);
+      setUser(response);
     } catch (error) {
       console.error('Error fetching user data:', error);
       setUser(null);
@@ -61,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       // You might want to set some state here to indicate successful registration
       // For example: setRegistrationSuccess(true);
       // but that would be global and i dont need it i think
-      return response.data.message;
+      return response;
     } catch (error) {
       if (error instanceof ApiError) {
         throw error;
