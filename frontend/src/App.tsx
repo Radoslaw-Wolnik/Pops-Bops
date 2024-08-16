@@ -7,6 +7,7 @@ import LandingPageLayout from './layouts/LandingPageLayout'
 import HomePage from './pages/HomePage';
 import About from './pages/About';
 import VerifyEmail from './pages/VerifyEmail';
+import ResetPassword from './pages/RestPassword';
 import Profile from './pages/Profile';
 
 import ProtectedRoute from './components/ProtectedRoute';
@@ -31,6 +32,7 @@ const router = createBrowserRouter([
       { path: '/', element: <HomePage /> },
       { path: '/about', element: <About /> },
       { path: '/verify-email/:token', element: <VerifyEmail /> },
+      { path: '/reset-password/:token', element: <ResetPassword /> },
       {
         path: '/profile/:userId?',
         element: <ProtectedRoute><Profile /></ProtectedRoute>

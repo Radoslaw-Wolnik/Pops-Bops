@@ -164,7 +164,11 @@ export const sendVerificationEmail = (): Promise<void> =>
 export const verifyEmail = (token: string): Promise<void> => 
   apiRequest('get', `/auth/verify-email/${token}`);
 
+export const requestPasswordReset = (email: string): Promise<{ message: string }> =>
+  apiRequest('post', '/auth/request-password-reset', email);
 
+export const resetPassword = (token: string): Promise<{ message: string }> => 
+  apiRequest('post', `/auth/reset-password/${token}`);
 
 export const updateUserProfile = (formData: FormData): Promise<User> =>
   apiRequest('put', '/users/upload-profile-picture', formData, {

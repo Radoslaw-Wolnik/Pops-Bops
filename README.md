@@ -800,6 +800,30 @@ src/
 
 And from that you can see that other mioddleware / utils functions should propably be restructured too
 
+
+---------------------------- setting the private-key.pem and certificate.pem route as .env variables
+SSL_KEY_PATH=/path/to/your/private-key.pem
+SSL_CERT_PATH=/path/to/your/certificate.pem
+
+const options = {
+  key: fs.readFileSync(process.env.SSL_KEY_PATH),
+  cert: fs.readFileSync(process.env.SSL_CERT_PATH)
+};
+
+Secure file permissions:
+Ensure that the SSL/TLS key and certificate files have restrictive permissions. Only the user running the Node.js process should be able to read these files.
+chmod 400 /path/to/your/private-key.pem
+chmod 400 /path/to/your/certificate.pem
+
+Use a secrets management service:
+For more advanced setups, consider using a secrets management service like AWS Secrets Manager, HashiCorp Vault, or Docker secrets if you're using containerization.
+
+Regular rotation:
+Implement a process for regularly rotating your SSL/TLS certificates and keys.
+
+Monitoring and logging:
+Set up monitoring to alert you if there are any unauthorized attempts to access these files or if the certificates are nearing expiration.
+
 ## So now - TODO
 - [x] redesigned entire backend
 - [ ] create svg titles
@@ -808,6 +832,8 @@ And from that you can see that other mioddleware / utils functions should propab
 - [ ] create homepage with title and bops, pops
 - [ ] create make pop bop with simple icon creator (make it pop)
 - [ ] create my pops
+- [ ] add request password reset to the login modal
+- [ ] only request token reset if there is a token to begin with; start token refresh counter after login not after rendering the website
 
 - [ ] create collections
 - [ ] add to collections
@@ -818,5 +844,7 @@ And from that you can see that other mioddleware / utils functions should propab
 - [ ] mini icon maker canva for bops (make it pop page)
 
 - [ ] restructure middleware/utils in backend
+- [ ] the api documentation
+- [ ] make usage of docker secrets
 
 
