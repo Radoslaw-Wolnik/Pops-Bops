@@ -1,17 +1,17 @@
-// src/components/SignUpForm.tsx
+// src/components/RegisterForm.tsx
 import React, { useState } from 'react';
-//import { useNavigate } from 'react-router-dom';
+import PostRegistration from './PostRegistration';
 import { useAuth } from '../hooks/useAuth';
 import { useModal } from '../hooks/useModal';
 import { ApiError } from '../services/api';
 
-const SignUpForm: React.FC = () => {
+const RegisterForm: React.FC = () => {
   const [userData, setUserData] = useState({email: '', username: '', password: '' });
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-//const navigate = useNavigate();
   const { register } = useAuth();
-  const { closeModal } = useModal();
+  const { updateModalContent } = useModal();
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
@@ -22,11 +22,10 @@ const SignUpForm: React.FC = () => {
     setError('');
     setSuccessMessage('');
     try {
-      const message = await register(userData.email, userData.username, userData.password);
-      setSuccessMessage(message);
-      // Optionally close the modal after a delay
-      setTimeout(() => closeModal(), 3000);
-      // navigate('/trips'); // Redirect to trips page after successful registration
+      const response = await register(userData.email, userData.username, userData.password);
+      setSuccessMessage(response.message);
+      // here should be someawait or sth
+      updateModalContent(<PostRegistration />);
     } catch (error) {
       if (error instanceof ApiError) {
         setError(error.message);
@@ -83,4 +82,4 @@ const SignUpForm: React.FC = () => {
   );
 };
 
-export default SignUpForm;
+export default RegisterForm;
