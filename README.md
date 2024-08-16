@@ -826,12 +826,19 @@ Set up monitoring to alert you if there are any unauthorized attempts to access 
 
 ## So now - TODO
 - [x] redesigned entire backend
-- [ ] create svg titles
+- [ ] restructure middleware/utils in backend
+- [ ] the api documentation
+- [ ] make scheduler for cleanupFunction for revoked tokens
+
 - [ ] create admin acc (in populate db script)
-- [ ] add some (5) sounds and icons (either in populate or in admin add page)
+- [ ] make populate db script so that there is admin account that can add bops but also so that there are things in db to begin with (bops on main page, icons etc)
+- [ ] add some (5) sounds and icons (in populate)
+
+- [ ] create svg titles
 - [ ] create homepage with title and bops, pops
 - [ ] create make pop bop with simple icon creator (make it pop)
 - [ ] create my pops
+
 - [ ] add request password reset to the login modal
 - [ ] only request token reset if there is a token to begin with; start token refresh counter after login not after rendering the website
 
@@ -843,8 +850,6 @@ Set up monitoring to alert you if there are any unauthorized attempts to access 
 - [ ] styles for login singup
 - [ ] mini icon maker canva for bops (make it pop page)
 
-- [ ] restructure middleware/utils in backend
-- [ ] the api documentation
-- [ ] make usage of docker secrets
 
+- [ ] make usage of docker secrets
 
