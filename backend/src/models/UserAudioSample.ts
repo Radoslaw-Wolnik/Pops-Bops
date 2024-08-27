@@ -1,15 +1,15 @@
 // models/UserAudioSample.ts
-import { AudioSample, IAudioSample } from './AudioSample';
-import mongoose, { Schema } from 'mongoose';
+import { AudioSample, IAudioSampleDocument } from './AudioSample';
+import mongoose, { Schema, Types } from 'mongoose';
 
-export interface IUserAudioSample extends IAudioSample {
-  user: mongoose.Schema.Types.ObjectId;
+interface IUserAudioSampleDocument extends IAudioSampleDocument {
+  user: Types.ObjectId;
 }
 
-const UserAudioSampleSchema = new Schema<IUserAudioSample>({
+const UserAudioSampleSchema = new Schema<IUserAudioSampleDocument>({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 });
 
-const UserAudioSample = AudioSample.discriminator<IUserAudioSample>('UserAudioSample', UserAudioSampleSchema);
+const UserAudioSample = AudioSample.discriminator<IUserAudioSampleDocument>('UserAudioSample', UserAudioSampleSchema);
 
 export default UserAudioSample;

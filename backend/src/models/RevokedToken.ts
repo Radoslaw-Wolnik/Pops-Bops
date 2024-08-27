@@ -1,12 +1,12 @@
 // models/RevokedToken.ts
 import mongoose, { Document, Schema } from 'mongoose';
 
-export interface IRevokedToken extends Document {
+interface IRevokedTokenDocument extends Document {
   token: string;
   expiresAt: Date;
 }
 
-const RevokedTokenSchema = new Schema<IRevokedToken>({
+const RevokedTokenSchema = new Schema<IRevokedTokenDocument>({
   token: {
     type: String,
     required: true,
@@ -18,4 +18,4 @@ const RevokedTokenSchema = new Schema<IRevokedToken>({
   }
 });
 
-export default mongoose.model<IRevokedToken>('RevokedToken', RevokedTokenSchema);
+export default mongoose.model<IRevokedTokenDocument>('RevokedToken', RevokedTokenSchema);

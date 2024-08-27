@@ -1,15 +1,16 @@
 // models/DefaultAudioSample.ts
-import { AudioSample, IAudioSample } from './AudioSample';
+import { AudioSample, IAudioSampleDocument } from './AudioSample';
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface IDefaultAudioSample extends IAudioSample {
+
+interface IDefaultAudioSampleDocument extends IAudioSampleDocument {
   forMainPage: boolean;
 }
 
-const DefaultAudioSampleSchema = new Schema<IDefaultAudioSample>({
+const DefaultAudioSampleSchema = new Schema<IDefaultAudioSampleDocument>({
   forMainPage: { type: Boolean, default: false }
 });
 
-const DefaultAudioSample = AudioSample.discriminator<IDefaultAudioSample>('DefaultAudioSample', DefaultAudioSampleSchema);
+const DefaultAudioSample = AudioSample.discriminator<IDefaultAudioSampleDocument>('DefaultAudioSample', DefaultAudioSampleSchema);
 
 export default DefaultAudioSample;
