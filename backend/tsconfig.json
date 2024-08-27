@@ -10,9 +10,9 @@
       "forceConsistentCasingInFileNames": true, // Disallow inconsistently-cased references to the same file
       "resolveJsonModule": true,                // Include modules imported with .json extension
       "moduleResolution": "node",               // TypeScript module resolution strategy (node is recommended for Node.js)
-      "typeRoots": ["./node_modules/@types"],   // List of folders to include type definitions from
+      "typeRoots": ["./node_modules/@types", "./types"],   // List of folders to include type definitions from
       "allowSyntheticDefaultImports": true      // Allow default imports from modules with no default export
   },
-  "include": ["src/**/*.ts"],  // Include all TypeScript files in the src directory
+  "include": ["src/**/*.ts", "types/**/*"],  // Include all TypeScript files in the src directory
   "exclude": ["node_modules", "dist"]  // Exclude node_modules and dist directories from compilation
 }
