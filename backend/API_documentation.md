@@ -321,7 +321,7 @@ Response
 Request
 ```typescript
 POST /audio/upload-audio
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Cookie: session=abc123
 Content-Type: multipart/form-data
 
 [audio file data]
