@@ -1,23 +1,31 @@
-// src/controllers/authController.js
+// src/controllers/authController.ts
+import { Request, Response } from 'express';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
-import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
+import RevokedToken from '../models/RevokedToken';
+import User, { IUser } from '../models/User';
+import { generateToken, setTokenCookie, refreshToken as refreshAuthToken, generateShortLivedToken, setShortLivedTokenCookie } from '../middleware/auth';
+import env from '../config/environment';
+import sendEmail from '../utils/sendEmail';
 
-import RevokedToken from '../models/RevokedToken.js';
-import User from '../models/User.js';
+interface LoginRequest extends Request {
+  body: {
+    email: string;
+    password: string;
+  };
+  user?: IUser;
+}
 
-import { generateToken, setTokenCookie, refreshToken as refreshAuthToken, generateShortLivedToken, setShortLivedTokenCookie,  } from '../middleware/auth.js';
-import env from '../config/environment.js';
-import sendEmail from '../utils/sendEmail.js';
 
-
-export const login = async (req, res) => {
+export const login = async (req: LoginRequest, res: Response): Promise<void> => {
   // If user is already authenticated via short-lived token, send success response
   if (req.user) {
-    return res.json({ 
+    res.json({ 
       message: 'Login successful', 
       user: { id: req.user._id, role: req.user.role, isVerified: req.user.isVerified }
     });
+    return;
   }
 
   try {
@@ -26,18 +34,21 @@ export const login = async (req, res) => {
     // Check if user exists
     let user = await User.findOne({ email });
     if (!user) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      res.status(400).json({ message: 'Invalid credentials' });
+      return;
     }
 
     // Check if email is verified 
     if (!user.isVerified) {
-      return res.status(401).json({ message: 'Please verify your email before logging in' });
+      res.status(401).json({ message: 'Please verify your email before logging in' });
+      return;
     }
 
     // Check password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Invalid credentials' });
+      res.status(400).json({ message: 'Invalid credentials' });
+      return;
     }
 
     // Create and return JWT token
@@ -48,29 +59,31 @@ export const login = async (req, res) => {
     // res.json({ token, user: { id: user._id, username: user.username, role: user.role } });
 
   } catch (error) {
-    console.error(error.message);
+    console.error(error);
     res.status(500).send('Server error');
   }
 };
 
-export const logout = async (req, res) => {
+export const logout = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     //const token = req.headers.authorization.split(' ')[1];
     //const token = extractToken(req);
     const token = req.cookies.token;
     if (!token) {
-      return res.status(400).json({ message: 'No token provided.' });
+      res.status(400).json({ message: 'No token provided.' });
+      return;
     }
 
     const decodedToken = jwt.decode(token);
     if (!decodedToken) {
-      return res.status(400).json({ message: 'Invalid token.' });
+      res.status(400).json({ message: 'Invalid token.' });
+      return;
     }
 
     // Add the token to the revoked tokens list
     await RevokedToken.create({
       token: token,
-      expiresAt: new Date(decodedToken.exp * 1000)
+      expiresAt: new Date((decodedToken as jwt.JwtPayload).exp! * 1000)
     });
     //console.log("Succes at revoking the token");
 
@@ -79,27 +92,37 @@ export const logout = async (req, res) => {
     res.status(200).json({ message: 'Logout successful' });
   } catch (error) {
     console.error('Logout error:', error);
-    if (error.code === 11000) { // Duplicate key error
-      return res.status(400).json({ message: 'Token already revoked.' });
+    if (error as any === 11000) { // Duplicate key error
+      res.status(400).json({ message: 'Token already revoked.' });
     }
     res.status(500).json({ message: 'Server error during logout' });
   }
 };
 
-export const register = async (req, res) => {
+interface RegisterRequest extends Request {
+  body: {
+    username: string;
+    email: string;
+    password: string;
+  };
+}
+
+export const register = async (req: RegisterRequest, res: Response): Promise<void> => {
   try {
     const { username, email, password } = req.body;
 
     // Check if user already exists
     let user = await User.findOne({ email });
     if (user) {
-      return res.status(400).json({ message: 'User already exists' });
+      res.status(400).json({ message: 'User already exists' });
+      return;
     }
 
     // Check if username is already taken
     user = await User.findOne({ username });
     if (user) {
-      return res.status(401).json({ message: 'Username already exists' });
+      res.status(401).json({ message: 'Username already exists' });
+      return;
     }
 
     // Hash password
@@ -128,7 +151,7 @@ export const register = async (req, res) => {
 
     const verificationUrl = `${env.FRONTEND}/verify-email/${verificationToken}`;
     console.log('Attempting to send email to:', user.email);
-    console.log('Verification URL:', verificationUrl);
+    //console.log('Verification URL:', verificationUrl);
     await sendEmail({
       to: user.email,
       subject: 'Verify Your Email',
@@ -146,36 +169,35 @@ export const register = async (req, res) => {
     });
   } catch (error) {
     console.error('Error in registration process:', error);
-    if (error.response) {
-      console.error('Email service response:', error.response.body);
-    }
     res.status(500).send('Server error');
   }
 };
 
-export const refreshToken = async (req, res) => {
+export const refreshToken = async (req: AuthRequest, res: Response): Promise<void> => {
   // Use the existing refreshToken function from the auth module
   try {
     await refreshAuthToken(req, res);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to refresh token', error: error.message });
+    res.status(500).json({ message: 'Failed to refresh token', error: (error as Error).message });
   }
 };
 
-export const sendVerificationEmail = async (req, res) => {
+export const sendVerificationEmail = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'User not found' });
+      return;
     }
 
     if (user.isVerified) {
-      return res.status(400).json({ message: 'Email already verified' });
+      res.status(400).json({ message: 'Email already verified' });
+      return;
     }
 
     const verificationToken = crypto.randomBytes(20).toString('hex');
     user.verificationToken = verificationToken;
-    user.verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours from now
+    user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await user.save();
 
     const verificationUrl = `${env.FRONTEND}/verify-email/${verificationToken}`;
@@ -198,7 +220,13 @@ export const sendVerificationEmail = async (req, res) => {
   }
 };
 
-export const verifyEmail = async (req, res) => {
+interface VerifyEmailRequest extends Request {
+  params: {
+    token: string;
+  };
+}
+
+export const verifyEmail = async (req: VerifyEmailRequest, res: Response): Promise<void> => {
   try {
     const { token } = req.params;
 
@@ -208,7 +236,8 @@ export const verifyEmail = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired verification token' });
+      res.status(400).json({ message: 'Invalid or expired verification token' });
+      return;
     }
 
     user.isVerified = true;
@@ -223,18 +252,27 @@ export const verifyEmail = async (req, res) => {
   }
 };
 
-export const changePassword = async (req, res) => {
+interface ChangePasswordRequest extends AuthRequest {
+  body: {
+    currentPassword: string;
+    newPassword: string;
+  };
+}
+
+export const changePassword = async (req: ChangePasswordRequest, res: Response): Promise<void> => {
   try {
     const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(req.user.id);
+    const user = await User.findById(req.user!.id);
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'User not found' });
+      return;
     }
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
-      return res.status(400).json({ message: 'Current password is incorrect' });
+      res.status(400).json({ message: 'Current password is incorrect' });
+      return;
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -248,18 +286,25 @@ export const changePassword = async (req, res) => {
   }
 };
 
-export const requestPasswordReset = async (req, res) => {
+interface RequestPasswordResetRequest extends Request {
+  body: {
+    email: string;
+  };
+}
+
+export const requestPasswordReset = async (req: RequestPasswordResetRequest, res: Response): Promise<void> => {
   try {
     const { email } = req.body;
     const user = await User.findOne({ email });
 
     if (!user) {
-      return res.status(404).json({ message: 'User not found' });
+      res.status(404).json({ message: 'User not found' });
+      return;
     }
 
     const resetToken = crypto.randomBytes(20).toString('hex');
     user.resetPasswordToken = resetToken;
-    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
     await user.save();
 
     const resetUrl = `${env.FRONTEND}/reset-password/${resetToken}`;
@@ -282,7 +327,16 @@ export const requestPasswordReset = async (req, res) => {
   }
 };
 
-export const resetPassword = async (req, res) => {
+interface ResetPasswordRequest extends Request {
+  params: {
+    token: string;
+  };
+  body: {
+    password: string;
+  };
+}
+
+export const resetPassword = async (req: ResetPasswordRequest, res: Response): Promise<void> => {
   try {
     const { token } = req.params;
     const { password } = req.body;
@@ -293,7 +347,8 @@ export const resetPassword = async (req, res) => {
     });
 
     if (!user) {
-      return res.status(400).json({ message: 'Invalid or expired reset token' });
+      res.status(400).json({ message: 'Invalid or expired reset token' });
+      return;
     }
 
     const salt = await bcrypt.genSalt(10);

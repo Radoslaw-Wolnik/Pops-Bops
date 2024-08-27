@@ -1,5 +1,5 @@
-// src/routes/authRoutes.js
-import express from 'express';
+// src/routes/authRoutes.ts
+import express, { Router } from 'express';
 import { 
     register, 
     login, 
@@ -15,7 +15,7 @@ import {
 } from '../controllers/authController.js';
 import { authenticateToken, handlePostRegistrationAuth } from '../middleware/auth.js';
 
-const router = express.Router();
+const router: Router = express.Router();
 
 router.post('/register', register);
 
