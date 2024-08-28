@@ -1,6 +1,13 @@
 // utils/sendEmail.js
 import nodemailer from 'nodemailer';
-import env from '../config/environment.js';
+import env from '../config/environment';
+
+interface EmailOptions {
+  to: string;
+  subject: string;
+  text?: string;
+  html?: string;
+}
 
 const transporter = nodemailer.createTransport({
   host: env.EMAIL_HOST,
@@ -11,8 +18,8 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-const sendEmail = async ({ to, subject, text, html }) => {
-  const mailOptions = {
+const sendEmail = async ({ to, subject, text, html }: EmailOptions): Promise<nodemailer.SentMessageInfo> => {
+  const mailOptions: nodemailer.SendMailOptions = {
     from: env.EMAIL_FROM,
     to,
     subject,
