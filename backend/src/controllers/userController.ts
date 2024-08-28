@@ -4,10 +4,6 @@ import fs from 'fs/promises';
 import path from 'path';
 
 
-interface AuthRequestWithFile extends AuthRequest {
-  file?: Express.Multer.File;
-}
-
 export const getUserOwnProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   console.log("backend is trying");
   //console.log('data: ', req.user);
