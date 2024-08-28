@@ -73,13 +73,7 @@ export const authenticateAdmin = async (req: AuthRequest, res: Response, next: N
       return;
     }
 
-    req.user = {
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      isVerified: user.isVerified
-    };
+    req.user = user;
     next();
   } catch (error) {
     if (error instanceof jwt.JsonWebTokenError) {
@@ -114,13 +108,7 @@ export const authenticateToken = async (req: AuthRequest, res: Response, next: N
       return;
     }
 
-    req.user = {
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      isVerified: user.isVerified
-    };
+    req.user = user; // Attach the full user object
     next();
 
   } catch (error) {
@@ -191,13 +179,7 @@ export const handlePostRegistrationAuth = async (req: AuthRequest, res: Response
     res.clearCookie('shortLivedToken');
 
     // Set the user on the request object
-    req.user = {
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      role: user.role,
-      isVerified: user.isVerified
-    };
+    req.user = user;
 
     // Generate and set a regular session token
     const sessionToken = generateToken(user);

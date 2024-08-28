@@ -6,19 +6,11 @@ import { IUserDocument } from '../models/User';
 
 
 declare global {
-  interface AuthenticatedUser {
-    _id: Types.ObjectId;
-    username: string;
-    email: string;
-    role: string;
-    isVerified: boolean;
-  }
 
   interface AuthRequest extends Request {
-    user?: AuthenticatedUser;
+    user?: IUserDocument;
   }
 
-  type UploadedFile = Express.Multer.File;
 }
 
 export {};
