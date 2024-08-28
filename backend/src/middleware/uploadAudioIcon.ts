@@ -1,8 +1,11 @@
+// uploadAudioIcon.ts
 import multer from 'multer';
+import path from 'path';
+import { Request } from 'express';
 
 const createMultipleUpload = () => {
   const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
+    destination: (req: Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
       let uploadPath = 'uploads/';
       if (file.fieldname === 'audio') {
         uploadPath += 'audio/';
@@ -12,7 +15,7 @@ const createMultipleUpload = () => {
       uploadPath += req.user ? 'user/' : 'default/';
       cb(null, uploadPath);
     },
-    filename: (req, file, cb) => {
+    filename: (req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
       const userId = req.user ? req.user.id : 'default';
       const timestamp = Date.now();
       const ext = path.extname(file.originalname).toLowerCase();
@@ -21,23 +24,25 @@ const createMultipleUpload = () => {
     }
   });
 
-  const fileFilter = (req, file, cb) => {
+  const fileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
     if (file.fieldname === 'audio') {
       const allowedTypes = /wav|mp3|ogg/;
       const mimetype = allowedTypes.test(file.mimetype);
       const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
       if (mimetype && extname) {
-        return cb(null, true);
+        cb(null, true);
+      } else {
+        cb(new Error("Error: File upload only supports audio files (wav, mp3, ogg)"), false);
       }
-      cb(new Error("Error: File upload only supports audio files (wav, mp3, ogg)"));
     } else if (file.fieldname === 'icon') {
       const allowedTypes = /jpeg|jpg|png|gif/;
       const mimetype = allowedTypes.test(file.mimetype);
       const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
       if (mimetype && extname) {
-        return cb(null, true);
+        cb(null, true);
+      } else {
+        cb(new Error("Error: File upload only supports images (jpeg, jpg, png, gif)"), false);
       }
-      cb(new Error("Error: File upload only supports images (jpeg, jpg, png, gif)"));
     }
   };
 
