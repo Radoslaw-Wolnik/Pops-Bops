@@ -1,21 +1,19 @@
-import express from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
+import env from './config/environment';
 
-import userRoutes from './routes/userRoutes.ts';
-import audioRoutes from './routes/audioRoutes.ts';
-import iconRoutes from './routes/iconRoutes.ts';
-import authRoutes from './routes/authRoutes.ts';
-import adminRoutes from './routes/adminRoutes.ts';
-import collectionRoutes from './routes/collectionRoutes.ts'
+import userRoutes from './routes/userRoutes';
+import audioRoutes from './routes/audioRoutes';
+import iconRoutes from './routes/iconRoutes';
+import authRoutes from './routes/authRoutes';
+import adminRoutes from './routes/adminRoutes';
+import collectionRoutes from './routes/collectionRoutes'
 
-dotenv.config();
 
-const app = express();
+const app: Express = express();
 
-// idk why but process.env.FRONTEND doesnt work but its not the most important thing
 app.use(cors({
-    origin: 'https://localhost:5173', // Note the 'https'
+    origin: env.FRONTEND, //'https://localhost:5173' 
     credentials: true,
   }));
 app.use(express.json());

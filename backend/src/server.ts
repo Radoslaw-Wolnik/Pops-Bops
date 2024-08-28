@@ -4,11 +4,11 @@ import fs from 'fs';
 import path from 'path';
 
 import app from './app.js';
-import connectDB from './config/database.js';
-import env from './config/environment.js';
+import connectDB from './config/database';
+import env from './config/environment';
 
-const HTTPS_PORT = env.PORT;
-const HTTP_PORT = env.PORT_HTTP;
+const HTTPS_PORT: number = env.PORT;
+const HTTP_PORT: number = env.PORT_HTTP;
 
 const options = {
   //key: fs.readFileSync(path.join(__dirname, '../ssl/cert/private-key.pem')),
@@ -22,14 +22,14 @@ const startServer = async () => {
     await connectDB();
 
     // create HTTPS server
-    const server = https.createServer(options, app);
+    const server: https.Server = https.createServer(options, app);
     server.listen(HTTPS_PORT, () => {
       console.log(`HTTPS Server running in ${env.NODE_ENV} mode on port ${HTTPS_PORT}`);
     });
 
     // Create a separate HTTP server that redirects all requests to HTTPS
-    const httpServer = http.createServer((req, res) => {
-      res.writeHead(301, { "Location": `https://${req.headers.host.split(':')[0]}:${HTTPS_PORT}${req.url}` });
+    const httpServer: http.Server = http.createServer((req, res) => {
+      res.writeHead(301, { "Location": `https://${req.headers.host?.split(':')[0]}:${HTTPS_PORT}${req.url}` });
       res.end();
     });
 
@@ -38,7 +38,7 @@ const startServer = async () => {
     });
 
   } catch (error) {
-    console.error('Failed to start the server:', error.message);
+    console.error('Failed to start the server:', (error as Error).message);
     process.exit(1);
   }
 };
