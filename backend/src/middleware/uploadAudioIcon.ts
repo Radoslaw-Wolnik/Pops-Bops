@@ -2,10 +2,15 @@
 import multer from 'multer';
 import path from 'path';
 import { Request } from 'express';
+import { FileFilterCallback } from 'multer';
+
+// Define a more specific type for the callback function
+type DestinationCallback = (error: Error | null, destination: string) => void;
+type FileNameCallback = (error: Error | null, filename: string) => void;
 
 const createMultipleUpload = () => {
   const storage = multer.diskStorage({
-    destination: (req: Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
+    destination: (req: AuthRequest, file: Express.Multer.File, cb: DestinationCallback ) => {
       let uploadPath = 'uploads/';
       if (file.fieldname === 'audio') {
         uploadPath += 'audio/';
@@ -15,8 +20,8 @@ const createMultipleUpload = () => {
       uploadPath += req.user ? 'user/' : 'default/';
       cb(null, uploadPath);
     },
-    filename: (req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
-      const userId = req.user ? req.user.id : 'default';
+    filename: (req: AuthRequest, file: Express.Multer.File, cb: FileNameCallback ) => {
+      const userId = req.user ? req.user._id : 'default';
       const timestamp = Date.now();
       const ext = path.extname(file.originalname).toLowerCase();
       const filename = `${file.fieldname}-${userId}-${timestamp}${ext}`;
@@ -32,7 +37,7 @@ const createMultipleUpload = () => {
       if (mimetype && extname) {
         cb(null, true);
       } else {
-        cb(new Error("Error: File upload only supports audio files (wav, mp3, ogg)"), false);
+        cb(new Error("Error: File upload only supports audio files (wav, mp3, ogg)"));
       }
     } else if (file.fieldname === 'icon') {
       const allowedTypes = /jpeg|jpg|png|gif/;
@@ -41,7 +46,7 @@ const createMultipleUpload = () => {
       if (mimetype && extname) {
         cb(null, true);
       } else {
-        cb(new Error("Error: File upload only supports images (jpeg, jpg, png, gif)"), false);
+        cb(new Error("Error: File upload only supports images (jpeg, jpg, png, gif)"));
       }
     }
   };
