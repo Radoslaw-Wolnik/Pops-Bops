@@ -11,6 +11,14 @@ declare global {
     user?: IUserDocument;
   }
 
+  interface AuthRequestWithFile extends AuthRequest {
+    file?: Express.Multer.File;
+  }
+
+  interface AuthRequestWithFiles extends AuthRequest {
+    files?: { [fieldname: string]: Express.Multer.File[] };
+  }
+
 }
 
 export {};
