@@ -1,8 +1,6 @@
-//import DefaultAudioSample from '../models/DefaultAudioSample.ts';
-import { Request, Response } from 'express';
+import { Response } from 'express';
 import UserAudioSample from '../models/UserAudioSample';
 import DefaultAudioSample from '../models/DefaultAudioSample';
-import { uploadIcon } from '../middleware/upload';
 import fs from 'fs/promises';
 import path from 'path';
 
