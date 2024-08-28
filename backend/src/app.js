@@ -2,11 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 
-import userRoutes from './routes/userRoutes.js';
-import audioRoutes from './routes/audioRoutes.js';
-import iconRoutes from './routes/iconRoutes.js';
-import authRoutes from './routes/authRoutes.js';
-import adminRoutes from './routes/adminRoutes.js';
+import userRoutes from './routes/userRoutes.ts';
+import audioRoutes from './routes/audioRoutes.ts';
+import iconRoutes from './routes/iconRoutes.ts';
+import authRoutes from './routes/authRoutes.ts';
+import adminRoutes from './routes/adminRoutes.ts';
+import collectionRoutes from './routes/collectionRoutes.ts'
 
 dotenv.config();
 
@@ -26,5 +27,6 @@ app.use('/api/audio', audioRoutes);
 app.use('/api/icon', iconRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/collection', collectionRoutes);
 
 export default app;
