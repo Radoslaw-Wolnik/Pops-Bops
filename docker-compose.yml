@@ -13,17 +13,31 @@ services:
       - ./frontend/ssl/cert:/app/ssl/cert
     command: npm run dev
     environment:
-      NODE_ENV: development
+      - NODE_ENV=development
+      - VITE_API_URL=http://backend:5443
+    networks:
+      - frontend-network
 
   mongo:
     image: mongo:latest
-    ports:
-      - '27017:27017'
-    env_file:
-      - .env.main
+    # ports:
+    #   - '27017:27017'
+    # env_file
+    #  - .env.main
+    enviorement:
+      - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/db_root_username
+      - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
+      - MONGO_INITDB_DATABASE_FILE=/run/secrets/db_name
     volumes:
       - mongo-data:/data/db
       - ./backend/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
+      - ./mongod.conf:/etc/mongod.conf
+      - ./secrets:/run/secrets:ro
+    command: ["mongod", "--config", "/etc/mongod.conf"]
+    networks:
+      - backend-network
+    security_opt:
+      - no-new-privileges:true
 
   redis:
     image: redis:6.2
@@ -31,6 +45,8 @@ services:
       - "6379:6379"
     volumes:
       - redis-data:/data
+    networks:
+      - backend-network
 
   backend:
     build:
@@ -41,8 +57,6 @@ services:
       - '5000:5000' # http
     depends_on:
       - mongo
-    env_file:
-      - ./backend/.env  # Path to the .env file
     volumes:
       - ./backend/src:/app/src:delegated
       - ./backend/nodemon.json:/app/nodemon.json
@@ -50,9 +64,33 @@ services:
       - ./backend/uploads:/app/uploads  # uploads
       - ./backend/ssl/cert/certificate.pem:/app/cert/certificate.pem
       - ./backend/ssl/cert/private-key.pem:/app/cert/private-key.pem
+      - ./secrets:/run/secrets:ro
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=5443
+      - PORT_HTTP=5000
+      - FRONTEND=https://localhost:5173
+      - DB_HOST=mongo
+      - DB_NAME_FILE=/run/secrets/db_name
+      - DB_USER_FILE=/run/secrets/db_user
+      - DB_PASS_FILE=/run/secrets/db_password
+      - JWT_SECRET_FILE=/run/secrets/jwt_secret
+      - EMAIL_HOST_FILE=/run/secrets/email_host
+      - EMAIL_PORT_FILE=/run/secrets/email_port
+      - EMAIL_USER_FILE=/run/secrets/email_user
+      - EMAIL_PASSWORD_FILE=/run/secrets/email_password
+      - EMAIL_FROM_FILE=/run/secrets/email_from
+    networks:
+      - frontend-network
+      - backend-network
+
+networks:
+  frontend-network:
+    driver: bridge
+  backend-network:
+    driver: bridge
 
 volumes:
   mongo-data:
   uploads:
-  audio-samples:
   redis-data:

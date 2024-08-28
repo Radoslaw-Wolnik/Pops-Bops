@@ -1,22 +1,25 @@
 # Pops-Bops
+
 a full stack app to generate satisfying short sounds
 
-uploads/
-├── audio/
-│   ├── default/
-│   │   └── (default audio samples)
-│   └── user/
-│       └── (user-uploaded audio samples)
-├── icons/
-│   ├── default/
-│   │   └── (default icons for main page and presets)
-│   └── user/
-│       └── (user-created icons)
-└── profile_pictures/
-    └── (user profile pictures)
 
+## Setting Up the Project
 
------------------- also add https to be more secure
+1. Clone the repository
+2. Navigate to the scripts directory: `cd scripts`
+3. Set executable permissions: `./set_permissions.sh`
+4. Set up local secrets: 
+   - Copy `local_secrets.sh.example` to `local_secrets.sh`
+   - Edit `local_secrets.sh` with your actual email credentials
+5. Generate secrets: `./generate_secrets.sh`
+6. Start the project: `./start_project.sh`
+
+Note: `local_secrets.sh` is ignored by Git to prevent accidental commit of sensitive information.
+
+set local local_secrets.sh and all scripts in ./scripts to be executable
+chmod +x ./name.sh
+chmod +x set_permissions.sh
+./set_permissions.sh
 
 
 ------------------ client side implementation for renewing session

@@ -1,7 +1,6 @@
 // src/config/environment.ts
-import dotenv from 'dotenv';
 
-dotenv.config();
+import fs from 'fs';
 
 interface Environment {
   DB_HOST: string;
@@ -16,30 +15,34 @@ interface Environment {
   EMAIL_HOST: string;
   EMAIL_PORT: number;
   EMAIL_USER: string;
-  EMAIL_PASS: string;
+  EMAIL_PASSWORD: string;
   EMAIL_FROM: string;
-  AUDIO_STORAGE_PATH: string;
-  MAX_AUDIO_FILE_SIZE: number;
+}
+
+function readSecret(path: string): string {
+  try {
+    return fs.readFileSync(path, 'utf8').trim();
+  } catch (error) {
+    console.error(`Error reading secret from ${path}:`, error);
+    return '';
+  }
 }
 
 const env: Environment = {
-  DB_HOST: process.env.DB_HOST || 'mongo:27017',
-  DB_NAME: process.env.DB_NAME || '',
-  DB_USER: process.env.DB_USER || '',
-  DB_PASS: process.env.DB_PASS || '',
-  JWT_SECRET: process.env.JWT_SECRET || '',
-  PORT: parseInt(process.env.PORT || '5443', 10), //https
+  DB_HOST: process.env.DB_HOST || 'mongo',
+  DB_NAME: readSecret(process.env.DB_NAME_FILE || '/run/secrets/db_name'),
+  DB_USER: readSecret(process.env.DB_USER_FILE || '/run/secrets/db_user'),
+  DB_PASS: readSecret(process.env.DB_PASS_FILE || '/run/secrets/db_password'),
+  JWT_SECRET: readSecret(process.env.JWT_SECRET_FILE || '/run/secrets/jwt_secret'),
+  PORT: parseInt(process.env.PORT || '5443', 10),
   PORT_HTTP: parseInt(process.env.PORT_HTTP || '5000', 10),
   NODE_ENV: process.env.NODE_ENV || 'development',
   FRONTEND: process.env.FRONTEND || 'https://localhost:5173',
-  EMAIL_HOST: process.env.EMAIL_HOST || 'smtp-relay.brevo.com',
-  EMAIL_PORT: parseInt(process.env.EMAIL_PORT || '587', 10),
-  EMAIL_USER: process.env.EMAIL_USER || '795ccf001@smtp-brevo.com',
-  EMAIL_PASS: process.env.EMAIL_PASS || 'HPtac1DbV8wvsWZk',
-  EMAIL_FROM: process.env.EMAIL_FROM || 'radoslaw.m.wolnik@gmail.com', // changed to radoslaw.m.wolnik@7953615.brevosend.com
-  AUDIO_STORAGE_PATH: process.env.AUDIO_STORAGE_PATH || './audio_samples', // there is no ./audio sample i think - all in uploads -------- delete
-  MAX_AUDIO_FILE_SIZE: parseInt(process.env.MAX_AUDIO_FILE_SIZE || '5242880', 10), // 5MB
+  EMAIL_HOST: readSecret(process.env.EMAIL_HOST_FILE || '/run/secrets/email_host'),
+  EMAIL_PORT: parseInt(readSecret(process.env.EMAIL_PORT_FILE || '/run/secrets/email_port'), 10),
+  EMAIL_USER: readSecret(process.env.EMAIL_USER_FILE || '/run/secrets/email_user'),
+  EMAIL_PASSWORD: readSecret(process.env.EMAIL_PASSWORD_FILE || '/run/secrets/email_password'),
+  EMAIL_FROM: readSecret(process.env.EMAIL_FROM_FILE || '/run/secrets/email_from'),
 };
 
 export default env;
-
