@@ -184,6 +184,13 @@ Body: { email: string; password: string }
 Response: ApiResponse<{ token: string; user: User }>
 ```
 
+### Post Registration Login
+```typescript
+🔓 POST /auth/reg-login
+Body: { token: string } // a short lived token assigned after registration
+Response: ApiResponse<{ token: string; user: User }>
+```
+
 ### Logout
 ```typescript
 🔒 POST /auth/logout
