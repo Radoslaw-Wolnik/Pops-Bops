@@ -1,8 +1,9 @@
-// controllers/adminController.js
-import User from '../models/User.js';
+// adminController.ts
+import { Response } from 'express';
+import User from '../models/User';
 import bcrypt from 'bcrypt';
 
-export const getAdmins = async (req, res) => {
+export const getAdmins = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const admins = await User.find({ role: 'admin' }).select('-password');
     res.json(admins);
@@ -11,7 +12,7 @@ export const getAdmins = async (req, res) => {
   }
 };
 
-export const deleteAdmin = async (req, res) => {
+export const deleteAdmin = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;
     await User.findOneAndDelete({ _id: id, role: 'admin' });
@@ -21,7 +22,15 @@ export const deleteAdmin = async (req, res) => {
   }
 };
 
-export const addAdmin = async (req, res) => {
+interface AddAdminRequest extends AuthRequest {
+  body: {
+    username: string;
+    password: string;
+    email: string;
+  }
+}
+
+export const addAdmin = async (req: AddAdminRequest, res: Response): Promise<void> => {
   try {
     const { username, password, email } = req.body;
     const hashedPassword = await bcrypt.hash(password, 10);
