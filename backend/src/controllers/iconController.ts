@@ -6,15 +6,6 @@ import { uploadIcon } from '../middleware/upload';
 import fs from 'fs/promises';
 import path from 'path';
 
-export const handleIconUpload = (req: Request, res: Response, next: () => void): void => {
-  uploadIcon(req, res, (err: any) => {
-    if (err) {
-      res.status(400).json({ message: err.message });
-      return;
-    }
-    next();
-  });
-};
   
 export const saveIconToStorage = async (req: AuthRequestWithFile, res: Response): Promise<void> => {
   try {
