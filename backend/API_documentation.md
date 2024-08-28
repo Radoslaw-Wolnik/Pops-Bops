@@ -1,13 +1,25 @@
 # API Documentation
 
 ## Table of Contents
+- [Data Models](#data-models)
 - [Global Types](#global-types)
 - [Authentication](#authentication)
 - [Admin Routes](#admin-routes)
 - [Audio Routes](#audio-routes)
+- [Collection Routes](#collection-routes)
 - [Auth Routes](#auth-routes)
 - [Icon Routes](#icon-routes)
 - [User Routes](#user-routes)
+
+## Data Models
+
+This API interacts with the following high-level data models:
+
+- Users: Represent registered users of the application
+- AudioSamples: Represent audio files, including both default samples and user-uploaded samples
+- Collections: Groups of audio samples created by users
+
+For more detailed information about our data models and their interactions, please refer to backend documentation. `BACKEND_documentation.md`
 
 ## Global Types
 
@@ -54,29 +66,30 @@ interface ApiResponse<T> {
 ## Authentication
 
 Most endpoints require authentication. Authentication is handled using HTTP-only cookies. When a user logs in successfully, the server will set a secure, HTTP-only cookie containing a session identifier. This cookie will be automatically included in subsequent requests to authenticated endpoints.
-
 Authentication requirement is indicated for each endpoint as follows:
-- 🔒 Authentication required
-- 🔓 No authentication required
+
+ - 🔒 Authentication required
+ - 🔓 No authentication required
+ - 👑 Admin authentication required
 
 
 ## Admin Routes
 
 ### Get All Admins
 ```typescript
-🔒 GET /admin/users
+👑 GET /admin/users
 Response: ApiResponse<User[]>
 ```
 
 ### Delete Admin
 ```typescript
-🔒 DELETE /admin/users/:id
+👑 DELETE /admin/users/:id
 Response: ApiResponse<{ message: string }>
 ```
 
 ### Add Admin
 ```typescript
-🔒 POST /admin/users
+👑 POST /admin/users
 Body: { username: string; email: string; password: string }
 Response: ApiResponse<User>
 ```
@@ -95,78 +108,101 @@ Response: ApiResponse<DefaultAudioSample[]>
 Response: ApiResponse<UserAudioSample[]>
 ```
 
+### Save Audio Sample with Icon
+```typescript
+🔒 POST /audio/audio-sample-with-icon
+Body: FormData (name: string, audio: File, icon: File)
+Response: ApiResponse<UserAudioSample>
+```
+
+### Save Audio Sample
+```typescript
+🔒 POST /audio/audio-sample
+Body: FormData (name: string, audio: File)
+Response: ApiResponse<UserAudioSample>
+```
+
+### Update Audio Sample
+```typescript
+🔒 PUT /audio/audio-sample/:id
+Body: { name?: string; settings?: Record<string, any> }
+Response: ApiResponse<UserAudioSample>
+```
+
+### Delete Audio Sample
+```typescript
+🔒 DELETE /audio/audio-sample/:id
+Response: ApiResponse<{ message: string }>
+```
+
+### Save Default Audio Sample with Icon (Admin)
+```typescript
+👑 POST /audio/default-audio-sample-with-icon
+Body: FormData (name: string, audio: File, icon: File, forMainPage: boolean)
+Response: ApiResponse<DefaultAudioSample>
+```
+
+### Save Default Audio Sample (Admin)
+```typescript
+👑 POST /audio/default-audio-sample
+Body: FormData (name: string, audio: File, forMainPage: boolean)
+Response: ApiResponse<DefaultAudioSample>
+```
+
+### Delete Default Audio Sample (Admin)
+```typescript
+👑 DELETE /audio/default-audio-sample/:id
+Response: ApiResponse<{ message: string }>
+```
+
+
+## Collection Routes
+
+### Get User Collections
+```typescript
+🔒 GET /collections
+Response: ApiResponse<Collection[]>
+```
+
+### Get Collection by ID
+```typescript
+🔒 GET /collections/:id
+Response: ApiResponse<Collection>
+```
+
 ### Create Collection
 ```typescript
-🔒 POST /audio/collections
+🔒 POST /collections
 Body: { name: string }
 Response: ApiResponse<Collection>
 ```
 
-### Add to Collection
+### Update Collection
 ```typescript
-🔒 POST /audio/collections/:id/add
-Body: { sampleId: string }
+🔒 PUT /collections/:id
+Body: { name: string }
 Response: ApiResponse<Collection>
-```
-
-### Get User Collections
-```typescript
-🔒 GET /audio/collections
-Response: ApiResponse<Collection[]>
-```
-
-### Upload Audio
-```typescript
-🔒 POST /audio/upload-audio
-Body: FormData
-Response: ApiResponse<{ fileName: string; fileUrl: string }>
-```
-
-### Upload Default Audio
-```typescript
-🔒 POST /audio/upload-default-audio
-Body: FormData
-Response: ApiResponse<{ fileName: string; fileUrl: string }>
-```
-
-### Save User Audio Sample with Icon
-```typescript
-🔒 POST /audio/user-audio-sample
-Body: { name: string; audioUrl: string; iconUrl: string; settings: Record<string, any> }
-Response: ApiResponse<UserAudioSample>
-```
-
-### Update User Audio Sample Icon
-```typescript
-🔒 PUT /audio/user-audio-sample/:id/icon
-Body: { iconUrl: string }
-Response: ApiResponse<UserAudioSample>
-```
-
-### Save Default Audio Sample with Icon
-```typescript
-🔒 POST /audio/default-audio-sample
-Body: { name: string; audioUrl: string; iconUrl: string; settings: Record<string, any>; forMainPage: boolean }
-Response: ApiResponse<DefaultAudioSample>
-```
-
-### Delete User Sample
-```typescript
-🔒 DELETE /audio/sample/:id
-Response: ApiResponse<{ message: string }>
-```
-
-### Delete Default Sample
-```typescript
-🔒 DELETE /audio/default-sample/:id
-Response: ApiResponse<{ message: string }>
 ```
 
 ### Delete Collection
 ```typescript
-🔒 DELETE /audio/collections/:id
+🔒 DELETE /collections/:id
 Response: ApiResponse<{ message: string }>
 ```
+
+### Add Samples to Collection
+```typescript
+🔒 POST /collections/:id/add
+Body: { sampleIds: string[] }
+Response: ApiResponse<Collection>
+```
+
+### Remove Sample from Collection
+```typescript
+🔒 DELETE /collections/:collectionId/samples/:sampleId
+Response: ApiResponse<{ message: string }>
+```
+
 
 ## Auth Routes
 
@@ -181,14 +217,14 @@ Response: ApiResponse<User>
 ```typescript
 🔓 POST /auth/login
 Body: { email: string; password: string }
-Response: ApiResponse<{ token: string; user: User }>
+Response: ApiResponse<{ user: User }>
 ```
 
 ### Post Registration Login
 ```typescript
 🔓 POST /auth/reg-login
 Body: { token: string } // a short lived token assigned after registration
-Response: ApiResponse<{ token: string; user: User }>
+Response: ApiResponse<{ user: User }>
 ```
 
 ### Logout
@@ -218,7 +254,7 @@ Response: ApiResponse<{ message: string }>
 ### Change Password
 ```typescript
 🔒 PUT /auth/change-password
-Body: { oldPassword: string; newPassword: string }
+Body: { currentPassword: string; newPassword: string }
 Response: ApiResponse<{ message: string }>
 ```
 
@@ -242,14 +278,28 @@ Response: ApiResponse<{ message: string }>
 ```typescript
 🔒 POST /icon/upload-icon
 Body: FormData
-Response: ApiResponse<{ fileName: string; fileUrl: string }>
+Response: ApiResponse<{ iconPath: string }>
 ```
 
-### Upload Default Icon
+### Upload Default Icon (Admin)
 ```typescript
-🔒 POST /icon/upload-default-icon
+👑 POST /icon/upload-default-icon
 Body: FormData
-Response: ApiResponse<{ fileName: string; fileUrl: string }>
+Response: ApiResponse<{ iconPath: string }>
+```
+
+### Update Icon
+```typescript
+🔒 PATCH /icon/update-icon/:id
+Body: FormData
+Response: ApiResponse<AudioSample>
+```
+
+### Update Default Icon (Admin)
+```typescript
+👑 PATCH /icon/update-default-icon/:id
+Body: FormData
+Response: ApiResponse<AudioSample>
 ```
 
 ## User Routes
@@ -264,7 +314,7 @@ Response: ApiResponse<User>
 ```typescript
 🔒 PUT /user/upload-profile-picture
 Body: FormData
-Response: ApiResponse<User>
+Response: ApiResponse<{ profilePicture: string }>
 ```
 
 ## Error Responses
@@ -324,26 +374,6 @@ Response
 }
 ```
 
-### Upload Audio
-Request
-```typescript
-POST /audio/upload-audio
-Cookie: session=abc123
-Content-Type: multipart/form-data
-
-[audio file data]
-```
-Response
-```typescript
-{
-  "data": {
-    "fileName": "mysong.mp3",
-    "fileUrl": "https://storage.example.com/audio/mysong-123456.mp3"
-  },
-  "message": "Audio uploaded successfully"
-}
-```
-
 ### Login
 Request
 ```typescript
@@ -394,7 +424,31 @@ Response
 }
 ```
 
+### Upload Audio
+Request
+```typescript
+POST /audio/upload-audio
+Cookie: session=abc123
+Content-Type: multipart/form-data
+
+[audio file data]
+```
+Response
+```typescript
+{
+  "data": {
+    "fileName": "mysong.mp3",
+    "fileUrl": "https://storage.example.com/uploads/auidio/user/mysong-123456.mp3"
+  },
+  "message": "Audio uploaded successfully"
+}
+```
+
 
 ## Changelog
-Version 1.0 (2024-08-27)
+### Version 1.1 (2024-08-28)
+ - Updated routes and controllers to match the latest implementation
+ - Added new endpoints for icon management and collection operations
+ - Clarified authentication requirements for each endpoint
+### Version 1.0 (2024-08-27)
  - Initial API release
