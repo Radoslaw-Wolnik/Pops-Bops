@@ -4,7 +4,7 @@ import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import RevokedToken from '../models/RevokedToken';
-import User, { IUser } from '../models/User';
+import User, { IUserDocument } from '../models/User';
 import { generateToken, setTokenCookie, refreshToken as refreshAuthToken, generateShortLivedToken, setShortLivedTokenCookie } from '../middleware/auth';
 import env from '../config/environment';
 import sendEmail from '../utils/sendEmail';
@@ -14,21 +14,15 @@ interface LoginRequest extends Request {
     email: string;
     password: string;
   };
-  user?: IUser;
 }
 
+interface PostRegLoginRequest extends Request {
+  user?: IUserDocument; // Set by handlePostRegistrationAuth middleware
+}
 
 export const login = async (req: LoginRequest, res: Response): Promise<void> => {
-  // If user is already authenticated via short-lived token, send success response
-  if (req.user) {
-    res.json({ 
-      message: 'Login successful', 
-      user: { id: req.user._id, role: req.user.role, isVerified: req.user.isVerified }
-    });
-    return;
-  }
-
   try {
+
     const { email, password } = req.body;
 
     // Check if user exists
@@ -63,6 +57,26 @@ export const login = async (req: LoginRequest, res: Response): Promise<void> => 
     res.status(500).send('Server error');
   }
 };
+
+export const postRegistrationLogin = async (req: PostRegLoginRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    // User is already authenticated via short-lived token
+    res.json({ 
+      message: 'Login successful', 
+      user: { id: req.user._id, role: req.user.role, isVerified: req.user.isVerified }
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Server error');
+  }
+};
+
 
 export const logout = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -184,26 +198,25 @@ export const refreshToken = async (req: AuthRequest, res: Response): Promise<voi
 
 export const sendVerificationEmail = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      res.status(404).json({ message: 'User not found' });
+    if (!req.user) {
+      res.status(500).json({ message: 'Internal server error: User not attached to request' });
       return;
     }
 
-    if (user.isVerified) {
+    if (req.user.isVerified) {
       res.status(400).json({ message: 'Email already verified' });
       return;
     }
 
     const verificationToken = crypto.randomBytes(20).toString('hex');
-    user.verificationToken = verificationToken;
-    user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    await user.save();
+    req.user.verificationToken = verificationToken;
+    req.user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await req.user.save();
 
     const verificationUrl = `${env.FRONTEND}/verify-email/${verificationToken}`;
     
     await sendEmail({
-      to: user.email,
+      to: req.user.email,
       subject: 'Verify Your Email',
       html: `
         <h1>Verify Your Email</h1>
@@ -261,23 +274,22 @@ interface ChangePasswordRequest extends AuthRequest {
 
 export const changePassword = async (req: ChangePasswordRequest, res: Response): Promise<void> => {
   try {
-    const { currentPassword, newPassword } = req.body;
-    const user = await User.findById(req.user!.id);
-
-    if (!user) {
-      res.status(404).json({ message: 'User not found' });
+    if (!req.user) {
+      res.status(500).json({ message: 'Internal server error: User not attached to request' });
       return;
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    const { currentPassword, newPassword } = req.body;
+
+    const isMatch = await bcrypt.compare(currentPassword, req.user.password);
     if (!isMatch) {
       res.status(400).json({ message: 'Current password is incorrect' });
       return;
     }
 
     const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
-    await user.save();
+    req.user.password = await bcrypt.hash(newPassword, salt);
+    await req.user.save();
 
     res.json({ message: 'Password changed successfully' });
   } catch (error) {

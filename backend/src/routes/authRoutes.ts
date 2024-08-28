@@ -3,6 +3,7 @@ import express, { Router } from 'express';
 import { 
     register, 
     login, 
+    postRegistrationLogin,
     logout, 
     refreshToken, 
     
@@ -19,7 +20,10 @@ const router: Router = express.Router();
 
 router.post('/register', register);
 
-router.post('/login', handlePostRegistrationAuth, login);
+router.post('/login', login);
+// Post-registration login route
+router.post('/reg-login', handlePostRegistrationAuth, postRegistrationLogin);
+
 router.post('/logout', authenticateToken, logout);
 
 router.post('/refresh-token', authenticateToken, refreshToken);
