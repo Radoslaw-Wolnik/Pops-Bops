@@ -7,16 +7,10 @@ import { audioFileFilter, iconFileFilter } from './upload';
 type DestinationCallback = (error: Error | null, destination: string) => void;
 type FileNameCallback = (error: Error | null, filename: string) => void;
 
-const testRequest: AuthRequestWithFiles = {} as AuthRequestWithFiles;
-console.log(testRequest); // Just to prevent unused variable warning
 
-// i should be able to do 
-// destination: (req: AuthRequestWithFiles, file: Express.Multer.File, cb: DestinationCallback) => {
-// but somehow TS does not recoginze the inheritance chain correctly or sth is of the multer's types interacting with custom types
 const createCombinedStorage = () => multer.diskStorage({
-  destination: (req: Request, file: Express.Multer.File, cb: DestinationCallback) => {
-    const authReq = req as AuthRequestWithFiles;
-    const isAdmin = authReq.user && authReq.user.role === 'admin';
+  destination: (req: AuthRequestWithFiles, file: Express.Multer.File, cb: DestinationCallback) => {
+    const isAdmin = req.user && req.user.role === 'admin';
     let uploadPath = 'uploads/';
     
     if (file.fieldname === 'audio') {

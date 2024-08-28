@@ -16,7 +16,9 @@ declare global {
   }
 
   interface AuthRequestWithFiles extends AuthRequest {
-    files?: { [fieldname: string]: Express.Multer.File[] };
+    files?: {
+      [fieldname: string]: Express.Multer.File[];
+    } | Express.Multer.File[];
   }
 
 }
