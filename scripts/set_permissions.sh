@@ -6,6 +6,7 @@ scripts=(
     "start_project.sh"
     "local_secrets.sh"
     "backup_secrets.sh"
+    "recover_secrets.sh"
     "set_permissions.sh"
 )
 
