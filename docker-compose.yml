@@ -1,34 +1,112 @@
 version: '3.8'
 
 services:
+  reverse-proxy:
+    image: traefik:v2.5
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.file.directory=/etc/traefik/dynamic_conf"
+      - "--providers.file.watch=true"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Traefik dashboard
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./certs:/certs:ro"
+      - "./letsencrypt:/letsencrypt"
+      - "./traefik_dynamic_conf:/etc/traefik/dynamic_conf:ro"
+    networks:
+      - frontend-network
+      - backend-network
+    secrets:
+      - domain_name
+      - letsencrypt_email
+      - traefik_auth
+    environment:
+      - DOMAIN_NAME_FILE=/run/secrets/domain_name
+      - LETSENCRYPT_EMAIL_FILE=/run/secrets/letsencrypt_email
+      - NOOP_URL=http://192.168.65.2  # Docker host IP
+    labels:
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.service=api@internal"
+      - "traefik.http.routers.traefik.middlewares=auth"
+      - "traefik.http.middlewares.auth.basicauth.usersfile=/run/secrets/traefik_auth"
+
   frontend:
     build:
       context: ./frontend
       target: dev-stage
-    ports:
-      - "5173:5173"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.http.routers.frontend.tls.certresolver=le"
     volumes:
       - ./frontend:/app
       - /app/node_modules
-      - ./frontend/ssl/cert:/app/ssl/cert
     command: npm run dev
     environment:
       - NODE_ENV=development
-      - VITE_API_URL=http://backend:5443
+      - VITE_API_URL=https://${DOMAIN_NAME}/api
     networks:
       - frontend-network
+    secrets:
+      - domain_name
+
+  backend:
+    build:
+      context: ./backend
+      target: development
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls=true"
+      - "traefik.http.routers.backend.tls.certresolver=le"
+      - "traefik.http.middlewares.strip-api-prefix.stripprefix.prefixes=/api"
+      - "traefik.http.routers.backend.middlewares=strip-api-prefix@docker,rate-limit@docker"
+      - "traefik.http.middlewares.rate-limit.ratelimit.average=${RATE_LIMIT_AVERAGE}"
+      - "traefik.http.middlewares.rate-limit.ratelimit.burst=${RATE_LIMIT_BURST}"
+    volumes:
+      - ./backend/src:/app/src:delegated
+      - ./backend/nodemon.json:/app/nodemon.json
+      - /app/node_modules
+      - ./backend/uploads:/app/uploads
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - FRONTEND=https://${DOMAIN_NAME}
+    networks:
+      - backend-network
+    secrets:
+      - domain_name
+      - rate_limit_average
+      - rate_limit_burst
+      - db_name
+      - db_user
+      - db_password
+      - jwt_secret
+      - encryption_key
+      - email_host
+      - email_port
+      - email_user
+      - email_password
+      - email_from
+    security_opt:
+      - no-new-privileges:true
 
   mongo:
     image: mongo:latest
-    # ports:
-    #   - '27017:27017'
-    # env_file
-    #  - .env.main
     volumes:
       - mongo-data:/data/db
       - ./backend/scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
       - ./mongod.conf:/etc/mongod.conf
-      - ./secrets:/run/secrets:ro
     environment:
       - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/db_root_username
       - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
@@ -36,55 +114,62 @@ services:
     command: ["mongod", "--config", "/etc/mongod.conf"]
     networks:
       - backend-network
+    secrets:
+      - db_root_username
+      - db_root_password
+      - db_name
     security_opt:
       - no-new-privileges:true
 
   redis:
     image: redis:6.2
-    ports:
-      - "6379:6379"
     volumes:
       - redis-data:/data
     networks:
       - backend-network
 
-  backend:
-    build:
-      context: ./backend
-      target: ${NODE_ENV:-development}
-    ports:
-      - '5443:5443' # https
-      - '5000:5000' # http
-    depends_on:
-      - mongo
-    volumes:
-      - ./backend/src:/app/src:delegated
-      - ./backend/nodemon.json:/app/nodemon.json
-      - /app/node_modules
-      - ./backend/uploads:/app/uploads  # uploads
-      - ./backend/ssl/cert/certificate.pem:/app/cert/certificate.pem
-      - ./backend/ssl/cert/private-key.pem:/app/cert/private-key.pem
-      - ./secrets:/run/secrets:ro
-    environment:
-      - NODE_ENV=${NODE_ENV:-development}
-      - PORT=5443
-      - PORT_HTTP=5000
-      - FRONTEND=https://localhost:5173
-      - DB_HOST=mongo
-      - DB_NAME_FILE=/run/secrets/db_name
-      - DB_USER_FILE=/run/secrets/db_user
-      - DB_PASS_FILE=/run/secrets/db_password
-      - JWT_SECRET_FILE=/run/secrets/jwt_secret
-      - EMAIL_HOST_FILE=/run/secrets/email_host
-      - EMAIL_PORT_FILE=/run/secrets/email_port
-      - EMAIL_USER_FILE=/run/secrets/email_user
-      - EMAIL_PASS=/run/secrets/email_password
-      - EMAIL_FROM_FILE=/run/secrets/email_from
-      - ENCRYPTION_KEY=/run/secrets/encryption_key
-    command: npm run devstart
-    networks:
-      - frontend-network
-      - backend-network
+  
+
+secrets:
+  domain_name:
+    file: ./secrets/domain_name
+  letsencrypt_email:
+    file: ./secrets/letsencrypt_email
+  traefik_auth:
+    file: ./secrets/traefik_auth
+  rate_limit_average:
+    file: ./secrets/rate_limit_average
+  rate_limit_burst:
+    file: ./secrets/rate_limit_burst
+  db_root_username:
+    file: ./secrets/db_root_username
+  db_root_password:
+    file: ./secrets/db_root_password
+  db_name:
+    file: ./secrets/db_name
+  db_user:
+    file: ./secrets/db_user
+  db_password:
+    file: ./secrets/db_password
+  jwt_secret:
+    file: ./secrets/jwt_secret
+  encryption_key:
+    file: ./secrets/encryption_key
+  email_host:
+    file: ./secrets/email_host
+  email_port:
+    file: ./secrets/email_port
+  email_user:
+    file: ./secrets/email_user
+  email_password:
+    file: ./secrets/email_password
+  email_from:
+    file: ./secrets/email_from
+  # for localhost development
+  local_cert:
+    file: ./certs/localhost.crt
+  local_key:
+    file: ./certs/localhost.key
 
 networks:
   frontend-network:

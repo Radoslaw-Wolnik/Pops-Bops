@@ -12,6 +12,9 @@ import collectionRoutes from './routes/collectionRoutes'
 
 const app: Express = express();
 
+app.set('trust proxy', true);
+
+
 app.use(cors({
     origin: env.FRONTEND, //'https://localhost:5173' 
     credentials: true,

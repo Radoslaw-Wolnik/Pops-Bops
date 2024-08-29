@@ -27,6 +27,15 @@ echo "user@example.com" > "$ROOT_DIR/secrets/email_user"
 echo "defaultpassword" > "$ROOT_DIR/secrets/email_password"
 echo "noreply@example.com" > "$ROOT_DIR/secrets/email_from"
 
+# Generate domain name and rate limit secrets
+echo "localhost" > "$ROOT_DIR/secrets/domain_name"
+echo "100" > "$ROOT_DIR/secrets/rate_limit_average"
+echo "50" > "$ROOT_DIR/secrets/rate_limit_burst"
+
+# Generate Traefik authentication secret
+echo "admin:$(htpasswd -nb -B admin password | cut -d ":" -f 2)" > "$ROOT_DIR/secrets/traefik_auth"
+
+
 # Override with local secrets if available
 if [ -f "$SCRIPT_DIR/local_secrets.sh" ]; then
     echo "Applying local secrets..."

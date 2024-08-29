@@ -30,6 +30,7 @@ Thumbs.db
 *.pem
 *.key
 *.crt
+*.csr
 
 # Docker volumes
 mongo-data/

@@ -26,8 +26,6 @@ COPY --from=builder /app .
 
 # Copy additional development-specific configuration files
 COPY ts-node-dev.json .
-COPY ssl/cert/certificate.pem /app/cert/certificate.pem
-COPY ssl/cert/private-key.pem /app/cert/private-key.pem
 
 # make uploads dir in development setup
 RUN mkdir -p /app/uploads
@@ -36,7 +34,7 @@ RUN mkdir -p /app/uploads
 RUN npm ci
 
 # Expose port 5000 for development
-EXPOSE 5000 5443
+EXPOSE 5000
 
 # Command to run the application in development mode
 # CMD ["npm", "run", "devstart"]
@@ -63,8 +61,8 @@ COPY ssl/cert/private-key.pem /app/cert/private-key.pem
 # make uploads dir in production
 RUN mkdir -p /app/uploads
 
-# Expose ports for production
-EXPOSE 5000 5443
+# Expose port for production
+EXPOSE 5000
 
 # Set environment variable for production
 ENV NODE_ENV=production
