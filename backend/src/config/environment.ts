@@ -15,8 +15,9 @@ interface Environment {
   EMAIL_HOST: string;
   EMAIL_PORT: number;
   EMAIL_USER: string;
-  EMAIL_PASSWORD: string;
+  EMAIL_PASS: string;
   EMAIL_FROM: string;
+  ENCRYPTION_KEY: string;
 }
 
 function readSecret(path: string): string {
@@ -41,8 +42,9 @@ const env: Environment = {
   EMAIL_HOST: readSecret(process.env.EMAIL_HOST_FILE || '/run/secrets/email_host'),
   EMAIL_PORT: parseInt(readSecret(process.env.EMAIL_PORT_FILE || '/run/secrets/email_port'), 10),
   EMAIL_USER: readSecret(process.env.EMAIL_USER_FILE || '/run/secrets/email_user'),
-  EMAIL_PASSWORD: readSecret(process.env.EMAIL_PASSWORD_FILE || '/run/secrets/email_password'),
+  EMAIL_PASS: readSecret(process.env.EMAIL_PASSWORD_FILE || '/run/secrets/email_password'),
   EMAIL_FROM: readSecret(process.env.EMAIL_FROM_FILE || '/run/secrets/email_from'),
+  ENCRYPTION_KEY: readSecret(process.env.ENCRYPTION_KEY || '/run/secrets/encryption_key'),
 };
 
 export default env;

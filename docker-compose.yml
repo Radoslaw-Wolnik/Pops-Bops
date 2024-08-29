@@ -26,7 +26,7 @@ services:
     #  - .env.main
     volumes:
       - mongo-data:/data/db
-      - ./backend/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
+      - ./backend/scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
       - ./mongod.conf:/etc/mongod.conf
       - ./secrets:/run/secrets:ro
     environment:
@@ -78,8 +78,9 @@ services:
       - EMAIL_HOST_FILE=/run/secrets/email_host
       - EMAIL_PORT_FILE=/run/secrets/email_port
       - EMAIL_USER_FILE=/run/secrets/email_user
-      - EMAIL_PASSWORD_FILE=/run/secrets/email_password
+      - EMAIL_PASS=/run/secrets/email_password
       - EMAIL_FROM_FILE=/run/secrets/email_from
+      - ENCRYPTION_KEY=/run/secrets/encryption_key
     command: npm run devstart
     networks:
       - frontend-network

@@ -17,6 +17,9 @@ echo "myuser" > "$ROOT_DIR/secrets/db_user"
 openssl rand -base64 32 | tr -d /=+ | cut -c -16 > "$ROOT_DIR/secrets/db_password"
 openssl rand -base64 32 | tr -d /=+ | cut -c -32 > "$ROOT_DIR/secrets/jwt_secret"
 
+# Generate a 256-bit (32 byte) encryption key
+openssl rand -base64 32 > "$ROOT_DIR/secrets/encryption_key"
+
 # Set default values for email secrets
 echo "smtp.example.com" > "$ROOT_DIR/secrets/email_host"
 echo "587" > "$ROOT_DIR/secrets/email_port"
