@@ -8,7 +8,9 @@
     "build": "tsc",
     "devstart": "ts-node-dev --project tsconfig.json --require ts-node/register -r tsconfig-paths/register --respawn --transpile-only --ignore-watch node_modules --no-notify --config ts-node-dev.json src/server.ts",
     "prod": "NODE_ENV=production node dist/server.js",
-    "populate": "node populateDB.js"
+    "populate": "ts-node scripts/populate_database.ts",
+    "backup": "ts-node scripts/backup_database.ts",
+    "restore": "ts-node scripts/restore_database.ts"
   },
   "keywords": [],
   "author": "",
@@ -41,8 +43,10 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.5.0",
     "@types/nodemailer": "^6.4.15",
+    "@types/uuid": "^10.0.0",
     "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "uuid": "^10.0.0"
   }
 }
