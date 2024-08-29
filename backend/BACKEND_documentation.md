@@ -295,7 +295,7 @@ A utility function `cleanupRevokedTokens` is provided in `utils/cleanupRevokedTo
 
 ---------------------
 - [ ] set resource limits
-- [ ] make helf checks
+- [ ] make helth checks
 
 Additional Security Measures
 
