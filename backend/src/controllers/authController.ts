@@ -26,8 +26,16 @@ export const login = async (req: LoginRequest, res: Response): Promise<void> => 
     const { email, password } = req.body;
 
     // Check if user exists
-    let user = await User.findOne({ email });
+    // Find user by email hash
+    const user = await User.findOne({ emailHash: User.hashEmail(email) });
     if (!user) {
+      res.status(400).json({ message: 'Invalid credentials' });
+      return;
+    }
+
+    // Decrypt the stored email and compare with the provided email
+    const decryptedEmail = user.getDecryptedEmail()
+    if (decryptedEmail !== email) {
       res.status(400).json({ message: 'Invalid credentials' });
       return;
     }
@@ -126,7 +134,7 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
     const { username, email, password } = req.body;
 
     // Check if user already exists
-    let user = await User.findOne({ email });
+    let user = await User.findOne({ emailHash: User.hashEmail(email) });
     if (user) {
       res.status(400).json({ message: 'User already exists' });
       return;
@@ -143,6 +151,8 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
+
+
     // Create verification token
     const verificationToken = crypto.randomBytes(20).toString('hex');
     const verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
@@ -150,12 +160,14 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
     // Create new user
     user = new User({
       username,
-      email,
       password: hashedPassword,
       verificationToken,
       verificationTokenExpires,
       role: 'user'
     });
+
+    // Set encrypted email
+    user.setEncryptedEmail(email);
 
     await user.save();
 
@@ -167,7 +179,7 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
     console.log('Attempting to send email to:', user.email);
     //console.log('Verification URL:', verificationUrl);
     await sendEmail({
-      to: user.email,
+      to: email,
       subject: 'Verify Your Email',
       html: `
         <h1>Verify Your Email</h1>
@@ -214,9 +226,11 @@ export const sendVerificationEmail = async (req: AuthRequest, res: Response): Pr
     await req.user.save();
 
     const verificationUrl = `${env.FRONTEND}/verify-email/${verificationToken}`;
+
+    const decryptedEmail = req.user.getDecryptedEmail();
     
     await sendEmail({
-      to: req.user.email,
+      to: decryptedEmail,
       subject: 'Verify Your Email',
       html: `
         <h1>Verify Your Email</h1>
@@ -307,7 +321,8 @@ interface RequestPasswordResetRequest extends Request {
 export const requestPasswordReset = async (req: RequestPasswordResetRequest, res: Response): Promise<void> => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+
+    const user = await User.findOne({ emailHash: User.hashEmail(email) });
 
     if (!user) {
       res.status(404).json({ message: 'User not found' });
@@ -322,7 +337,7 @@ export const requestPasswordReset = async (req: RequestPasswordResetRequest, res
     const resetUrl = `${env.FRONTEND}/reset-password/${resetToken}`;
     
     await sendEmail({
-      to: user.email,
+      to: email,
       subject: 'Password Reset Request',
       html: `
         <h1>Password Reset Request</h1>

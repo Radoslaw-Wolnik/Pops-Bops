@@ -17,6 +17,9 @@ export const getUserOwnProfile = async (req: AuthRequest, res: Response): Promis
   const userWithoutPassword = req.user.toObject();
   delete userWithoutPassword.password;
 
+  // Get the decrypted email using the model's method
+  userWithoutPassword.email = req.user.getDecryptedEmail();
+
   res.json(userWithoutPassword);
 
 };
