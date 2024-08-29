@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-      "target": "ES6",                          // Target ECMAScript version (ES6 and above is recommended)
-      "module": "commonjs",                     // Module code generation (commonjs is used for Node.js)
+      "target": "ES2020",                          // Target ECMAScript version (ES6 and above is recommended)
+      "module": "ESNext",                     // Module code generation (commonjs is used for Node.js)
       "rootDir": "./src",                       // Specifies the root directory of input files
       "outDir": "./dist",                       // Output directory for compiled JavaScript files
       "strict": true,                           // Enable all strict type-checking options

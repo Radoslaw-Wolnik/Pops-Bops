@@ -13,6 +13,9 @@ RUN npm ci
 # Copy the rest of the application files
 COPY . .
 
+# Build TypeScript
+RUN npm run build
+
 # Development stage
 FROM node:20 AS development
 
@@ -22,8 +25,7 @@ WORKDIR /app
 COPY --from=builder /app .
 
 # Copy additional development-specific configuration files
-COPY nodemon.json .
-COPY .env .env
+COPY ts-node-dev.json .
 COPY ssl/cert/certificate.pem /app/cert/certificate.pem
 COPY ssl/cert/private-key.pem /app/cert/private-key.pem
 
@@ -34,10 +36,11 @@ RUN mkdir -p /app/uploads
 RUN npm ci
 
 # Expose port 5000 for development
-EXPOSE 5000
+EXPOSE 5000 5443
 
 # Command to run the application in development mode
-CMD ["npm", "run", "devstart"]
+# CMD ["npm", "run", "devstart"]
+# command specified in docker-compose insted of here
 
 # Production stage
 FROM node:20-slim AS production
@@ -50,11 +53,8 @@ COPY --from=builder /app/package*.json ./
 # Install production dependencies
 RUN npm ci --only=production
 
-# Copy source files from the builder stage
-COPY --from=builder /app/src ./src
-
-# Copy production environment configuration
-COPY .env .env
+# Copy compiled JavaScript files
+COPY --from=builder /app/dist ./dist
 
 # copy the certificate, private key
 COPY ssl/cert/certificate.pem /app/cert/certificate.pem
@@ -63,11 +63,11 @@ COPY ssl/cert/private-key.pem /app/cert/private-key.pem
 # make uploads dir in production
 RUN mkdir -p /app/uploads
 
-# Expose port 3000 for production
-EXPOSE 3000
+# Expose ports for production
+EXPOSE 5000 5443
 
 # Set environment variable for production
 ENV NODE_ENV=production
 
 # Command to run the application in production mode
-CMD ["npm", "run", "start"]
+# CMD ["npm", "run", "start"]

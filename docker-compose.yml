@@ -24,15 +24,15 @@ services:
     #   - '27017:27017'
     # env_file
     #  - .env.main
-    enviorement:
-      - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/db_root_username
-      - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
-      - MONGO_INITDB_DATABASE_FILE=/run/secrets/db_name
     volumes:
       - mongo-data:/data/db
       - ./backend/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
       - ./mongod.conf:/etc/mongod.conf
       - ./secrets:/run/secrets:ro
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/db_root_username
+      - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
+      - MONGO_INITDB_DATABASE_FILE=/run/secrets/db_name
     command: ["mongod", "--config", "/etc/mongod.conf"]
     networks:
       - backend-network
@@ -80,6 +80,7 @@ services:
       - EMAIL_USER_FILE=/run/secrets/email_user
       - EMAIL_PASSWORD_FILE=/run/secrets/email_password
       - EMAIL_FROM_FILE=/run/secrets/email_from
+    command: npm run devstart
     networks:
       - frontend-network
       - backend-network

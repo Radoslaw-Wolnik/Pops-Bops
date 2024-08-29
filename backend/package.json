@@ -1,13 +1,13 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "dist/server.js",
   "type": "module",
   "scripts": {
-    "start": "node ./dist/server.js",
+    "start": "node dist/server.js",
     "build": "tsc",
-    "devstart": "nodemon --exec ts-node ./src/server.ts",
-    "prod": "NODE_ENV=production node ./src/server.ts",
+    "devstart": "ts-node-dev --project tsconfig.json --require ts-node/register -r tsconfig-paths/register --respawn --transpile-only --ignore-watch node_modules --no-notify --config ts-node-dev.json src/server.ts",
+    "prod": "NODE_ENV=production node dist/server.js",
     "populate": "node populateDB.js"
   },
   "keywords": [],
@@ -41,8 +41,8 @@
     "@types/multer": "^1.4.12",
     "@types/node": "^22.5.0",
     "@types/nodemailer": "^6.4.15",
-    "nodemon": "^3.1.4",
     "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
     "typescript": "^5.5.4"
   }
 }
