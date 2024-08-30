@@ -68,4 +68,4 @@ EXPOSE 5000
 ENV NODE_ENV=production
 
 # Command to run the application in production mode
-# CMD ["npm", "run", "start"]
+CMD ["npm", "run", "start"]

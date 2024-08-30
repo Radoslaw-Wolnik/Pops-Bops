@@ -27,23 +27,45 @@ services:
       - domain_name
       - letsencrypt_email
       - traefik_auth
+      - rate_limit_average
+      - rate_limit_burst
     environment:
-      - DOMAIN_NAME_FILE=/run/secrets/domain_name
+      - DOMAIN_NAME=${domain_name}
       - LETSENCRYPT_EMAIL_FILE=/run/secrets/letsencrypt_email
+      - RATE_LIMIT_AVERAGE=${rate_limit_average}
+      - RATE_LIMIT_BURST=${rate_limit_burst}
       - NOOP_URL=http://192.168.65.2  # Docker host IP
+      - NODE_ENV=${NODE_ENV:-development}
+    deploy:
+      mode: global
+      placement:
+        constraints:
+          - node.role == manager
     labels:
       - "traefik.http.routers.traefik.tls=true"
       - "traefik.http.routers.traefik.service=api@internal"
       - "traefik.http.routers.traefik.middlewares=auth"
       - "traefik.http.middlewares.auth.basicauth.usersfile=/run/secrets/traefik_auth"
+      - "traefik.http.middlewares.rate-limit.ratelimit.average=${rate_limit_average}"
+      - "traefik.http.middlewares.rate-limit.ratelimit.burst=${rate_limit_burst}"
+      - "traefik.http.routers.backend.middlewares=strip-api-prefix@docker,rate-limit@docker"
 
   frontend:
-    build:
-      context: ./frontend
-      target: dev-stage
+    image: frontend-image:latest
+    secrets:
+      - domain_name
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=https://${domain_name}/api
+      - DOMAIN_NAME=${domain_name}
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.routers.frontend.rule=Host(`${domain_name}`)"
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls=true"
       - "traefik.http.routers.frontend.tls.certresolver=le"
@@ -51,43 +73,13 @@ services:
       - ./frontend:/app
       - /app/node_modules
     command: npm run dev
-    environment:
-      - NODE_ENV=development
-      - VITE_API_URL=https://${DOMAIN_NAME}/api
     networks:
       - frontend-network
-    secrets:
-      - domain_name
 
   backend:
-    build:
-      context: ./backend
-      target: development
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls=true"
-      - "traefik.http.routers.backend.tls.certresolver=le"
-      - "traefik.http.middlewares.strip-api-prefix.stripprefix.prefixes=/api"
-      - "traefik.http.routers.backend.middlewares=strip-api-prefix@docker,rate-limit@docker"
-      - "traefik.http.middlewares.rate-limit.ratelimit.average=${RATE_LIMIT_AVERAGE}"
-      - "traefik.http.middlewares.rate-limit.ratelimit.burst=${RATE_LIMIT_BURST}"
-    volumes:
-      - ./backend/src:/app/src:delegated
-      - ./backend/nodemon.json:/app/nodemon.json
-      - /app/node_modules
-      - ./backend/uploads:/app/uploads
-    environment:
-      - NODE_ENV=development
-      - PORT=5000
-      - FRONTEND=https://${DOMAIN_NAME}
-    networks:
-      - backend-network
+    image: backend-image:latest
     secrets:
       - domain_name
-      - rate_limit_average
-      - rate_limit_burst
       - db_name
       - db_user
       - db_password
@@ -98,8 +90,37 @@ services:
       - email_user
       - email_password
       - email_from
-    security_opt:
-      - no-new-privileges:true
+    environment:
+      - NODE_ENV=development
+      - PORT=5000
+      - FRONTEND=https://${domain_name}
+      - DB_NAME_FILE=/run/secrets/db_name
+      - DB_USER_FILE=/run/secrets/db_user
+      - DB_PASS_FILE=/run/secrets/db_password
+      - JWT_SECRET_FILE=/run/secrets/jwt_secret
+      - ENCRYPTION_KEY_FILE=/run/secrets/encryption_key
+      - EMAIL_HOST_FILE=/run/secrets/email_host
+      - EMAIL_PORT_FILE=/run/secrets/email_port
+      - EMAIL_USER_FILE=/run/secrets/email_user
+      - EMAIL_PASS_FILE=/run/secrets/email_password
+      - EMAIL_FROM_FILE=/run/secrets/email_from
+      - OLD_ENCRYPTION_KEY
+      - ROTATION_IN_PROGRESS=false
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`${domain_name}`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls=true"
+      - "traefik.http.routers.backend.tls.certresolver=le"
+      - "traefik.http.middlewares.strip-api-prefix.stripprefix.prefixes=/api"
+      # - "traefik.http.routers.backend.middlewares=strip-api-prefix@docker,rate-limit@docker" # not sure if keep it or not
+    volumes:
+      - ./backend/src:/app/src:delegated
+      - ./backend/nodemon.json:/app/nodemon.json
+      - /app/node_modules
+      - ./backend/uploads:/app/uploads
+    networks:
+      - backend-network
 
   mongo:
     image: mongo:latest
@@ -107,77 +128,91 @@ services:
       - mongo-data:/data/db
       - ./backend/scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
       - ./mongod.conf:/etc/mongod.conf
+    secrets:
+      - db_root_username
+      - db_root_password
+      - db_name
     environment:
       - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/db_root_username
       - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
       - MONGO_INITDB_DATABASE_FILE=/run/secrets/db_name
     command: ["mongod", "--config", "/etc/mongod.conf"]
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+      resources:
+        limits:
+          cpus: '0.50'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+      update_config:
+        parallelism: 1
+        delay: 10s
+      rollback_config:
+        parallelism: 1
     networks:
       - backend-network
-    secrets:
-      - db_root_username
-      - db_root_password
-      - db_name
-    security_opt:
-      - no-new-privileges:true
+
+    # security_opt:
+    #   - no-new-privileges:true
 
   redis:
     image: redis:6.2
     volumes:
       - redis-data:/data
+    deploy:
+      replicas: 1
     networks:
       - backend-network
 
-  
-
-secrets:
-  domain_name:
-    file: ./secrets/domain_name
-  letsencrypt_email:
-    file: ./secrets/letsencrypt_email
-  traefik_auth:
-    file: ./secrets/traefik_auth
-  rate_limit_average:
-    file: ./secrets/rate_limit_average
-  rate_limit_burst:
-    file: ./secrets/rate_limit_burst
-  db_root_username:
-    file: ./secrets/db_root_username
-  db_root_password:
-    file: ./secrets/db_root_password
-  db_name:
-    file: ./secrets/db_name
-  db_user:
-    file: ./secrets/db_user
-  db_password:
-    file: ./secrets/db_password
-  jwt_secret:
-    file: ./secrets/jwt_secret
-  encryption_key:
-    file: ./secrets/encryption_key
-  email_host:
-    file: ./secrets/email_host
-  email_port:
-    file: ./secrets/email_port
-  email_user:
-    file: ./secrets/email_user
-  email_password:
-    file: ./secrets/email_password
-  email_from:
-    file: ./secrets/email_from
-  # for localhost development
-  local_cert:
-    file: ./certs/localhost.crt
-  local_key:
-    file: ./certs/localhost.key
-
 networks:
   frontend-network:
-    driver: bridge
+    driver: overlay
   backend-network:
-    driver: bridge
+    driver: overlay
 
 volumes:
   mongo-data:
   uploads:
   redis-data:
+
+secrets:
+  domain_name:
+    external: true
+  letsencrypt_email:
+    external: true
+  traefik_auth:
+    external: true
+  rate_limit_average:
+    external: true
+  rate_limit_burst:
+    external: true
+  db_root_username:
+    external: true
+  db_root_password:
+    external: true
+  db_name:
+    external: true
+  db_user:
+    external: true
+  db_password:
+    external: true
+  jwt_secret:
+    external: true
+  encryption_key:
+    external: true
+  email_host:
+    external: true
+  email_port:
+    external: true
+  email_user:
+    external: true
+  email_password:
+    external: true
+  email_from:
+    external: true
+
+

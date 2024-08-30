@@ -1,44 +1,105 @@
 #!/bin/bash
 
-# Function to check if local secrets need updating
-check_local_secrets() {
-    local secrets_file="./local_secrets.sh"
-    local max_age=$((30 * 24 * 60 * 60))  # 30 days in seconds
+# Define your stack name
+STACK_NAME="pops-and-bops"
 
-    if [ -f "$secrets_file" ]; then
-        local file_age=$(($(date +%s) - $(date -r "$secrets_file" +%s)))
-        if [ $file_age -gt $max_age ]; then
-            echo "Warning: Your local secrets file is older than 30 days."
-            echo "Consider updating it by running: ./local_secrets.sh"
-            read -p "Do you want to continue anyway? (y/n) " -n 1 -r
-            echo
-            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-                exit 1
-            fi
-        fi
+# Get the directory of the script
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# Parse command line arguments
+if [ "$1" == "--dev" ]; then
+    ENV="development"
+elif [ "$1" == "--prod" ]; then
+    ENV="production"
+else
+    echo "Usage: $0 [--dev|--prod]"
+    exit 1
+fi
+
+# Function to manage secrets
+manage_secrets() {
+    if [ "$ENV" == "development" ]; then
+        ./manage_secrets.sh --no-cron
     else
-        echo "Warning: local_secrets.sh not found. Some features may not work correctly."
-        read -p "Do you want to continue anyway? (y/n) " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            exit 1
-        fi
+        ./manage_secrets.sh
+    fi
+    ./local_secrets.sh
+}
+
+# Function to handle certificates
+handle_certificates() {
+    if [ "$ENV" == "development" ]; then
+        ./generate_dev_certs_extended.sh # can be changed ot ./generate_dev_certs_simple.sh
+    else
+        # Ensure Let's Encrypt setup is in place
+        # This might involve checking for existing certs and renewing if necessary
+        echo "Ensuring Let's Encrypt certificates are in place..."
+        # Add your Let's Encrypt certificate check/renewal logic here
     fi
 }
 
-# Check local secrets
-source "$(dirname "$0")/check_local_secrets.sh"
 
-# Generate secrets
-"$(dirname "$0")/generate_secrets.sh"
+# Initialize Docker Swarm 
+init_swarm() {
+    if ! docker info | grep -q 'Swarm: active'; then
+        echo "Initializing Docker Swarm mode..."
+        docker swarm init
+    else
+        echo "Docker Swarm is already active."
+    fi
+}
 
-# Start the project (assuming docker-compose.yml is in the parent directory)
-docker-compose -f "$(dirname "$0")/../docker-compose.yml" up -d
+# Function to create Docker secrets
+create_docker_secrets() {
+    echo "Creating Docker secrets..."
+    pass ls | while read secret_name; do
+        echo "Creating Docker secret: $secret_name"
+        docker secret rm "$secret_name" 2>/dev/null
+        pass show "$secret_name" | docker secret create "$secret_name" -
+    done
+}
+
+# Main execution starts here
+
+echo "Starting project in $ENV mode..."
+
+# Manage secrets
+manage_secrets
+
+# Handle certificates
+handle_certificates
+
+# Initialize Docker Swarm
+init_swarm
+
+# Create Docker secrets
+create_docker_secrets
+
+# Build Docker images
+echo "Building Docker images..."
+docker build -t backend-image:latest --target $ENV "$SCRIPT_DIR/../backend"
+docker build -t frontend-image:latest --target $ENV "$SCRIPT_DIR/../frontend"
 
 
-# Get the assigned ports
-BACKEND_PORT=$(docker-compose port backend 5443 | cut -d: -f2)
-FRONTEND_PORT=$(docker-compose port frontend 5173 | cut -d: -f2)
+# Deploy the stack
+echo "Deploying the stack..."
+export NODE_ENV=$ENV
+docker stack deploy -c "$SCRIPT_DIR/../docker-compose.yml" $STACK_NAME
 
-echo "Backend running on port $BACKEND_PORT"
-echo "Frontend running on port $FRONTEND_PORT"
+echo "Waiting for services to start..."
+sleep 30
+
+echo "Deployed services:"
+docker stack services $STACK_NAME
+
+DOMAIN_NAME=$(pass show domain_name)
+echo "Access your services at:"
+echo "Frontend: https://${DOMAIN_NAME}"
+echo "Backend API: https://${DOMAIN_NAME}/api"
+
+echo "Service status:"
+docker service ls --filter name=${STACK_NAME}
+
+# If you need to troubleshoot, you can get more detailed information about a specific service
+# echo "Detailed information for backend service:"
+# docker service ps ${STACK_NAME}_backend
