@@ -2,12 +2,15 @@
 
 # Array of scripts that need executable permissions
 scripts=(
-    "backup_secrets.sh"
-    "generate_local_certs.sh"
-    "generate_secrets.sh"
+    "backup_recover_secrets.sh"
+    "check_secrets.sh"
+    "generate_dev_certs_extended.sh"
+    "generate_dev_certs_simple.sh"
     "local_secrets.sh"
-    "recover_secrets.sh"
+    "manage_secrets.sh"
+    "rotate_secrets_cron"
     "start_project.sh"
+    "stop_project.sh"
 )
 
 # Function to set executable permissions
