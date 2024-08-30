@@ -17,7 +17,7 @@ COPY . .
 FROM base AS development
 
 # Copy additional development-specific configuration files
-COPY ts-node-dev.json .
+COPY nodemon.json .
 
 # Make uploads dir in development setup
 RUN mkdir -p /app/uploads
