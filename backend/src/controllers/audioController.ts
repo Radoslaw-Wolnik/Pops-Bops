@@ -99,15 +99,15 @@ export const updateAudioSample = async (req: AuthRequestWithFile, res: Response)
     const sampleId = req.params.id;
     const isAdmin = req.user!.role === 'admin';
     const { name } = req.body;
-
-    const updatedSample = await AudioSample.findOneAndUpdate(
-      isAdmin ? { _id: sampleId } : { _id: sampleId, user: req.user!._id },
-      { 
-        name, 
-        ...(isAdmin ? { forMainPage: req.body.forMainPage === 'true' } : {}) 
-      },
-      { new: true }
-    );
+    const filter = isAdmin ? { _id: sampleId } : { _id: sampleId, user: req.user!._id };
+    
+    const update = {
+      name,
+      ...(isAdmin ? { forMainPage: req.body.forMainPage === 'true' } : {})
+    };
+    
+    const updatedSample = await AudioSample.findOneAndUpdate(filter, update, { new: true });
+    
 
     if (!updatedSample) {
       res.status(404).json({ message: 'Sample not found or not authorized to update' });
@@ -125,10 +125,10 @@ export const deleteAudioSample = async (req: AuthRequest, res: Response): Promis
   try {
     const sampleId = req.params.id;
     const isAdmin = req.user!.role === 'admin';
-
-    const deletedSample = await AudioSample.findOneAndDelete(
-      isAdmin ? { _id: sampleId } : { _id: sampleId, user: req.user!._id }
-    );
+    const filter = isAdmin ? { _id: sampleId } : { _id: sampleId, user: req.user!._id };
+    
+    const deletedSample = await AudioSample.findOneAndDelete(filter);
+    
 
     if (!deletedSample) {
       res.status(404).json({ message: 'Sample not found or not authorized to delete' });
