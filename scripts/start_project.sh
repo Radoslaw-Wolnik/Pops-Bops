@@ -52,10 +52,22 @@ init_swarm() {
 # Function to create Docker secrets
 create_docker_secrets() {
     echo "Creating Docker secrets..."
-    pass ls | while read secret_name; do
+    pass ls | while read -r line; do
+        # Skip the first line (Password Store)
+        if [[ "$line" == "Password Store" ]]; then
+            continue
+        fi
+        
+        # Remove leading tree characters and spaces
+        secret_name=$(echo "$line" | sed 's/^[│├└─ ]\+//')
+        
         echo "Creating Docker secret: $secret_name"
-        docker secret rm "$secret_name" 2>/dev/null
-        pass show "$secret_name" | docker secret create "$secret_name" -
+        if pass show "$secret_name" > /dev/null 2>&1; then
+            docker secret rm "$secret_name" 2>/dev/null
+            pass show "$secret_name" | docker secret create "$secret_name" -
+        else
+            echo "Error: Secret '$secret_name' not found in the password store."
+        fi
     done
 }
 
@@ -76,15 +88,32 @@ init_swarm
 create_docker_secrets
 
 # Build Docker images
-echo "Building Docker images..."
-docker build -t backend-image:latest --target $ENV "$SCRIPT_DIR/../backend"
-docker build -t frontend-image:latest --target $ENV "$SCRIPT_DIR/../frontend"
+echo "Building backend image..."
+docker build -t backend-image:latest --target $ENV "$SCRIPT_DIR/../backend" 2>&1 | tee backend_build.log
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo "Backend build failed. Check backend_build.log for details."
+    exit 1
+fi
+
+echo "Building frontend image..."
+docker build -t frontend-image:latest --target $ENV "$SCRIPT_DIR/../frontend" 2>&1 | tee frontend_build.log
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo "Frontend build failed. Check frontend_build.log for details."
+    exit 1
+fi
+
+
+# Build Docker images simplified
+# docker build -t backend-image:latest --target $ENV "$SCRIPT_DIR/../backend"
+# docker build -t frontend-image:latest --target $ENV "$SCRIPT_DIR/../frontend"
 
 
 # Deploy the stack
 echo "Deploying the stack..."
 export NODE_ENV=$ENV
-docker stack deploy -c "$SCRIPT_DIR/../docker-compose.yml" $STACK_NAME
+# docker stack deploy -c "$SCRIPT_DIR/../docker-compose.yml" $STACK_NAME
+# with stack_name as global var
+STACK_NAME=$STACK_NAME docker stack deploy -c "$SCRIPT_DIR/../docker-compose.yml" $STACK_NAME
 
 echo "Waiting for services to start..."
 sleep 30
