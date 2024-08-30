@@ -18,6 +18,8 @@ interface Environment {
   EMAIL_PASS: string;
   EMAIL_FROM: string;
   ENCRYPTION_KEY: string;
+  OLD_ENCRYPTION_KEY: string;
+  ROTATION_IN_PROGRESS: boolean;
 }
 
 function readSecret(path: string): string {
@@ -45,6 +47,8 @@ const env: Environment = {
   EMAIL_PASS: readSecret(process.env.EMAIL_PASSWORD_FILE || '/run/secrets/email_password'),
   EMAIL_FROM: readSecret(process.env.EMAIL_FROM_FILE || '/run/secrets/email_from'),
   ENCRYPTION_KEY: readSecret(process.env.ENCRYPTION_KEY || '/run/secrets/encryption_key'),
+  OLD_ENCRYPTION_KEY: process.env.OLD_ENCRYPTION_KEY || '',
+  ROTATION_IN_PROGRESS: process.env.ROTATION_IN_PROGRESS === 'true',
 };
 
 export default env;

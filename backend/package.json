@@ -10,7 +10,11 @@
     "prod": "NODE_ENV=production node dist/server.js",
     "populate": "ts-node scripts/populate_database.ts",
     "backup": "ts-node scripts/backup_database.ts",
-    "restore": "ts-node scripts/restore_database.ts"
+    "restore": "ts-node scripts/restore_database.ts",
+    "rotate-secrets": "ts-node scripts/rotateSecrets.ts",
+    "start-rotation": "ts-node scripts/manageRotation.ts start",
+    "check-rotation": "ts-node scripts/manageRotation.ts status",
+    "cleanup-rotation": "ts-node scripts/manageRotation.ts cleanup"
   },
   "keywords": [],
   "author": "",
