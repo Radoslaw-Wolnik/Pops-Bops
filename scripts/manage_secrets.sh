@@ -13,12 +13,22 @@ while [[ "$#" -gt 0 ]]; do
     shift
 done
 
-# Install necessary tools
-sudo apt-get update
-sudo apt-get install -y gnupg2 pass
+# remove_cron_job() {
+#     crontab -l | grep -v "rotate_secrets_cron.sh" | crontab -
+#     echo "Cron job for secret rotation has been removed."
+# }
 
-# Generate a GPG key for encrypting secrets
-gpg --batch --gen-key <<EOF
+# Ensure pass is installed
+if ! command -v pass &> /dev/null; then
+    echo "pass is not installed. Installing..."
+    sudo apt-get update
+    sudo apt-get install -y pass
+fi
+
+# Check if GPG key exists, if not, create one
+if ! gpg --list-secret-keys | grep -q "Production Secrets"; then
+    echo "Generating GPG key..."
+    gpg --batch --gen-key <<EOF
 Key-Type: RSA
 Key-Length: 4096
 Name-Real: Production Secrets
@@ -26,21 +36,26 @@ Name-Email: admin@yourdomain.com
 Expire-Date: 0
 %no-protection
 EOF
+fi
 
-# Initialize pass password store
-pass init "Production Secrets"
+# Initialize pass password store if not already initialized
+if [ ! -d "$HOME/.password-store" ]; then
+    echo "Initializing pass password store..."
+    pass init "Production Secrets"
+fi
 
 # Function to add or update a secret
 add_secret() {
     local secret_name=$1
     local secret_value=$2
-    echo "$secret_value" | pass insert -e -m "$secret_name"
-}
-
-# Function to retrieve a secret
-get_secret() {
-    local secret_name=$1
-    pass "$secret_name"
+    echo -n "$secret_value" | pass insert -e -f "$secret_name"
+    # echo -n "$secret_value" | pass insert -e -m -f "$secret_name"
+    # printf "%s\n%s\n" "$secret_value" "$secret_value" | pass insert -e -m -f "$secret_name"
+    if [ $? -eq 0 ]; then
+        echo "Secret '$secret_name' added successfully."
+    else
+        echo "Failed to add secret '$secret_name'."
+    fi
 }
 
 # Function to generate a random string
@@ -96,4 +111,12 @@ else
     echo "Cron job setup skipped due to --no-cron flag."
 fi
 
+
 echo "Secret management setup complete"
+
+
+# gpg --list-secret-keys
+
+# List all secrets to verify
+echo "Listing all secrets:"
+pass ls

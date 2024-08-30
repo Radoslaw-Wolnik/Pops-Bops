@@ -8,7 +8,7 @@ scripts=(
     "generate_dev_certs_simple.sh"
     "local_secrets.sh"
     "manage_secrets.sh"
-    "rotate_secrets_cron"
+    "rotate_secrets_cron.sh"
     "start_project.sh"
     "stop_project.sh"
 )
