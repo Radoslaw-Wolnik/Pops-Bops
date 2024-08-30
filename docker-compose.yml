@@ -131,11 +131,9 @@ services:
         - "traefik.http.routers.backend.middlewares=strip-api-prefix@docker,rate-limit@docker"
 
   mongo:
-    image: mongo:latest
+    image: mongo-image:latest
     volumes:
       - mongo-data:/data/db
-      - ./backend/scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
-      - ./mongod.conf:/etc/mongod.conf
     secrets:
       - db_root_username
       - db_root_password
@@ -144,7 +142,6 @@ services:
       - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/db_root_username
       - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
       - MONGO_INITDB_DATABASE_FILE=/run/secrets/db_name
-    command: ["mongod", "--config", "/etc/mongod.conf"]
     healthcheck:
       test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
       interval: 10s
@@ -157,10 +154,6 @@ services:
       placement:
         constraints:
           - node.role == manager
-      resources:
-        limits:
-          cpus: '0.50'
-          memory: 512M
       update_config:
         parallelism: 1
         delay: 10s
@@ -168,6 +161,11 @@ services:
         parallelism: 1
       labels:
         - "com.docker.stack.namespace=${STACK_NAME}"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "200k"
+        max-file: "10"
     # security_opt:
     #   - no-new-privileges:true
 

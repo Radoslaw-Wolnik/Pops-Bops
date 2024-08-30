@@ -88,6 +88,13 @@ init_swarm
 create_docker_secrets
 
 # Build Docker images
+echo "Building mongo image..."
+docker build -t mongo-image:latest --target $ENV "$SCRIPT_DIR/../backend/mongo" 2>&1 | tee mongo_build.log
+if [ ${PIPESTATUS[0]} -ne 0 ]; then
+    echo "mongo build failed. Check mongo_build.log for details."
+    exit 1
+fi
+
 echo "Building backend image..."
 docker build -t backend-image:latest --target $ENV "$SCRIPT_DIR/../backend" 2>&1 | tee backend_build.log
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
@@ -132,3 +139,13 @@ docker service ls --filter name=${STACK_NAME}
 # If you need to troubleshoot, you can get more detailed information about a specific service
 # echo "Detailed information for backend service:"
 # docker service ps ${STACK_NAME}_backend
+
+# to restart the stack
+# STACK_NAME=pops-and-bops docker stack deploy -c docker-compose.yml pops-and-bops
+#  docker service rm pops-and-bops_mongo
+# check the task status
+# docker service ps pops-and-bops_mongo --no-trunc
+# check the task
+# docker service logs pops-and-bops_mongo
+# check containers
+# docker ps -a
