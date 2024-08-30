@@ -41,14 +41,15 @@ services:
       placement:
         constraints:
           - node.role == manager
-    labels:
-      - "traefik.http.routers.traefik.tls=true"
-      - "traefik.http.routers.traefik.service=api@internal"
-      - "traefik.http.routers.traefik.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.usersfile=/run/secrets/traefik_auth"
-      - "traefik.http.middlewares.rate-limit.ratelimit.average=${rate_limit_average}"
-      - "traefik.http.middlewares.rate-limit.ratelimit.burst=${rate_limit_burst}"
-      - "traefik.http.routers.backend.middlewares=strip-api-prefix@docker,rate-limit@docker"
+      labels:
+        - "com.docker.stack.namespace=${STACK_NAME}"
+        - "traefik.enable=true"
+        - "traefik.http.routers.traefik.tls=true"
+        - "traefik.http.routers.traefik.service=api@internal"
+        - "traefik.http.routers.traefik.middlewares=auth"
+        - "traefik.http.middlewares.auth.basicauth.usersfile=/run/secrets/traefik_auth"
+        - "traefik.http.middlewares.rate-limit.ratelimit.average=${rate_limit_average}"
+        - "traefik.http.middlewares.rate-limit.ratelimit.burst=${rate_limit_burst}"
 
   frontend:
     image: frontend-image:latest
@@ -58,23 +59,24 @@ services:
       - NODE_ENV=development
       - VITE_API_URL=https://${domain_name}/api
       - DOMAIN_NAME=${domain_name}
-    deploy:
-      replicas: 2
-      update_config:
-        parallelism: 1
-        delay: 10s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`${domain_name}`)"
-      - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls=true"
-      - "traefik.http.routers.frontend.tls.certresolver=le"
     volumes:
       - ./frontend:/app
       - /app/node_modules
     command: npm run dev
     networks:
       - frontend-network
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      labels:
+        - "com.docker.stack.namespace=${STACK_NAME}"
+        - "traefik.enable=true"
+        - "traefik.http.routers.frontend.rule=Host(`${domain_name}`)"
+        - "traefik.http.routers.frontend.entrypoints=websecure"
+        - "traefik.http.routers.frontend.tls=true"
+        - "traefik.http.routers.frontend.tls.certresolver=le"
 
   backend:
     image: backend-image:latest
@@ -106,21 +108,27 @@ services:
       - EMAIL_FROM_FILE=/run/secrets/email_from
       - OLD_ENCRYPTION_KEY
       - ROTATION_IN_PROGRESS=false
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`${domain_name}`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls=true"
-      - "traefik.http.routers.backend.tls.certresolver=le"
-      - "traefik.http.middlewares.strip-api-prefix.stripprefix.prefixes=/api"
-      # - "traefik.http.routers.backend.middlewares=strip-api-prefix@docker,rate-limit@docker" # not sure if keep it or not
     volumes:
       - ./backend/src:/app/src:delegated
-      - ./backend/nodemon.json:/app/nodemon.json
+      # - ./backend/nodemon.json:/app/nodemon.json
       - /app/node_modules
       - ./backend/uploads:/app/uploads
     networks:
       - backend-network
+    deploy:
+      replicas: 1
+      update_config:
+        parallelism: 1
+        delay: 10s
+      labels:
+        - "com.docker.stack.namespace=${STACK_NAME}"
+        - "traefik.enable=true"
+        - "traefik.http.routers.backend.rule=Host(`${domain_name}`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.backend.entrypoints=websecure"
+        - "traefik.http.routers.backend.tls=true"
+        - "traefik.http.routers.backend.tls.certresolver=le"
+        - "traefik.http.middlewares.strip-api-prefix.stripprefix.prefixes=/api"
+        - "traefik.http.routers.backend.middlewares=strip-api-prefix@docker,rate-limit@docker"
 
   mongo:
     image: mongo:latest
@@ -137,6 +145,13 @@ services:
       - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
       - MONGO_INITDB_DATABASE_FILE=/run/secrets/db_name
     command: ["mongod", "--config", "/etc/mongod.conf"]
+    healthcheck:
+      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend-network
     deploy:
       replicas: 1
       placement:
@@ -146,16 +161,13 @@ services:
         limits:
           cpus: '0.50'
           memory: 512M
-      restart_policy:
-        condition: on-failure
       update_config:
         parallelism: 1
         delay: 10s
       rollback_config:
         parallelism: 1
-    networks:
-      - backend-network
-
+      labels:
+        - "com.docker.stack.namespace=${STACK_NAME}"
     # security_opt:
     #   - no-new-privileges:true
 
@@ -163,15 +175,19 @@ services:
     image: redis:6.2
     volumes:
       - redis-data:/data
-    deploy:
-      replicas: 1
     networks:
       - backend-network
+    deploy:
+      replicas: 1
+      labels:
+        - "com.docker.stack.namespace=${STACK_NAME}"
 
 networks:
   frontend-network:
+    name: ${STACK_NAME}_frontend
     driver: overlay
   backend-network:
+    name: ${STACK_NAME}_backend
     driver: overlay
 
 volumes:
@@ -214,5 +230,3 @@ secrets:
     external: true
   email_from:
     external: true
-
-
