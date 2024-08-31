@@ -34,8 +34,8 @@ services:
       - LETSENCRYPT_EMAIL_FILE=/run/secrets/letsencrypt_email
       - RATE_LIMIT_AVERAGE=${rate_limit_average}
       - RATE_LIMIT_BURST=${rate_limit_burst}
-      - NOOP_URL=http://192.168.65.2  # Docker host IP
       - NODE_ENV=${NODE_ENV:-development}
+      - CERT_RESOLVER=${CERT_RESOLVER:-}
     deploy:
       mode: global
       placement:
@@ -44,19 +44,23 @@ services:
       labels:
         - "com.docker.stack.namespace=${STACK_NAME}"
         - "traefik.enable=true"
+        - "traefik.http.routers.traefik.rule=Host(`${DOMAIN_NAME}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+        - "traefik.http.routers.traefik.entrypoints=websecure"
         - "traefik.http.routers.traefik.tls=true"
+        - "traefik.http.routers.traefik.tls.certresolver=${CERT_RESOLVER:-}"
         - "traefik.http.routers.traefik.service=api@internal"
-        - "traefik.http.routers.traefik.middlewares=auth"
+        - "traefik.http.routers.traefik.middlewares=auth,rate-limit"
         - "traefik.http.middlewares.auth.basicauth.usersfile=/run/secrets/traefik_auth"
-        - "traefik.http.middlewares.rate-limit.ratelimit.average=${rate_limit_average}"
-        - "traefik.http.middlewares.rate-limit.ratelimit.burst=${rate_limit_burst}"
+        - "traefik.http.middlewares.rate-limit.ratelimit.average=${RATE_LIMIT_AVERAGE}"
+        - "traefik.http.middlewares.rate-limit.ratelimit.burst=${RATE_LIMIT_BURST}"
+
 
   frontend:
     image: frontend-image:latest
     secrets:
       - domain_name
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development} 
       - VITE_API_URL=https://${domain_name}/api
       - DOMAIN_NAME=${domain_name}
     volumes:
@@ -76,7 +80,13 @@ services:
         - "traefik.http.routers.frontend.rule=Host(`${domain_name}`)"
         - "traefik.http.routers.frontend.entrypoints=websecure"
         - "traefik.http.routers.frontend.tls=true"
-        - "traefik.http.routers.frontend.tls.certresolver=le"
+        - "traefik.http.routers.frontend.tls.certresolver=${CERT_RESOLVER:-}"
+        - "traefik.http.services.frontend.loadbalancer.server.port=${NODE_ENV:-development}-production:80-5173"
+        - "traefik.http.routers.frontend.service=frontend"
+        - "traefik.http.services.frontend.loadbalancer.passhostheader=true"
+        - "traefik.http.middlewares.frontend-security-headers.headers.customresponseheaders.X-Frame-Options=SAMEORIGIN"
+        - "traefik.http.middlewares.frontend-security-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
+        - "traefik.http.routers.frontend.middlewares=frontend-security-headers"
 
   backend:
     image: backend-image:latest
@@ -93,7 +103,7 @@ services:
       - email_password
       - email_from
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development} 
       - PORT=5000
       - FRONTEND=https://${domain_name}
       - DB_NAME_FILE=/run/secrets/db_name
@@ -121,14 +131,14 @@ services:
         parallelism: 1
         delay: 10s
       labels:
-        - "com.docker.stack.namespace=${STACK_NAME}"
         - "traefik.enable=true"
+        - "com.docker.stack.namespace=${STACK_NAME}"
         - "traefik.http.routers.backend.rule=Host(`${domain_name}`) && PathPrefix(`/api`)"
         - "traefik.http.routers.backend.entrypoints=websecure"
         - "traefik.http.routers.backend.tls=true"
-        - "traefik.http.routers.backend.tls.certresolver=le"
-        - "traefik.http.middlewares.strip-api-prefix.stripprefix.prefixes=/api"
-        - "traefik.http.routers.backend.middlewares=strip-api-prefix@docker,rate-limit@docker"
+        - "traefik.http.routers.frontend.tls.certresolver=${CERT_RESOLVER:-}"
+      # - "traefik.http.middlewares.strip-api-prefix.stripprefix.prefixes=/api"
+      # - "traefik.http.routers.backend.middlewares=strip-api-prefix@docker"
 
   mongo:
     image: mongo-image:latest

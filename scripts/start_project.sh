@@ -9,8 +9,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Parse command line arguments
 if [ "$1" == "--dev" ]; then
     ENV="development"
+    export CERT_RESOLVER=""
 elif [ "$1" == "--prod" ]; then
     ENV="production"
+    export CERT_RESOLVER="le"
 else
     echo "Usage: $0 [--dev|--prod]"
     exit 1

@@ -37,14 +37,6 @@ http:
         certResolver: {{ .Env.CERT_RESOLVER }}
         {{ end }}
 
-{{ if ne .Env.NOOP_URL "" }}
-  services:
-    noop:
-      loadBalancer:
-        servers:
-          - url: ${NOOP_URL}
-  {{ end }}
-
 {{ if eq .Env.CERT_RESOLVER "le" }}
 certificatesResolvers:
   le:
