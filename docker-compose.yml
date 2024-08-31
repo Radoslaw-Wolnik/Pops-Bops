@@ -134,16 +134,17 @@ services:
     image: mongo-image:latest
     volumes:
       - mongo-data:/data/db
+       - ./init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh
     secrets:
       - db_root_username
       - db_root_password
       - db_name
+      - db_user
+      - db_password
     environment:
-      - MONGO_INITDB_ROOT_USERNAME_FILE=/run/secrets/db_root_username
-      - MONGO_INITDB_ROOT_PASSWORD_FILE=/run/secrets/db_root_password
       - MONGO_INITDB_DATABASE_FILE=/run/secrets/db_name
     healthcheck:
-      test: ["CMD", "mongo", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5

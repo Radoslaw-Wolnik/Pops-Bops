@@ -1,8 +1,11 @@
 FROM mongo:latest
 
-ADD mongo.conf /etc/mongo.conf
+COPY mongod.conf /etc/mongod.conf
+COPY init-mongo.sh /docker-entrypoint-initdb.d/init-mongo.sh
 
-CMD ["mongod", "--config", "etc/mongo.conf"]
+RUN chmod +x /docker-entrypoint-initdb.d/init-mongo.sh
+
+CMD ["mongod", "--config", "/etc/mongod.conf"]
 # command: ["mongod", "--config", "/etc/mongod.conf", "--verbose"]
 
 #  - ./backend/scripts/init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js
