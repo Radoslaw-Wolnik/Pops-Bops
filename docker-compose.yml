@@ -116,8 +116,9 @@ services:
       - EMAIL_USER_FILE=/run/secrets/email_user
       - EMAIL_PASS_FILE=/run/secrets/email_password
       - EMAIL_FROM_FILE=/run/secrets/email_from
-      - OLD_ENCRYPTION_KEY
+      - OLD_ENCRYPTION_KEY=""
       - ROTATION_IN_PROGRESS=false
+      - DB_URI=""
     volumes:
       - ./backend/src:/app/src:delegated
       # - ./backend/nodemon.json:/app/nodemon.json
@@ -141,7 +142,7 @@ services:
       # - "traefik.http.routers.backend.middlewares=strip-api-prefix@docker"
 
   mongo:
-    image: mongo-image:latest
+    image: mongo-image:6.0
     volumes:
       - mongo-data:/data/db
        - ./init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh
@@ -158,6 +159,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 40s
     networks:
       - backend-network
     deploy:

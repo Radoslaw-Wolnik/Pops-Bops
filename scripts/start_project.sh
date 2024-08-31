@@ -91,7 +91,7 @@ create_docker_secrets
 
 # Build Docker images
 echo "Building mongo image..."
-docker build -t mongo-image:latest "$SCRIPT_DIR/../backend/mongo" 2>&1 | tee mongo_build.log
+docker build -t mongo-image:6.0 "$SCRIPT_DIR/../backend/mongo" 2>&1 | tee mongo_build.log
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
     echo "mongo build failed. Check mongo_build.log for details."
     exit 1

@@ -1,4 +1,4 @@
-FROM mongo:latest
+FROM mongo:6.0 
 
 COPY mongod.conf /etc/mongod.conf
 COPY init-mongo.sh /docker-entrypoint-initdb.d/init-mongo.sh
