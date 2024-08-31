@@ -12,7 +12,7 @@ stop_swarm() {
     docker stack rm $STACK_NAME
 
     echo "Waiting for services to stop..."
-    sleep 30
+    sleep 20
 
     echo "Leaving Docker Swarm..."
     docker swarm leave --force

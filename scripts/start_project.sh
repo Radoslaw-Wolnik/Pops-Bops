@@ -91,21 +91,21 @@ create_docker_secrets
 
 # Build Docker images
 echo "Building mongo image..."
-docker build -t mongo-image:6.0 "$SCRIPT_DIR/../backend/mongo" 2>&1 | tee mongo_build.log
+docker build -t mongo-image:6.0 "$SCRIPT_DIR/../backend/mongo" 2>&1 | tee ./logs/mongo_build.log
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
     echo "mongo build failed. Check mongo_build.log for details."
     exit 1
 fi
 
 echo "Building backend image..."
-docker build -t backend-image:latest --target $ENV "$SCRIPT_DIR/../backend" 2>&1 | tee backend_build.log
+docker build -t backend-image:latest --target $ENV "$SCRIPT_DIR/../backend" 2>&1 | tee ./logs/backend_build.log
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
     echo "Backend build failed. Check backend_build.log for details."
     exit 1
 fi
 
 echo "Building frontend image..."
-docker build -t frontend-image:latest --target $ENV "$SCRIPT_DIR/../frontend" 2>&1 | tee frontend_build.log
+docker build -t frontend-image:latest --target $ENV "$SCRIPT_DIR/../frontend" 2>&1 | tee ./logs/frontend_build.log
 if [ ${PIPESTATUS[0]} -ne 0 ]; then
     echo "Frontend build failed. Check frontend_build.log for details."
     exit 1
@@ -125,7 +125,7 @@ export NODE_ENV=$ENV
 STACK_NAME=$STACK_NAME docker stack deploy -c "$SCRIPT_DIR/../docker-compose.yml" $STACK_NAME
 
 echo "Waiting for services to start..."
-sleep 30
+sleep 10
 
 echo "Deployed services:"
 docker stack services $STACK_NAME
