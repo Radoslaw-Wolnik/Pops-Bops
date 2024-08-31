@@ -6,8 +6,7 @@ import env from '../src/config/environment';
 const BATCH_SIZE = 100; // Number of users to process in each batch
 
 async function connectToDatabase() {
-  const dbURI = `mongodb://${env.DB_USER}:${env.DB_PASS}@${env.DB_HOST}/${env.DB_NAME}`;
-  await mongoose.connect(dbURI);
+  await mongoose.connect(env.DB_URI);
   console.log('Connected to MongoDB');
 }
 

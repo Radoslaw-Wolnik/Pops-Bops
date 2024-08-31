@@ -7,6 +7,7 @@ interface Environment {
   DB_NAME: string;
   DB_USER: string;
   DB_PASS: string;
+  DB_URI: string;
   JWT_SECRET: string;
   PORT: number;
   PORT_HTTP: number;
@@ -49,6 +50,10 @@ const env: Environment = {
   ENCRYPTION_KEY: readSecret(process.env.ENCRYPTION_KEY || '/run/secrets/encryption_key'),
   OLD_ENCRYPTION_KEY: process.env.OLD_ENCRYPTION_KEY || '',
   ROTATION_IN_PROGRESS: process.env.ROTATION_IN_PROGRESS === 'true',
+  get DB_URI() {
+    return `mongodb://${this.DB_USER}:${this.DB_PASS}@${this.DB_HOST}:27017/${this.DB_NAME}?authMechanism=SCRAM-SHA-256`;
+//  return `mongodb://${this.DB_USER}:${this.DB_PASS}@mongo:27017/${this.DB_NAME}?authMechanism=SCRAM-SHA-256`,
+  },
 };
 
 export default env;

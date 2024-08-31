@@ -132,8 +132,7 @@ async function createCustomCollections(users: IUserDocument[]): Promise<void> {
 
 async function populateDB(): Promise<void> {
   try {
-    const dbURI = `mongodb://${env.DB_USER}:${env.DB_PASS}@${env.DB_HOST}/${env.DB_NAME}`;
-    await mongoose.connect(dbURI);
+    await mongoose.connect(env.DB_URI);
     console.log('Connected to MongoDB');
 
     // Check if database is already populated

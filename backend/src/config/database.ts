@@ -3,9 +3,8 @@ import env from './environment.js';
 
 // Function to connect to MongoDB
 const connectToMongoDB = async (): Promise<typeof mongoose> => {
-  const dbURI = `mongodb://${env.DB_USER}:${env.DB_PASS}@${env.DB_HOST}/${env.DB_NAME}`;
-  
-  return mongoose.connect(dbURI, {
+
+  return mongoose.connect(env.DB_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   } as mongoose.ConnectOptions);
