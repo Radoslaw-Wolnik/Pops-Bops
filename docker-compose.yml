@@ -11,6 +11,11 @@ services:
       - "--entrypoints.websecure.address=:443"
       - "--providers.file.directory=/etc/traefik/dynamic_conf"
       - "--providers.file.watch=true"
+      - "--accesslog=true"
+      - "--accesslog.filepath=/path/to/access.log"
+      - "--log.level=INFO"
+      - "--metrics.prometheus=true"
+      - "--metrics.prometheus.buckets=0.1,0.3,1.2,5.0"
     ports:
       - "80:80"
       - "443:443"
@@ -35,6 +40,7 @@ services:
       - RATE_LIMIT_AVERAGE=${rate_limit_average}
       - RATE_LIMIT_BURST=${rate_limit_burst}
       - NODE_ENV=${NODE_ENV:-development}
+      # Comment out or remove the next line if not using Let's Encrypt in development
       - CERT_RESOLVER=${CERT_RESOLVER:-}
     deploy:
       mode: global
@@ -47,7 +53,7 @@ services:
         - "traefik.http.routers.traefik.rule=Host(`${DOMAIN_NAME}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
         - "traefik.http.routers.traefik.entrypoints=websecure"
         - "traefik.http.routers.traefik.tls=true"
-        - "traefik.http.routers.traefik.tls.certresolver=${CERT_RESOLVER:-}"
+        - "traefik.http.routers.traefik.tls.certresolver=${CERT_RESOLVER:-}" # remove
         - "traefik.http.routers.traefik.service=api@internal"
         - "traefik.http.routers.traefik.middlewares=auth,rate-limit"
         - "traefik.http.middlewares.auth.basicauth.usersfile=/run/secrets/traefik_auth"
@@ -137,7 +143,8 @@ services:
         - "traefik.http.routers.backend.rule=Host(`${domain_name}`) && PathPrefix(`/api`)"
         - "traefik.http.routers.backend.entrypoints=websecure"
         - "traefik.http.routers.backend.tls=true"
-        - "traefik.http.routers.frontend.tls.certresolver=${CERT_RESOLVER:-}"
+        - "traefik.http.services.backend.loadbalancer.server.port=5000"
+      # - "traefik.http.routers.frontend.tls.certresolver=${CERT_RESOLVER:-}"
       # - "traefik.http.middlewares.strip-api-prefix.stripprefix.prefixes=/api"
       # - "traefik.http.routers.backend.middlewares=strip-api-prefix@docker"
 
