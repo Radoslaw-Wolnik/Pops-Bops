@@ -7,9 +7,9 @@ tls:
       defaultCertificate:
         certFile: /certs/localhost.crt
         keyFile: /certs/localhost.key
-  options:
-    default:
-      minVersion: VersionTLS12
+#  options:
+#     default:
+#       minVersion: VersionTLS12
 
 http:
   middlewares:
@@ -33,14 +33,19 @@ http:
         - websecure
       service: noop@internal
       tls:
-        certResolver: le
+        {{ if ne .Env.CERT_RESOLVER "" }}
+        certResolver: {{ .Env.CERT_RESOLVER }}
+        {{ end }}
 
+{{ if ne .Env.NOOP_URL "" }}
   services:
     noop:
       loadBalancer:
         servers:
           - url: ${NOOP_URL}
+  {{ end }}
 
+{{ if eq .Env.CERT_RESOLVER "le" }}
 certificatesResolvers:
   le:
     acme:
@@ -48,3 +53,4 @@ certificatesResolvers:
       storage: /letsencrypt/acme.json
       httpChallenge:
         entryPoint: web
+{{ end }}
