@@ -16,8 +16,15 @@ COPY . .
 # Development stage
 FROM base AS development
 
+# Install ts-node globally
+RUN npm install -g ts-node typescript
+
+# Make sure nodemon is installed
+RUN npm install -g nodemon
+
 # Copy additional development-specific configuration files
-COPY nodemon.json .
+# COPY nodemon.json .
+# or insted in volumes in docekr-compose
 
 # Make uploads dir in development setup
 RUN mkdir -p /app/uploads
@@ -26,7 +33,11 @@ RUN mkdir -p /app/uploads
 EXPOSE 5000
 
 # Command to run the application in development mode
-CMD ["npm", "run", "devstart"]
+#CMD ["npm", "run", "devstart"]
+# Use ts-node-dev for development
+#CMD ["npx", "nodemon", "--exec", "node", "--loader", "ts-node/esm", "src/server.ts"]
+CMD ["npx", "nodemon", "--exec", "ts-node", "src/server.ts"]
+
 
 # Build stage
 FROM base AS build
@@ -42,11 +53,11 @@ WORKDIR /app
 # Copy package.json and package-lock.json for production install
 COPY --from=build /app/package*.json ./
 
-# Install production dependencies
-RUN npm ci --only=production
-
 # Copy compiled JavaScript files
 COPY --from=build /app/dist ./dist
+
+# Install production dependencies
+RUN npm ci --only=production
 
 # Make uploads dir in production
 RUN mkdir -p /app/uploads
@@ -59,3 +70,4 @@ ENV NODE_ENV=production
 
 # Command to run the application in production mode
 CMD ["npm", "run", "start"]
+# CMD ["node", "dist/server.js"]
