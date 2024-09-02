@@ -9,6 +9,14 @@ export default defineConfig({
     sourcemap: true  // Ensure source maps are generated
   },
   server: {
+    host: '0.0.0.0', // same as true
+    port: 5173,
+    watch: {
+      usePolling: true,
+    },
+  },
+  /*
+  server: {
     host: true, // This makes the server accessible externally
     port: 5173, // Optional: specify the port
     watch: {
@@ -18,4 +26,5 @@ export default defineConfig({
       overlay: true,
     },
   }
+  */
 })

@@ -5,13 +5,13 @@ services:
     image: traefik:v2.5
     command:
       - "--api.insecure=true"
-      - "--api.dashboard=true"  # Enable dashboard
+      - "--api.dashboard=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--providers.docker.swarmMode=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-      - "--providers.file.directory=/etc/traefik/dynamic_conf"
+      - "--providers.file.directory=/etc/traefik/dynamic_conf" # the traefic dynamic conf file
       - "--providers.file.watch=true"
       - "--log.level=DEBUG"
     ports:
@@ -46,17 +46,16 @@ services:
         constraints:
           - node.role == manager
       labels:
-        - "com.docker.stack.namespace=${STACK_NAME}"
         - "traefik.enable=true"
-        - "traefik.http.routers.traefik.rule=Host(`${DOMAIN_NAME}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+        - "traefik.http.routers.traefik.rule=Host(`dev.local`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
         - "traefik.http.routers.traefik.entrypoints=websecure"
         - "traefik.http.routers.traefik.tls=true"
-        - "traefik.http.routers.traefik.tls.certresolver=${CERT_RESOLVER:-}" # remove
         - "traefik.http.routers.traefik.service=api@internal"
-        - "traefik.http.routers.traefik.middlewares=auth,rate-limit"
         - "traefik.http.middlewares.auth.basicauth.usersfile=/run/secrets/traefik_auth"
-        - "traefik.http.middlewares.rate-limit.ratelimit.average=${RATE_LIMIT_AVERAGE}"
-        - "traefik.http.middlewares.rate-limit.ratelimit.burst=${RATE_LIMIT_BURST}"
+        - "traefik.http.routers.traefik.tls.certresolver=${CERT_RESOLVER:-}" # cert resolver
+      # - "traefik.http.routers.traefik.middlewares=auth,rate-limit"
+      # - "traefik.http.middlewares.rate-limit.ratelimit.average=${RATE_LIMIT_AVERAGE}"
+      # - "traefik.http.middlewares.rate-limit.ratelimit.burst=${RATE_LIMIT_BURST}"
 
 
   frontend:
@@ -74,7 +73,7 @@ services:
     networks:
       - frontend-network
     ports:
-      - "3000:5173"  # Map container port 5173 to host port 3000
+      - "3000:5173"  # Map container port 5173 to host port 3000 for dev
     deploy:
       replicas: 1
       update_config:
@@ -88,6 +87,11 @@ services:
         - "traefik.http.routers.frontend.entrypoints=websecure"
         - "traefik.http.routers.frontend.tls=true"
         - "traefik.docker.network=frontend-network"
+        # Add WebSocket route
+        - "traefik.http.routers.frontend-ws.rule=Host(`dev.local`) && PathPrefix(`/ws`)"
+        - "traefik.http.routers.frontend-ws.entrypoints=websecure"
+        - "traefik.http.routers.frontend-ws.tls=true"
+        - "traefik.http.services.frontend-ws.loadbalancer.server.port=5173"
         #- "traefik.http.routers.frontend.tls.certresolver=${CERT_RESOLVER:-}"
         #- "traefik.http.middlewares.frontend-security-headers.headers.customresponseheaders.X-Frame-Options=SAMEORIGIN"
         #- "traefik.http.middlewares.frontend-security-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
@@ -138,14 +142,12 @@ services:
         delay: 10s
       labels:
         - "traefik.enable=true"
-        - "com.docker.stack.namespace=${STACK_NAME}"
-        - "traefik.http.routers.backend.rule=Host(`${domain_name}`) && PathPrefix(`/api`)"
+      #  - "com.docker.stack.namespace=${STACK_NAME}"
+        - "traefik.http.routers.backend.rule=Host(`dev.local`) && PathPrefix(`/api`)"
         - "traefik.http.routers.backend.entrypoints=websecure"
         - "traefik.http.routers.backend.tls=true"
         - "traefik.http.services.backend.loadbalancer.server.port=5000"
       # - "traefik.http.routers.frontend.tls.certresolver=${CERT_RESOLVER:-}"
-      # - "traefik.http.middlewares.strip-api-prefix.stripprefix.prefixes=/api"
-      # - "traefik.http.routers.backend.middlewares=strip-api-prefix@docker"
 
   mongo:
     image: mongo-image:6.0

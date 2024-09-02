@@ -1,22 +1,53 @@
 version: '3.8'
 
 services:
-  traefik:
+  reverse-proxy:
     image: traefik:v2.5
     command:
       - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
       - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.file.directory=/etc/traefik/dynamic_conf"
+#     - "--providers.file.watch=true"
+#      - "--providers.file.filename=simplified_certificates.yml"
+      - "--providers.file.filename=/etc/traefik/dynamic_conf/simplified_certificates.yml"
+      - "--log.level=DEBUG"
+      - "--accesslog=true"
     ports:
       - "80:80"
-      - "8080:8080"
+      - "443:443"
+      - "8080:8080"  # Traefik dashboard
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./certs:/certs:ro"
+      - "./traefik_dynamic_conf:/etc/traefik/dynamic_conf:ro"
+    networks:
+      - web
 
-  whoami:
-    image: traefik/whoami
+  frontend:
+    image: frontend-image:latest
+    ports:
+      - "3000:5173"
+    environment:
+      - NODE_ENV=development
+      - VITE_USE_HTTPS=true
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm run dev
+    networks:
+      - web
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.whoami.rule=Host(`whoami.localhost`)"
-      - "traefik.http.routers.whoami.entrypoints=web"
+      - "traefik.http.routers.frontend.rule=Host(`dev.local`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=5173"
+      - "traefik.http.routers.frontend.entrypoints=websecure"
+      - "traefik.http.routers.frontend.tls=true"
+      - "traefik.docker.network=web"
+
+networks:
+  web:
+    driver: bridge
