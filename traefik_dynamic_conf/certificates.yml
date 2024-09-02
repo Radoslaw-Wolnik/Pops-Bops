@@ -7,9 +7,6 @@ tls:
       defaultCertificate:
         certFile: /certs/localhost.crt
         keyFile: /certs/localhost.key
-#  options:
-#     default:
-#       minVersion: VersionTLS12
 
 http:
   middlewares:
@@ -33,15 +30,8 @@ http:
         - websecure
       service: noop@internal
       tls: {}
-      #   {{ if ne .Env.CERT_RESOLVER "" }}
-      #   certResolver: {{ .Env.CERT_RESOLVER }}
-       #  {{ end }}
 
-
-
-#{{ $cert_resolver := env "CERT_RESOLVER" }}
-#{{ if $cert_resolver }}
-{{ if ne (env "CERT_RESOLVER" "") "" }}
+{{ if ne (env "CERT_RESOLVER") "" }}
 certificatesResolvers:
   le:
     acme:

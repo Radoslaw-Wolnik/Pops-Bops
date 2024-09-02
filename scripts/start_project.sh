@@ -117,6 +117,10 @@ fi
 # docker build -t frontend-image:latest --target $ENV "$SCRIPT_DIR/../frontend"
 
 
+# Create networks
+docker network create --driver overlay frontend-network
+docker network create --driver overlay backend-network
+
 # Deploy the stack
 echo "Deploying the stack..."
 export NODE_ENV=$ENV
@@ -137,6 +141,33 @@ echo "Backend API: https://${DOMAIN_NAME}/api"
 
 echo "Service status:"
 docker service ls --filter name=${STACK_NAME}
+
+echo "Deployed services:"
+docker stack services $STACK_NAME
+
+
+# logging for the debugining
+DOMAIN_NAME=$(pass show domain_name)
+echo "Access your services at:"
+echo "Frontend: https://${DOMAIN_NAME}"
+echo "Backend API: https://${DOMAIN_NAME}/api"
+
+echo "Service status:"
+docker service ls --filter name=${STACK_NAME}
+
+echo "Detailed information for frontend service:"
+docker service ps ${STACK_NAME}_frontend --no-trunc
+
+echo "Logs for frontend service:"
+docker service logs ${STACK_NAME}_frontend
+
+echo "Logs for Traefik service:"
+docker service logs ${STACK_NAME}_reverse-proxy
+
+# Add these lines for additional debugging
+# echo "Checking Traefik configuration:"
+# docker exec $(docker ps -q -f name=reverse-proxy) traefik show-config
+
 
 # If you need to troubleshoot, you can get more detailed information about a specific service
 # echo "Detailed information for backend service:"

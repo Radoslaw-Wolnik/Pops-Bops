@@ -4,10 +4,11 @@ services:
   reverse-proxy:
     image: traefik:v2.5
     command:
-      - "--api.insecure=true"  # Enable insecure API for troubleshooting
+      - "--api.insecure=true"
       - "--api.dashboard=true"  # Enable dashboard
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
+      - "--providers.docker.swarmMode=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--providers.file.directory=/etc/traefik/dynamic_conf"
@@ -80,14 +81,13 @@ services:
         parallelism: 1
         delay: 10s
       labels:
-        - "com.docker.stack.namespace=${STACK_NAME}"
+        #- "traefik.http.routers.frontend.rule=Host(`${domain_name}`)"
         - "traefik.enable=true"
-        - "traefik.http.routers.frontend.rule=Host(`${domain_name}`)"
+        - "traefik.http.routers.frontend.rule=Host(`dev.local`) || Host(`localhost`)"
+        - "traefik.http.services.frontend.loadbalancer.server.port=5173"
         - "traefik.http.routers.frontend.entrypoints=websecure"
         - "traefik.http.routers.frontend.tls=true"
-        - "traefik.http.services.frontend.loadbalancer.server.port=5173" # prod 80 dev 5173
-        - "traefik.http.routers.frontend.service=frontend"
-        - "traefik.http.services.frontend.loadbalancer.passhostheader=true"
+        - "traefik.docker.network=frontend-network"
         #- "traefik.http.routers.frontend.tls.certresolver=${CERT_RESOLVER:-}"
         #- "traefik.http.middlewares.frontend-security-headers.headers.customresponseheaders.X-Frame-Options=SAMEORIGIN"
         #- "traefik.http.middlewares.frontend-security-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
