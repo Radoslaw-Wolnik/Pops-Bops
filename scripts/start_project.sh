@@ -161,8 +161,8 @@ docker service ps ${STACK_NAME}_frontend --no-trunc
 echo "Logs for frontend service:"
 docker service logs ${STACK_NAME}_frontend
 
-echo "Logs for Traefik service:"
-docker service logs ${STACK_NAME}_reverse-proxy
+# echo "Logs for Traefik service:"
+# docker service logs ${STACK_NAME}_reverse-proxy
 
 # Add these lines for additional debugging
 # echo "Checking Traefik configuration:"

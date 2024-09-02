@@ -33,7 +33,7 @@ services:
       - rate_limit_average
       - rate_limit_burst
     environment:
-      - DOMAIN_NAME=${domain_name}
+      - DOMAIN_NAME=/run/secrets/domain_name
       - LETSENCRYPT_EMAIL_FILE=/run/secrets/letsencrypt_email
       - RATE_LIMIT_AVERAGE=${rate_limit_average}
       - RATE_LIMIT_BURST=${rate_limit_burst}
@@ -47,7 +47,7 @@ services:
           - node.role == manager
       labels:
         - "traefik.enable=true"
-        - "traefik.http.routers.traefik.rule=Host(`dev.local`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
+        - "traefik.http.routers.traefik.rule=Host(`${DOMAIN_NAME}`) && (PathPrefix(`/api`) || PathPrefix(`/dashboard`))"
         - "traefik.http.routers.traefik.entrypoints=websecure"
         - "traefik.http.routers.traefik.tls=true"
         - "traefik.http.routers.traefik.service=api@internal"
@@ -65,7 +65,7 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development} 
       - VITE_API_URL=https://${domain_name}/api
-      - DOMAIN_NAME=${domain_name}
+      - DOMAIN_NAME=/run/secrets/domain_name
     volumes:
       - ./frontend:/app
       - /app/node_modules
@@ -74,24 +74,21 @@ services:
       - frontend-network
     ports:
       - "3000:5173"  # Map container port 5173 to host port 3000 for dev
+    depends_on:
+      - reverse-proxy
     deploy:
       replicas: 1
       update_config:
         parallelism: 1
         delay: 10s
       labels:
-        #- "traefik.http.routers.frontend.rule=Host(`${domain_name}`)"
         - "traefik.enable=true"
-        - "traefik.http.routers.frontend.rule=Host(`dev.local`) || Host(`localhost`)"
+      # - "traefik.http.routers.frontend.rule=Host(`${DOMAIN_NAME}`)"
+        - "traefik.http.routers.frontend.rule=Host(`popsbops.localhost`)"
         - "traefik.http.services.frontend.loadbalancer.server.port=5173"
         - "traefik.http.routers.frontend.entrypoints=websecure"
         - "traefik.http.routers.frontend.tls=true"
         - "traefik.docker.network=frontend-network"
-        # Add WebSocket route
-        - "traefik.http.routers.frontend-ws.rule=Host(`dev.local`) && PathPrefix(`/ws`)"
-        - "traefik.http.routers.frontend-ws.entrypoints=websecure"
-        - "traefik.http.routers.frontend-ws.tls=true"
-        - "traefik.http.services.frontend-ws.loadbalancer.server.port=5173"
         #- "traefik.http.routers.frontend.tls.certresolver=${CERT_RESOLVER:-}"
         #- "traefik.http.middlewares.frontend-security-headers.headers.customresponseheaders.X-Frame-Options=SAMEORIGIN"
         #- "traefik.http.middlewares.frontend-security-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
@@ -128,6 +125,7 @@ services:
       - OLD_ENCRYPTION_KEY=""
       - ROTATION_IN_PROGRESS=false
       - DB_URI=""
+      - DOMAIN_NAME=/run/secrets/domain_name
     volumes:
       - ./backend/src:/app/src:delegated
       - ./backend/nodemon.json:/app/nodemon.json
@@ -135,6 +133,9 @@ services:
       - ./backend/uploads:/app/uploads
     networks:
       - backend-network
+    depends_on:
+      - reverse-proxy
+      - mongo
     deploy:
       replicas: 1
       update_config:
@@ -143,7 +144,7 @@ services:
       labels:
         - "traefik.enable=true"
       #  - "com.docker.stack.namespace=${STACK_NAME}"
-        - "traefik.http.routers.backend.rule=Host(`dev.local`) && PathPrefix(`/api`)"
+        - "traefik.http.routers.backend.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/api`)"
         - "traefik.http.routers.backend.entrypoints=websecure"
         - "traefik.http.routers.backend.tls=true"
         - "traefik.http.services.backend.loadbalancer.server.port=5000"
@@ -180,8 +181,6 @@ services:
         delay: 10s
       rollback_config:
         parallelism: 1
-      labels:
-        - "com.docker.stack.namespace=${STACK_NAME}"
     logging:
       driver: "json-file"
       options:
@@ -198,8 +197,7 @@ services:
       - backend-network
     deploy:
       replicas: 1
-      labels:
-        - "com.docker.stack.namespace=${STACK_NAME}"
+
 
 networks:
   frontend-network:

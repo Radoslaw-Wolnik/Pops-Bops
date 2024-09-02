@@ -53,3 +53,10 @@ services:
 networks:
   web:
     driver: bridge
+
+
+# to run:
+# docker-compose -f minimal-docker-compose.yml up -d
+
+# to stop:
+# docker-compose -f minimal-docker-compose.yml down
