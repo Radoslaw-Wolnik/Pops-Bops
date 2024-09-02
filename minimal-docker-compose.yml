@@ -12,7 +12,7 @@ services:
       - "--providers.file.directory=/etc/traefik/dynamic_conf"
 #     - "--providers.file.watch=true"
 #      - "--providers.file.filename=simplified_certificates.yml"
-      - "--providers.file.filename=/etc/traefik/dynamic_conf/simplified_certificates.yml"
+#      - "--providers.file.filename=/etc/traefik/dynamic_conf/simplified_certificates.yml"
       - "--log.level=DEBUG"
       - "--accesslog=true"
     ports:
@@ -40,9 +40,11 @@ services:
     command: npm run dev
     networks:
       - web
+    depends_on:
+      - reverse-proxy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`dev.local`)"
+      - "traefik.http.routers.frontend.rule=Host(`frontend.localhost`)"
       - "traefik.http.services.frontend.loadbalancer.server.port=5173"
       - "traefik.http.routers.frontend.entrypoints=websecure"
       - "traefik.http.routers.frontend.tls=true"
