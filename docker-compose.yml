@@ -75,6 +75,8 @@ services:
     command: npm run dev
     networks:
       - frontend-network
+    ports:
+      - "3000:5173"  # Map container port 5173 to host port 3000
     deploy:
       replicas: 1
       update_config:
@@ -86,13 +88,13 @@ services:
         - "traefik.http.routers.frontend.rule=Host(`${domain_name}`)"
         - "traefik.http.routers.frontend.entrypoints=websecure"
         - "traefik.http.routers.frontend.tls=true"
-        - "traefik.http.routers.frontend.tls.certresolver=${CERT_RESOLVER:-}"
-        - "traefik.http.services.frontend.loadbalancer.server.port=${NODE_ENV:-development}-production:80-5173"
+        - "traefik.http.services.frontend.loadbalancer.server.port=5173" # prod 80 dev 5173
         - "traefik.http.routers.frontend.service=frontend"
         - "traefik.http.services.frontend.loadbalancer.passhostheader=true"
-        - "traefik.http.middlewares.frontend-security-headers.headers.customresponseheaders.X-Frame-Options=SAMEORIGIN"
-        - "traefik.http.middlewares.frontend-security-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
-        - "traefik.http.routers.frontend.middlewares=frontend-security-headers"
+        #- "traefik.http.routers.frontend.tls.certresolver=${CERT_RESOLVER:-}"
+        #- "traefik.http.middlewares.frontend-security-headers.headers.customresponseheaders.X-Frame-Options=SAMEORIGIN"
+        #- "traefik.http.middlewares.frontend-security-headers.headers.customresponseheaders.X-Content-Type-Options=nosniff"
+        #- "traefik.http.routers.frontend.middlewares=frontend-security-headers"
 
   backend:
     image: backend-image:latest
@@ -127,7 +129,7 @@ services:
       - DB_URI=""
     volumes:
       - ./backend/src:/app/src:delegated
-      # - ./backend/nodemon.json:/app/nodemon.json
+      - ./backend/nodemon.json:/app/nodemon.json
       - /app/node_modules
       - ./backend/uploads:/app/uploads
     networks:

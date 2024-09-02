@@ -37,14 +37,14 @@ http:
       #   certResolver: {{ .Env.CERT_RESOLVER }}
        #  {{ end }}
 
-
-{{ $cert_resolver := env "CERT_RESOLVER" }}
-{{ if ne $cert_resolver "" }}
-certificatesResolvers:
-  le:
-    acme:
-      email: {{ env "LETSENCRYPT_EMAIL" }} 
-      storage: /letsencrypt/acme.json
-      httpChallenge:
-        entryPoint: web
-{{ end }}
+#
+#{{ $cert_resolver := env "CERT_RESOLVER" }}
+#{{ if $cert_resolver }}
+#certificatesResolvers:
+#  le:
+#    acme:
+#      email: {{ env "LETSENCRYPT_EMAIL" }} 
+#      storage: /letsencrypt/acme.json
+#      httpChallenge:
+#        entryPoint: web
+#{{ end }}
