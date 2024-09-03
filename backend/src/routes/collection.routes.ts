@@ -8,7 +8,7 @@ import {
   removeFromCollection,
   getCollectionById,
   updateCollection
-} from '../controllers/collectionController';
+} from '../controllers/collection.controller';
 
 const router: Router = express.Router();
 

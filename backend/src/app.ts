@@ -2,12 +2,12 @@ import express, { Express } from 'express';
 import cors from 'cors';
 import env from './config/environment';
 
-import userRoutes from './routes/userRoutes';
-import audioRoutes from './routes/audioRoutes';
-import iconRoutes from './routes/iconRoutes';
-import authRoutes from './routes/authRoutes';
-import adminRoutes from './routes/adminRoutes';
-import collectionRoutes from './routes/collectionRoutes'
+import userRoutes from './routes/user.routes';
+import audioRoutes from './routes/audio.routes';
+import iconRoutes from './routes/icon.routes';
+import authRoutes from './routes/auth.routes';
+import adminRoutes from './routes/admin.routes';
+import collectionRoutes from './routes/collection.routes'
 
 
 const app: Express = express();

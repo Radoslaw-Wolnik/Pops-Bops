@@ -13,7 +13,7 @@ import {
     changePassword,
     requestPasswordReset,
     resetPassword
-} from '../controllers/authController.js';
+} from '../controllers/auth.controller.js';
 import { authenticateToken, handlePostRegistrationAuth } from '../middleware/auth.js';
 
 const router: Router = express.Router();

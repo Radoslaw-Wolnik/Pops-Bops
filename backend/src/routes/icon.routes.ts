@@ -3,7 +3,7 @@ import { authenticateAdmin, authenticateToken } from '../middleware/auth.js';
 import { 
   saveIconToStorage,
   updateIcon
-} from "../controllers/iconController.js";
+} from "../controllers/icon.controller.js";
 import { uploadIcon } from '../middleware/upload.js';
 
 const router: Router = express.Router();

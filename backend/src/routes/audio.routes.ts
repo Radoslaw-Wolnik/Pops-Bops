@@ -9,9 +9,9 @@ import {
   saveAudioSample,
   updateAudioSample,
   deleteAudioSample
-} from '../controllers/audioController.js';
+} from '../controllers/audio.controller.js';
 
-import { uploadAudioAndIcon } from '../middleware/uploadCombined';
+import { uploadAudioAndIcon } from '../middleware/uploadCombined.js';
 import { uploadAudio } from '../middleware/upload.js';
 
 const router: Router = express.Router();
