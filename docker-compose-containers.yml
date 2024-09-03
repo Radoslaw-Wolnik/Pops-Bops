@@ -16,9 +16,8 @@ services:
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
       - "--providers.file.directory=/etc/traefik/dynamic_conf"
-#     - "--providers.file.watch=true"
-#      - "--providers.file.filename=simplified_certificates.yml"
-#      - "--providers.file.filename=/etc/traefik/dynamic_conf/certificates_containers.yml"
+      - "--providers.file.watch=true"
+      - "--providers.file.filename=/etc/traefik/dynamic_conf/certificates_containers.yml"
       - "--log.level=DEBUG"
       - "--accesslog=true"
     ports:
