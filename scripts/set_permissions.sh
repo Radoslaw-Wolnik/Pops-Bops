@@ -9,8 +9,11 @@ scripts=(
     "local_secrets.sh"
     "manage_secrets.sh"
     "rotate_secrets_cron.sh"
-    "start_project.sh"
-    "stop_project.sh"
+    "start-containers.sh"
+    "start-swarm.sh"
+    "stop-containers.sh"
+    "stop-swarm.sh"
+    "../backend/mongo/init-mongo.sh"
 )
 
 # Function to set executable permissions
