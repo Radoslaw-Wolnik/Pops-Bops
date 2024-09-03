@@ -8,6 +8,8 @@ import User, { IUserDocument } from '../models/User';
 import { generateToken, setTokenCookie, refreshToken as refreshAuthToken, generateShortLivedToken, setShortLivedTokenCookie } from '../middleware/auth';
 import env from '../config/environment';
 import sendEmail from '../utils/sendEmail';
+import AuthRequest from '../../types/global';
+import { MongoError } from 'mongodb';
 
 interface LoginRequest extends Request {
   body: {
@@ -141,11 +143,13 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
     }
 
     // Check if username is already taken
+    /* insted just try and if not possible send 409 error
     user = await User.findOne({ username });
     if (user) {
       res.status(401).json({ message: 'Username already exists' });
       return;
     }
+    */
 
     // Hash password
     const salt = await bcrypt.genSalt(10);
@@ -194,8 +198,25 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
       message: 'User registered. Please check your email to verify your account.'
     });
   } catch (error) {
-    console.error('Error in registration process:', error);
-    res.status(500).send('Server error');
+    if (error instanceof Error) {
+      // Check if it's a MongoDB duplicate key error
+      if ((error as any).code === 11000) {
+        let field = 'field';
+        if ((error as any).keyPattern) {
+          field = Object.keys((error as any).keyPattern)[0];
+        }
+        res.status(409).json({ 
+          message: `An account with that ${field} already exists.`,
+          field: field
+        });
+      } else {
+        console.error('Error in registration process:', error);
+        res.status(500).json({ message: 'Server error' });
+      }
+    } else {
+      console.error('Unknown error in registration process');
+      res.status(500).json({ message: 'Server error' });
+    }
   }
 };
 
