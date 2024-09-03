@@ -5,7 +5,7 @@ set -e
 
 # Get the directory of the script and the root directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-ROOT_DIR="$(dirname "$SCRIPT_DIR")
+ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 
 # Parse command line arguments
 if [ "$1" == "--dev" ]; then
@@ -44,6 +44,6 @@ fi
 
 # Start the containers
 echo "Starting containers..."
-docker-compose -f docker-compose-containers.yml up -d
+docker-compose -f "$ROOT_DIR/docker-compose-containers.yml" up -d
 
 echo "Containers started successfully."
