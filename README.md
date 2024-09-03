@@ -71,7 +71,86 @@ setInterval(checkTokenExpiration, 60000); // Check every minute
 
 
 
+# Project Name
 
+This project can be run in two modes: Docker containers mode and Docker Swarm mode. Before starting the project, you need to set up local secrets.
+
+## Prerequisites
+
+- Docker
+- Docker Compose
+- Docker Swarm (for swarm mode)
+
+## Setup
+
+### 1. Set up local secrets
+
+Before starting the project, you need to create local secrets based on the example file:
+
+1. Navigate to the scripts directory:
+   ```
+   cd root/scripts
+   ```
+
+2. Copy the example secrets file:
+   ```
+   cp local-secrets.sh.example local-secrets.sh
+   ```
+
+3. Edit `local-secrets.sh` and fill in your actual secret values.
+
+4. Run the local secrets script to create the secrets:
+   ```
+   ./local-secrets.sh
+   ```
+
+### 2. Choose a mode to run the project
+
+#### A. Docker Containers Mode
+
+To start the project in Docker containers mode:
+
+```
+./scripts/start-containers.sh --dev
+```
+
+This will build the necessary Docker images and start the containers defined in `docker-compose-containers.yml`.
+
+To stop the containers:
+
+```
+./scripts/stop-containers.sh
+```
+
+#### B. Docker Swarm Mode
+
+To start the project in Docker Swarm mode:
+
+```
+./scripts/start-project.sh --dev
+```
+
+This will initialize a Docker Swarm (if not already initialized), deploy the stack defined in `docker-compose.yml`, and start the services.
+
+To stop the swarm services and leave the swarm:
+
+```
+./scripts/stop-project.sh
+```
+
+## Choosing Between Containers and Swarm Mode
+
+- **Container Mode**: Ideal for local development and testing. It's simpler to set up and manage for single-machine deployments.
+
+- **Swarm Mode**: Better for production-like environments, multi-node deployments, and when you need features like rolling updates and service scaling.
+
+## Additional Notes
+
+- The `--dev` flag starts the project in development mode. Use `--prod` for production mode.
+- Make sure to never commit `local-secrets.sh` to version control. It's listed in `.gitignore` for your safety.
+- Always check the logs (in the `logs` directory) if you encounter any issues during startup.
+
+For more detailed information about each service, refer to their respective README files in their directories.
 
 
 
