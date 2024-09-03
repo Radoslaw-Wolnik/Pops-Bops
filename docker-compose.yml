@@ -203,9 +203,11 @@ networks:
   frontend-network:
     name: ${STACK_NAME}_frontend
     driver: overlay
+    attachable: true
   backend-network:
     name: ${STACK_NAME}_backend
     driver: overlay
+    attachable: true
 
 volumes:
   mongo-data:
