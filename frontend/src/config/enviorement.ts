@@ -1,27 +1,50 @@
-// sth like that:
-import fs from 'fs';
 
 interface Environment {
   API_URL: string;
+  // Add other environment variables as needed
 }
 
-function getEnvValue(key: string, defaultValue: string = ''): string {
-  // First, try to read from a secret file
-  const secretPath = process.env[`${key}_FILE`];
-  if (secretPath) {
-    try {
-      return fs.readFileSync(secretPath, 'utf8').trim();
-    } catch (error) {
-      console.error(`Error reading secret from ${secretPath}:`, error);
-    }
+async function getEnvValue(key: string, defaultValue: string = ''): Promise<string> {
+  // Check if running in a browser environment
+  if (typeof window !== 'undefined') {
+    // In browser, use Vite's import.meta.env
+    return (import.meta.env[key] as string) || defaultValue;
   }
-  
-  // If secret file doesn't exist or couldn't be read, return the environment variable or default value
-  return process.env[key] || defaultValue;
+
+  // Server-side logic
+  if (typeof process !== 'undefined' && process.env) {
+    // Check for secret file (Docker Swarm)
+    const secretPath = process.env[`${key}_FILE`];
+    if (secretPath) {
+      try {
+        const fs = await import('fs/promises');
+        return (await fs.readFile(secretPath, 'utf8')).trim();
+      } catch (error) {
+        console.error(`Error reading secret from ${secretPath}:`, error);
+      }
+    }
+    // If no secret file, return the environment variable
+    return process.env[key] || defaultValue;
+  }
+
+  // Fallback for unexpected environments
+  return defaultValue;
 }
 
-const env: Environment = {
-  API_URL: getEnvValue('VITE_API_URL'), // || 'https://localhost:5443/api',
+async function initializeEnv(): Promise<Environment> {
+  return {
+    API_URL: await getEnvValue('VITE_API_URL', 'https://localhost:5443/api'),
+    // Add other environment variables here
+  };
 }
 
-export default env;
+let env: Environment | null = null;
+
+export async function getEnv(): Promise<Environment> {
+  if (!env) {
+    env = await initializeEnv();
+  }
+  return env;
+}
+
+export default getEnv;

@@ -2,8 +2,8 @@
 import axios, { AxiosInstance, AxiosError, AxiosResponse, AxiosRequestConfig } from 'axios';
 import { User, FullUser, LoginCredentials, RegisterUserData, Collection, AudioSample, RegisterAdminData, LoginFetch } from '../types';
 
-import env from '../config/enviorement'
-
+import { getEnv } from '../config/enviorement'
+const env = await getEnv();
 // const API_URL: string = import.meta.env.VITE_API_URL;
 
 // Create a more flexible Axios instance with generics
