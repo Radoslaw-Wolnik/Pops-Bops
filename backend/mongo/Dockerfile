@@ -1,10 +1,5 @@
-FROM mongo:6.0 
-
+FROM mongo:6.0
 COPY mongod.conf /etc/mongod.conf
-COPY init-mongo.sh /docker-entrypoint-initdb.d/init-mongo.sh
-
-RUN chmod +x /docker-entrypoint-initdb.d/init-mongo.sh
-
 CMD ["mongod", "--config", "/etc/mongod.conf"]
 # command: ["mongod", "--config", "/etc/mongod.conf", "--verbose"]
 

@@ -154,7 +154,8 @@ services:
     image: mongo-image:6.0
     volumes:
       - mongo-data:/data/db
-       - ./init-mongo.sh:/docker-entrypoint-initdb.d/init-mongo.sh
+      - ./backend/mongo/init-mongo-swarm.sh:/docker-entrypoint-initdb.d/init-mongo.sh:ro
+      # - ./backend/mongo/mongod.conf:/etc/mongod.conf:ro
     secrets:
       - db_root_username
       - db_root_password
