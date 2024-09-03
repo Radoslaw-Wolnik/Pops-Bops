@@ -14,7 +14,7 @@ import {
     requestPasswordReset,
     resetPassword
 } from '../controllers/auth.controller.js';
-import { authenticateToken, handlePostRegistrationAuth } from '../middleware/auth.js';
+import { authenticateToken, handlePostRegistrationAuth } from '../middleware/auth.middleware.js';
 
 const router: Router = express.Router();
 

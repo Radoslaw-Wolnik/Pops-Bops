@@ -1,10 +1,10 @@
 import express, { Router } from 'express';
-import { authenticateAdmin, authenticateToken } from '../middleware/auth.js';
+import { authenticateAdmin, authenticateToken } from '../middleware/auth.middleware.js';
 import { 
   saveIconToStorage,
   updateIcon
 } from "../controllers/icon.controller.js";
-import { uploadIcon } from '../middleware/upload.js';
+import { uploadIcon } from '../middleware/upload.middleware.js';
 
 const router: Router = express.Router();
 

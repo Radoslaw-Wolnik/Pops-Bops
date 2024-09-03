@@ -1,7 +1,7 @@
 // routes/adminRoutes.ts
 import express, { Router } from 'express';
 import { getAdmins, deleteAdmin, addAdmin } from '../controllers/admin.controller';
-import { authenticateAdmin } from '../middleware/auth';
+import { authenticateAdmin } from '../middleware/auth.middleware';
 
 const router: Router = express.Router();
 

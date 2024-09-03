@@ -5,7 +5,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import RevokedToken from '../models/revoked-token.model';
 import User, { IUserDocument } from '../models/user.model';
-import { generateToken, setTokenCookie, refreshToken as refreshAuthToken, generateShortLivedToken, setShortLivedTokenCookie } from '../middleware/auth';
+import { generateToken, setTokenCookie, refreshToken as refreshAuthToken, generateShortLivedToken, setShortLivedTokenCookie } from '../middleware/auth.middleware';
 import env from '../config/environment';
 import sendEmail from '../services/email.service';
 import AuthRequest from '../../types/global';

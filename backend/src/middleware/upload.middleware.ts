@@ -93,4 +93,4 @@ export const uploadAudio = audioUpload.single('audio');
 export const uploadIcon = iconUpload.single('icon');
 
 // Import the combined upload middleware
-export { uploadAudioAndIcon } from './uploadCombined';
+export { uploadAudioAndIcon } from './upload-combined.middleware';

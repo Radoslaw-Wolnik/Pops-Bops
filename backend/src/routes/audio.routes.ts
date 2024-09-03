@@ -1,6 +1,6 @@
 //src/routes/audioRoutes.ts
 import express, { Router } from 'express';
-import { authenticateAdmin, authenticateToken } from '../middleware/auth.js';
+import { authenticateAdmin, authenticateToken } from '../middleware/auth.middleware.js';
 import {
   getMainPageSamples,
   getUserSamples,
@@ -11,8 +11,8 @@ import {
   deleteAudioSample
 } from '../controllers/audio.controller.js';
 
-import { uploadAudioAndIcon } from '../middleware/uploadCombined.js';
-import { uploadAudio } from '../middleware/upload.js';
+import { uploadAudioAndIcon } from '../middleware/upload-combined.middleware.js';
+import { uploadAudio } from '../middleware/upload.middleware.js';
 
 const router: Router = express.Router();
 

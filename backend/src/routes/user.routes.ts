@@ -4,8 +4,8 @@ import {
 
   saveProfilePicture,
 } from '../controllers/user.controller.js';
-import  { authenticateToken } from '../middleware/auth.js';
-import { uploadProfilePicture } from '../middleware/upload.js';
+import  { authenticateToken } from '../middleware/auth.middleware.js';
+import { uploadProfilePicture } from '../middleware/upload.middleware.js';
 
 
 const router: Router = express.Router();
