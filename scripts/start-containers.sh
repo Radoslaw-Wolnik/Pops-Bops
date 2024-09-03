@@ -44,6 +44,6 @@ fi
 
 # Start the containers
 echo "Starting containers..."
-docker-compose -f "$ROOT_DIR/docker-compose-containers.yml" up -d
+docker-compose -f "$ROOT_DIR/docker-compose-containers.yml" up -d --no-cache
 
 echo "Containers started successfully."
