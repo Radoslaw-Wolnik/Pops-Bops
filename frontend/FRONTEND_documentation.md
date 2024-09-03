@@ -2,7 +2,7 @@
 To do:
 - [ ] refresh token logic to maintain session
 - [ ] After register use register_login not normal login route
-
+- [ ] There must be a better way to acces the enviorement variables - the config/enviorement.ts
 
 Store the token (securely, preferably in HttpOnly cookies)
 Send the token with each request
