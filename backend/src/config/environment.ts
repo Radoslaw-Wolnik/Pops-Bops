@@ -10,7 +10,6 @@ interface Environment {
   DB_URI: string;
   JWT_SECRET: string;
   PORT: number;
-  PORT_HTTP: number;
   NODE_ENV: string;
   FRONTEND: string;
   EMAIL_HOST: string;
@@ -22,7 +21,7 @@ interface Environment {
   OLD_ENCRYPTION_KEY: string;
   ROTATION_IN_PROGRESS: boolean;
 }
-
+/*
 function readSecret(path: string): string {
   try {
     return fs.readFileSync(path, 'utf8').trim();
@@ -31,28 +30,42 @@ function readSecret(path: string): string {
     return '';
   }
 }
+*/
+function getEnvValue(key: string, defaultValue: string = ''): string {
+  // First, try to read from a secret file
+  const secretPath = process.env[`${key}_FILE`];
+  if (secretPath) {
+    try {
+      return fs.readFileSync(secretPath, 'utf8').trim();
+    } catch (error) {
+      console.error(`Error reading secret from ${secretPath}:`, error);
+    }
+  }
+  
+  // If secret file doesn't exist or couldn't be read, return the environment variable or default value
+  return process.env[key] || defaultValue;
+}
 
 const env: Environment = {
-  DB_HOST: process.env.DB_HOST || 'mongo',
-  DB_NAME: readSecret(process.env.DB_NAME_FILE || '/run/secrets/db_name'),
-  DB_USER: readSecret(process.env.DB_USER_FILE || '/run/secrets/db_user'),
-  DB_PASS: readSecret(process.env.DB_PASS_FILE || '/run/secrets/db_password'),
-  JWT_SECRET: readSecret(process.env.JWT_SECRET_FILE || '/run/secrets/jwt_secret'),
-  PORT: parseInt(process.env.PORT || '5443', 10),
-  PORT_HTTP: parseInt(process.env.PORT_HTTP || '5000', 10),
-  NODE_ENV: process.env.NODE_ENV || 'development',
-  FRONTEND: process.env.FRONTEND || 'https://localhost:5173',
-  EMAIL_HOST: readSecret(process.env.EMAIL_HOST_FILE || '/run/secrets/email_host'),
-  EMAIL_PORT: parseInt(readSecret(process.env.EMAIL_PORT_FILE || '/run/secrets/email_port'), 10),
-  EMAIL_USER: readSecret(process.env.EMAIL_USER_FILE || '/run/secrets/email_user'),
-  EMAIL_PASS: readSecret(process.env.EMAIL_PASSWORD_FILE || '/run/secrets/email_password'),
-  EMAIL_FROM: readSecret(process.env.EMAIL_FROM_FILE || '/run/secrets/email_from'),
-  ENCRYPTION_KEY: readSecret(process.env.ENCRYPTION_KEY || '/run/secrets/encryption_key'),
-  OLD_ENCRYPTION_KEY: process.env.OLD_ENCRYPTION_KEY || '',
-  ROTATION_IN_PROGRESS: process.env.ROTATION_IN_PROGRESS === 'true',
+  DB_HOST: getEnvValue('DB_HOST', 'mongo'),
+  DB_NAME: getEnvValue('DB_NAME'),
+  DB_USER: getEnvValue('DB_USER'),
+  DB_PASS: getEnvValue('DB_PASSWORD'),
+  JWT_SECRET: getEnvValue('JWT_SECRET'),
+  PORT: parseInt(getEnvValue('PORT', '5000'), 10),
+  NODE_ENV: getEnvValue('NODE_ENV', 'development'),
+  FRONTEND: getEnvValue('FRONTEND', 'https://localhost:5173'),
+  EMAIL_HOST: getEnvValue('EMAIL_HOST'),
+  EMAIL_PORT: parseInt(getEnvValue('EMAIL_PORT', '587'), 10),
+  EMAIL_USER: getEnvValue('EMAIL_USER'),
+  EMAIL_PASS: getEnvValue('EMAIL_PASSWORD'),
+  EMAIL_FROM: getEnvValue('EMAIL_FROM'),
+  ENCRYPTION_KEY: getEnvValue('ENCRYPTION_KEY'),
+  OLD_ENCRYPTION_KEY: getEnvValue('OLD_ENCRYPTION_KEY', ''),
+  ROTATION_IN_PROGRESS: getEnvValue('ROTATION_IN_PROGRESS', 'false') === 'true',
   get DB_URI() {
     return `mongodb://${this.DB_USER}:${this.DB_PASS}@${this.DB_HOST}:27017/${this.DB_NAME}?authMechanism=SCRAM-SHA-256`;
-//  return `mongodb://${this.DB_USER}:${this.DB_PASS}@mongo:27017/${this.DB_NAME}?authMechanism=SCRAM-SHA-256`,
+    //  return `mongodb://${this.DB_USER}:${this.DB_PASS}@mongo:27017/${this.DB_NAME}?authMechanism=SCRAM-SHA-256`,
   },
 };
 
