@@ -1,6 +1,6 @@
 import { Response } from 'express';
-import Collection from '../models/Collection';
-import { AudioSample, IAudioSampleDocument } from '../models/AudioSample';
+import Collection from '../models/collection.model';
+import { AudioSample, IAudioSampleDocument } from '../models/audio-sample.model';
 import mongoose, { Types } from 'mongoose';
 
 export const getUserCollections = async (req: AuthRequest, res: Response): Promise<void> => {

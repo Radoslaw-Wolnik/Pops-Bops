@@ -1,5 +1,5 @@
 // models/DefaultAudioSample.ts
-import { AudioSample, IAudioSampleDocument } from './AudioSample';
+import { AudioSample, IAudioSampleDocument } from './audio-sample.model';
 import mongoose, { Schema, Document } from 'mongoose';
 
 

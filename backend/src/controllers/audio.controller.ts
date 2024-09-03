@@ -1,9 +1,9 @@
 import { Request, Response } from 'express';
 
-import { AudioSample } from '../models/AudioSample';
-import DefaultAudioSample from '../models/DefaultAudioSample';
-import UserAudioSample from '../models/UserAudioSample';
-import Collection from '../models/Collection';
+import { AudioSample } from '../models/audio-sample.model';
+import DefaultAudioSample from '../models/audio-sample-default.model';
+import UserAudioSample from '../models/audio-sample-user.model';
+import Collection from '../models/collection.model';
 
 import { deleteFileFromStorage } from '../utils/deleteFile';
 

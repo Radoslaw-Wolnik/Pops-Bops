@@ -2,8 +2,8 @@
 
 import { Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
-import RevokedToken from '../models/RevokedToken';
-import User, { IUserDocument } from '../models/User';
+import RevokedToken from '../models/revoked-token.model';
+import User, { IUserDocument } from '../models/user.model';
 
 // Helper function to generate a short-lived token
 export const generateShortLivedToken = (user: IUserDocument): string => {

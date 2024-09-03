@@ -1,6 +1,6 @@
 import { Response } from 'express';
-import UserAudioSample from '../models/UserAudioSample';
-import DefaultAudioSample from '../models/DefaultAudioSample';
+import UserAudioSample from '../models/audio-sample-user.model';
+import DefaultAudioSample from '../models/audio-sample-default.model';
 import fs from 'fs/promises';
 import path from 'path';
 

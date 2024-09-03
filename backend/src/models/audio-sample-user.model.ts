@@ -1,5 +1,5 @@
 // models/UserAudioSample.ts
-import { AudioSample, IAudioSampleDocument } from './AudioSample';
+import { AudioSample, IAudioSampleDocument } from './audio-sample.model';
 import mongoose, { Schema } from 'mongoose';
 
 interface IUserAudioSampleDocument extends IAudioSampleDocument {

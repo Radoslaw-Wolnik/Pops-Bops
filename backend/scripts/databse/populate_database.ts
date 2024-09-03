@@ -5,10 +5,10 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
 import User, { IUserDocument } from '../../src/models/User';
-import { AudioSample } from '../../src/models/AudioSample';
-import DefaultAudioSample from '../../src/models/DefaultAudioSample';
+import { AudioSample } from '../../src/models/audio-sample.model';
+import DefaultAudioSample from '../../src/models/default-audio-sample.model';
 import UserAudioSample from '../../src/models/UserAudioSample';
-import Collection from '../../src/models/Collection';
+import Collection from '../../src/models/collection.model';
 import env from '../../src/config/environment';
 
 const SALT_ROUNDS = 10;

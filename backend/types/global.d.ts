@@ -2,7 +2,7 @@
 
 import { Request } from 'express';
 import { Types } from 'mongoose';
-import { IUserDocument } from '../src/models/User';
+import { IUserDocument } from '../src/models/user.model';
 
 
 declare global {

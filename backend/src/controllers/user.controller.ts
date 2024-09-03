@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import User, { IUserDocument } from '../models/User';
+import User, { IUserDocument } from '../models/user.model';
 import fs from 'fs/promises';
 import path from 'path';
 

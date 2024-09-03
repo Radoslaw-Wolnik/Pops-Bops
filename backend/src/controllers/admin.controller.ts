@@ -1,6 +1,6 @@
 // adminController.ts
 import { Response } from 'express';
-import User from '../models/User';
+import User from '../models/user.model';
 import bcrypt from 'bcrypt';
 
 export const getAdmins = async (req: AuthRequest, res: Response): Promise<void> => {
