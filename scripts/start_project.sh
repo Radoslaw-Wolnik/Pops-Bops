@@ -118,8 +118,8 @@ fi
 
 
 # Create networks
-docker network create --driver overlay frontend-network
-docker network create --driver overlay backend-network
+# docker network create --driver overlay frontend-network attachable: true
+# docker network create --driver overlay backend-network attachable: true
 
 # Deploy the stack
 echo "Deploying the stack..."
