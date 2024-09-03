@@ -1,6 +1,7 @@
 // models/User.ts
 import mongoose, { Document, Types, Model } from 'mongoose';
 import { encrypt, decrypt, hashEmail as hashinghelper } from '../utils/encryption';
+//import isEmail from 'validator/lib/isEmail';
 
 export interface IUserDocument extends Document {
   _id: Types.ObjectId;
@@ -26,11 +27,40 @@ export interface IUserModel extends Model<IUserDocument> {
 }
 
 const userSchema = new mongoose.Schema<IUserDocument>({
-  username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true },
+  username: { 
+    type: String, 
+    required: true, 
+    unique: true,
+    trim: true,
+    minlength: [3, 'Username must be at least 3 characters long'],
+    maxlength: [30, 'Username cannot exceed 30 characters'],
+    match: [/^[a-zA-Z0-9_-]+$/, 'Username can only contain letters, numbers, underscores and hyphens']
+  },
+  email: { 
+    type: String, 
+    required: true, 
+    unique: true
+  },
+  /* email is already hashed here i think but not sure - if not could be validated
+  email: { 
+    type: String, 
+    required: [true, 'Email is required'],
+    unique: true,
+    validate: {
+      validator: (value: string) => isEmail(value),
+      message: 'Invalid email format'
+    }
+  },
+  */
   emailHash: { type: String, index: true }, // For faster lookups
-  password: { type: String, required: true },
-  profilePicture: { type: String },
+  password: { type: String, required: true }, // idk if minlenght here becouse its propably hashed and salted already
+  profilePicture: { 
+    type: String,
+    validate: {
+      validator: (value: string) => /^\/uploads\/profile-picture\/[\w-]+\.(jpg|jpeg|png|gif)$/.test(value),
+      message: 'Invalid profile picture URL format'
+    }
+  },
 
   isVerified: { type: Boolean, default: false },
   verificationToken: { type: String },

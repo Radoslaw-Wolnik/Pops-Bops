@@ -8,7 +8,11 @@ interface IDefaultAudioSampleDocument extends IAudioSampleDocument {
 }
 
 const DefaultAudioSampleSchema = new Schema<IDefaultAudioSampleDocument>({
-  forMainPage: { type: Boolean, default: false }
+  forMainPage: { 
+    type: Boolean, 
+    default: false,
+    required: [true, 'forMainPage flag is required for default audio samples']
+  }
 });
 
 const DefaultAudioSample = AudioSample.discriminator<IDefaultAudioSampleDocument>('DefaultAudioSample', DefaultAudioSampleSchema);
