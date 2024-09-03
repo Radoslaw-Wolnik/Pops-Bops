@@ -2,11 +2,13 @@
 import axios, { AxiosInstance, AxiosError, AxiosResponse, AxiosRequestConfig } from 'axios';
 import { User, FullUser, LoginCredentials, RegisterUserData, Collection, AudioSample, RegisterAdminData, LoginFetch } from '../types';
 
-const API_URL = "https://localhost:5443/api";
+import env from '../config/enviorement'
+
+// const API_URL: string = import.meta.env.VITE_API_URL;
 
 // Create a more flexible Axios instance with generics
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: env.API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
