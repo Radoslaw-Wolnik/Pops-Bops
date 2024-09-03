@@ -1,6 +1,6 @@
 // models/User.ts
 import mongoose, { Document, Types, Model } from 'mongoose';
-import { encrypt, decrypt, hashEmail as hashinghelper } from '../utils/encryption';
+import { encrypt, decrypt, hashEmail as hashinghelper } from '../utils/encryption.util';
 //import isEmail from 'validator/lib/isEmail';
 
 export interface IUserDocument extends Document {

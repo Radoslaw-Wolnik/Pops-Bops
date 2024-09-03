@@ -5,7 +5,7 @@ import DefaultAudioSample from '../models/audio-sample-default.model';
 import UserAudioSample from '../models/audio-sample-user.model';
 import Collection from '../models/collection.model';
 
-import { deleteFileFromStorage } from '../utils/deleteFile';
+import { deleteFileFromStorage } from '../utils/delete-file.util';
 
 export const getMainPageSamples = async (_req: Request, res: Response): Promise<void> => {
   try {
