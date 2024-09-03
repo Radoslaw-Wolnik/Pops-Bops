@@ -288,7 +288,70 @@ A utility function `cleanupRevokedTokens` is provided in `utils/cleanupRevokedTo
 4. **Email**: In production, use a reliable email service provider to ensure deliverability.
 5. **Error Handling**: Implement comprehensive error handling and logging throughout these systems.
 
-- Ensure that all sensitive information (like database credentials) is stored in environment variables and not hard-coded in the application.
 - The discriminator pattern used for AudioSamples allows for efficient querying of both default and user samples from a single collection while maintaining separate schemas.
 - Proper indexing should be implemented on frequently queried fields (like `user` in UserAudioSample and Collection) to improve performance.
-- Consider implementing data validation at the schema level to ensure data integrity.
+
+
+## To Do
+- [ ] change project structure / names
+- [ ] make congfig into database.config.ts, email.config.ts, app.config.ts mby
+
+
+```sh
+backend/
+├── src/
+│   ├── config/
+│   │   ├── database.config.ts
+│   │   ├── email.config.ts
+│   │   └── app.config.ts
+│   ├── controllers/
+│   │   ├── admin.controller.ts
+│   │   ├── audio.controller.ts
+│   │   ├── auth.controller.ts
+│   │   ├── collection.controller.ts
+│   │   ├── icon.controller.ts
+│   │   └── user.controller.ts
+│   ├── routes/
+│   │   ├── admin.routes.ts
+│   │   ├── audio.routes.ts
+│   │   ├── auth.routes.ts
+│   │   ├── collection.routes.ts
+│   │   ├── icon.routes.ts
+│   │   └── user.routes.ts
+│   ├── models/
+│   │   ├── audio-sample.model.ts
+│   │   ├── collection.model.ts
+│   │   ├── default-audio-sample.model.ts
+│   │   ├── revoked-token.model.ts
+│   │   ├── user.model.ts
+│   │   └── user-audio-sample.model.ts
+│   ├── middleware/
+│   │   ├── auth.middleware.ts
+│   │   ├── error-handler.middleware.ts
+│   │   ├── upload.middleware.ts
+│   │   └── upload-combined.middleware.ts
+│   ├── services/
+│   │   └── cache.service.ts
+│   ├── utils/
+│   │   ├── cleanup-revoked-tokens.util.ts
+│   │   ├── delete-file.util.ts
+│   │   ├── encryption.util.ts
+│   │   └── send-email.util.ts
+│   ├── types/
+│   │   └── global.d.ts
+│   ├── app.ts
+│   └── server.ts
+├── scripts/
+│   ├── backup-database.ts
+│   ├── manage-rotation.ts
+│   ├── populate-database.ts
+│   ├── restore-database.ts
+│   └── rotate-secrets.ts
+├── uploads/
+│   └── ... (same as before)
+├── mongo/
+│   └── ... (same as before)
+├── Dockerfile
+├── nodemon.json
+└── package.json
+```
