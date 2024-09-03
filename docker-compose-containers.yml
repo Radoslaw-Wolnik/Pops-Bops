@@ -87,7 +87,6 @@ services:
       - DOMAIN_NAME=${DOMAIN_NAME}
     volumes:
       - ./backend/src:/app/src:delegated
-      - ./backend/nodemon.json:/app/nodemon.json
       - /app/node_modules
       - ./backend/uploads:/app/uploads
     networks:
