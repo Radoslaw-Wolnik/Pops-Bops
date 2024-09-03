@@ -13,7 +13,8 @@ scripts=(
     "start-swarm.sh"
     "stop-containers.sh"
     "stop-swarm.sh"
-    "../backend/mongo/init-mongo.sh"
+    "../backend/mongo/init-mongo-containers.sh"
+    "../backend/mongo/init-mongo-swarm.sh"
 )
 
 # Function to set executable permissions
