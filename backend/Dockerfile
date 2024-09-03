@@ -4,6 +4,9 @@ FROM node:20 AS base
 # Set working directory inside the container
 WORKDIR /app
 
+# Update npm to the latest version and clear npm cache
+RUN npm install -g npm@latest && npm cache clean --force
+
 # Copy package.json and package-lock.json to install dependencies
 COPY package*.json ./
 
@@ -16,11 +19,9 @@ COPY . .
 # Development stage
 FROM base AS development
 
-# Install ts-node globally
-RUN npm install -g ts-node typescript
+# Install ts globaly
+RUN npm install -g tsx@latest typescript@latest
 
-# Make sure nodemon is installed
-RUN npm install -g nodemon
 
 # Copy additional development-specific configuration files
 # COPY nodemon.json .
@@ -36,7 +37,7 @@ EXPOSE 5000
 #CMD ["npm", "run", "devstart"]
 # Use ts-node-dev for development
 #CMD ["npx", "nodemon", "--exec", "node", "--loader", "ts-node/esm", "src/server.ts"]
-CMD ["npx", "nodemon", "--exec", "ts-node", "src/server.ts"]
+CMD ["npm", "run", "dev"]
 
 
 # Build stage
