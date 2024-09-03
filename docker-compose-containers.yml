@@ -103,8 +103,6 @@ services:
       - "traefik.http.routers.backend.tls=true"
       - "traefik.http.services.backend.loadbalancer.server.port=5000"
       - "traefik.docker.network=backend-network"
-    env_file:
-      - .env
 
   mongo:
     image: mongo-image:6.0
@@ -122,8 +120,6 @@ services:
       - backend-network
     labels:
       - "traefik.docker.network=backend-network"
-    env_file:
-      - .env
 
   redis:
     image: redis:6.2
