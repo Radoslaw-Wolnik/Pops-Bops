@@ -4,12 +4,12 @@ import fs from 'fs/promises';
 import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 
-import User, { IUserDocument } from '../src/models/User';
-import { AudioSample } from '../src/models/AudioSample';
-import DefaultAudioSample from '../src/models/DefaultAudioSample';
-import UserAudioSample from '../src/models/UserAudioSample';
-import Collection from '../src/models/Collection';
-import env from '../src/config/environment';
+import User, { IUserDocument } from '../../src/models/User';
+import { AudioSample } from '../../src/models/AudioSample';
+import DefaultAudioSample from '../../src/models/DefaultAudioSample';
+import UserAudioSample from '../../src/models/UserAudioSample';
+import Collection from '../../src/models/Collection';
+import env from '../../src/config/environment';
 
 const SALT_ROUNDS = 10;
 

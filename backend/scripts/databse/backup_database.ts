@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
-import env from '../src/config/environment';
+import env from '../../src/config/environment';
 
 const backupDatabase = async () => {
   const timestamp = new Date().toISOString().replace(/:/g, '-');
