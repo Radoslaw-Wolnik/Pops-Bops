@@ -7,7 +7,7 @@ import RevokedToken from '../models/revoked-token.model';
 import User, { IUserDocument } from '../models/user.model';
 import { generateToken, setTokenCookie, refreshToken as refreshAuthToken, generateShortLivedToken, setShortLivedTokenCookie } from '../middleware/auth';
 import env from '../config/environment';
-import sendEmail from '../utils/email.service';
+import sendEmail from '../services/email.service';
 import AuthRequest from '../../types/global';
 import { MongoError } from 'mongodb';
 

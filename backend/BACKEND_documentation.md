@@ -295,6 +295,7 @@ A utility function `cleanupRevokedTokens` is provided in `utils/cleanupRevokedTo
 ## To Do
 - [ ] change project structure / names
 - [ ] make congfig into database.config.ts, email.config.ts, app.config.ts mby
+- [ ] in my controllers should i make more usage of the delete util?
 
 
 ```sh
@@ -355,3 +356,26 @@ backend/
 ├── nodemon.json
 └── package.json
 ```
+
+To use this middleware, add it to your app.ts after all your routes: (error)
+// src/app.ts
+
+import express from 'express';
+import { errorHandler } from './middleware/error-handler.middleware';
+
+const app = express();
+
+// ... your routes and other middleware ...
+
+app.use(errorHandler);
+
+export default app;
+
+
+To use logger in the aplication
+import logger from './utils/logger.util';
+
+// In your code
+logger.info('Server started on port 3000');
+logger.error('An error occurred', { error: err });
+logger.debug('Debug message', { someData: data });
