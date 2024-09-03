@@ -42,7 +42,7 @@ services:
     image: frontend-image:latest
     environment:
       - NODE_ENV=${NODE_ENV}
-      - VITE_API_URL=http://${DOMAIN_NAME}/api
+      - VITE_API_URL=https://${DOMAIN_NAME}/api
       - DOMAIN_NAME=${DOMAIN_NAME}
       - VITE_USE_HTTPS=true
       - CHOKIDAR_USEPOLLING=true
@@ -73,7 +73,8 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV}
       - PORT=5000
-      - FRONTEND=${FRONTEND}
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      - FRONTEND=https://${DOMAIN_NAME}
       - DB_NAME=${DB_NAME}
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
@@ -84,7 +85,6 @@ services:
       - EMAIL_USER=${EMAIL_USER}
       - EMAIL_PASSWORD=${EMAIL_PASSWORD}
       - EMAIL_FROM=${EMAIL_FROM}
-      - DOMAIN_NAME=${DOMAIN_NAME}
     volumes:
       - ./backend/src:/app/src:delegated
       - /app/node_modules
