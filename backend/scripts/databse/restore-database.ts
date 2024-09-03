@@ -1,5 +1,5 @@
 import { exec } from 'child_process';
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import env from '../../src/config/environment';
 
