@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
-import User, { IUserDocument } from '../src/models/user.model';
-import { encrypt, decrypt } from '../src/utils/encryption.util';
-import env from '../src/config/environment';
+import User, { IUserDocument } from '../models/user.model';
+import { encrypt, decrypt } from '../utils/encryption.util';
+import env from '../config/environment';
 
 const BATCH_SIZE = 100; // Number of users to process in each batch
 
