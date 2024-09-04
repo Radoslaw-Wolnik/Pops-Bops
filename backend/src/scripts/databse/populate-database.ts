@@ -9,7 +9,7 @@ import { AudioSample } from '../../models/audio-sample.model';
 import DefaultAudioSample from '../../models/audio-sample-default.model';
 import UserAudioSample from '../../models/audio-sample-user.model';
 import Collection from '../../models/collection.model';
-import env from '../../config/environment';
+import environment from '../../config/environment';
 
 const SALT_ROUNDS = 10;
 
@@ -132,7 +132,7 @@ async function createCustomCollections(users: IUserDocument[]): Promise<void> {
 
 async function populateDB(): Promise<void> {
   try {
-    await mongoose.connect(env.DB_URI);
+    await mongoose.connect(environment.database.uri);
     console.log('Connected to MongoDB');
 
     // Check if database is already populated

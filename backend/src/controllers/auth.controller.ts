@@ -6,7 +6,7 @@ import jwt from 'jsonwebtoken';
 import RevokedToken from '../models/revoked-token.model';
 import User, { IUserDocument } from '../models/user.model';
 import { generateToken, setTokenCookie, refreshToken as refreshAuthToken, generateShortLivedToken, setShortLivedTokenCookie } from '../middleware/auth.middleware';
-import env from '../config/environment';
+import environment from '../config/environment';
 import sendEmail from '../services/email.service';
 import AuthRequest from '../../types/global';
 import { MongoError } from 'mongodb';
@@ -179,7 +179,7 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
     const shortLivedToken = generateShortLivedToken(user);
     setShortLivedTokenCookie(res, shortLivedToken);
 
-    const verificationUrl = `${env.FRONTEND}/verify-email/${verificationToken}`;
+    const verificationUrl = `${environment.app.frontend}/verify-email/${verificationToken}`;
     console.log('Attempting to send email to:', user.email);
     //console.log('Verification URL:', verificationUrl);
     await sendEmail({
@@ -246,7 +246,7 @@ export const sendVerificationEmail = async (req: AuthRequest, res: Response): Pr
     req.user.verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await req.user.save();
 
-    const verificationUrl = `${env.FRONTEND}/verify-email/${verificationToken}`;
+    const verificationUrl = `${environment.app.frontend}/verify-email/${verificationToken}`;
 
     const decryptedEmail = req.user.getDecryptedEmail();
     
@@ -355,7 +355,7 @@ export const requestPasswordReset = async (req: RequestPasswordResetRequest, res
     user.resetPasswordExpires = new Date(Date.now() + 3600000); // 1 hour
     await user.save();
 
-    const resetUrl = `${env.FRONTEND}/reset-password/${resetToken}`;
+    const resetUrl = `${environment.app.frontend}/reset-password/${resetToken}`;
     
     await sendEmail({
       to: email,

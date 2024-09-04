@@ -1,7 +1,7 @@
 import crypto from 'crypto';
-import env from '../config/environment';
+import environment from '../config/environment';
 
-const ENCRYPTION_KEY = env.ENCRYPTION_KEY; // Must be 32 bytes
+const ENCRYPTION_KEY = environment.auth.encryptionKey // Must be 32 bytes
 const IV_LENGTH = 16; // For AES, this is always 16
 
 
@@ -17,7 +17,7 @@ export async function encrypt(text: string): Promise<string> {
   }
 }
   
-export async function decrypt(text: string, key: string = env.ENCRYPTION_KEY!): Promise<string> {
+export async function decrypt(text: string, key: string = environment.auth.encryptionKey!): Promise<string> {
   try {
     const textParts = text.split(':');
     const iv = Buffer.from(textParts.shift()!, 'hex');

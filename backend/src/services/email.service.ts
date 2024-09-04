@@ -1,6 +1,6 @@
 // utils/sendEmail.js
 import nodemailer from 'nodemailer';
-import env from '../config/environment';
+import environment from '../config/environment';
 
 interface EmailOptions {
   to: string;
@@ -10,17 +10,17 @@ interface EmailOptions {
 }
 
 const transporter = nodemailer.createTransport({
-  host: env.EMAIL_HOST,
-  port: env.EMAIL_PORT,
+  host: environment.email.host,
+  port: environment.email.port,
   auth: {
-    user: env.EMAIL_USER,
-    pass: env.EMAIL_PASS
+    user: environment.email.user,
+    pass: environment.email.password,
   }
 });
 
 const sendEmail = async ({ to, subject, text, html }: EmailOptions): Promise<nodemailer.SentMessageInfo> => {
   const mailOptions: nodemailer.SendMailOptions = {
-    from: env.EMAIL_FROM,
+    from: environment.email.from,
     to,
     subject,
     text,

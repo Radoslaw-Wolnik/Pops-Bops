@@ -1,4 +1,4 @@
-// src/middleware/auth.ts
+// src/middleware/auth.middleware.ts
 
 import { Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';

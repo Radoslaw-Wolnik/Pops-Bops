@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
 import User, { IUserDocument } from '../models/user.model';
 import { encrypt, decrypt } from '../utils/encryption.util';
-import env from '../config/environment';
+import environment from '../config/environment';
 
 const BATCH_SIZE = 100; // Number of users to process in each batch
 
 async function connectToDatabase() {
-  await mongoose.connect(env.DB_URI);
+  await mongoose.connect(environment.database.uri);
   console.log('Connected to MongoDB');
 }
 
@@ -36,7 +36,7 @@ async function rotateEncryptionKey(startIndex: number = 0): Promise<number> {
 }
 
 async function rotateSecrets() {
-  if (!process.env.OLD_ENCRYPTION_KEY || !env.ENCRYPTION_KEY) {
+  if (!environment.auth.oldEncryptionKey || !environment.auth.encryptionKey) {
     throw new Error('Both OLD_ENCRYPTION_KEY and ENCRYPTION_KEY must be provided');
   }
 

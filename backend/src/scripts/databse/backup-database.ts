@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
-import env from '../../config/environment';
+import environment from '../../config/environment';
 
 const backupDatabase = async () => {
   const timestamp = new Date().toISOString().replace(/:/g, '-');
@@ -13,7 +13,7 @@ const backupDatabase = async () => {
     await fs.mkdir(backupDir, { recursive: true });
 
     // Construct mongodump command
-    const command = `mongodump --host=${env.DB_HOST} --db=${env.DB_NAME} --username=${env.DB_USER} --password=${env.DB_PASS} --gzip --archive=${backupPath}`;
+    const command = `mongodump --host=${environment.database.host} --db=${environment.database.name} --username=${environment.database.user} --password=${environment.database.password} --gzip --archive=${backupPath}`;
 
     // Execute mongodump
     exec(command, (error, stdout, stderr) => {

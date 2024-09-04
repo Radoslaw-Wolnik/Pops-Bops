@@ -1,7 +1,7 @@
 import { exec } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';
-import env from '../../config/environment';
+import environment from '../../config/environment';
 
 const restoreDatabase = async () => {
   const backupDir = path.join(__dirname, 'database_backups');
@@ -24,7 +24,7 @@ const restoreDatabase = async () => {
     const backupPath = path.join(backupDir, latestBackup);
 
     // Construct mongorestore command
-    const command = `mongorestore --host=${env.DB_HOST} --db=${env.DB_NAME} --username=${env.DB_USER} --password=${env.DB_PASS} --gzip --archive=${backupPath} --drop`;
+    const command = `mongorestore --host=${environment.database.host} --db=${environment.database.name} --username=${environment.database.user} --password=${environment.database.password} --gzip --archive=${backupPath} --drop`;
 
     // Execute mongorestore
     exec(command, (error, stdout, stderr) => {
