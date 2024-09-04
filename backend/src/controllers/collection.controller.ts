@@ -86,6 +86,7 @@ interface AddToCollectionRequest extends AuthRequest {
   };
 }
 
+
 export const addToCollection = async (req: AddToCollectionRequest, res: Response): Promise<void> => {
   try {
     const { sampleIds } = req.body;
@@ -109,14 +110,16 @@ export const addToCollection = async (req: AddToCollectionRequest, res: Response
       return;
     }
     
+    
+    
     // Find all samples in AudioSample (which includes both Default and User samples)
     const foundSamples = await AudioSample.find({
       _id: { $in: sampleIds },
       $or: [
         { sampleType: 'DefaultAudioSample' },
-        { sampleType: 'UserAudioSample', user: userId }
-      ]
-    }).exec();
+        { sampleType: 'UserAudioSample', user: userId } as any // by using any were telling ts to trust us
+      ] // but tbh in UserAudioSample there is user field dumb dumb
+    } as any).exec();
 
     // Explicitly type the foundSamples and map to _id
     // const typedFoundSamples = foundSamples as IAudioSampleDocument[];
