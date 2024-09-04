@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
-import env from './environment.js';
+import enviorement from './environment';
 
 // Function to connect to MongoDB
 const connectToMongoDB = async (): Promise<typeof mongoose> => {
 
-  return mongoose.connect(env.DB_URI, {
+  return mongoose.connect(enviorement.database.uri, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   } as mongoose.ConnectOptions);
