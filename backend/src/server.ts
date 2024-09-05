@@ -1,6 +1,6 @@
 import * as http from 'http';
 import app from './app.js';
-import connectDB from './config/database-connection.js';
+import connectDB from './utils/db-connection.util.js';
 import environment from './config/environment.js';
 import logger from './utils/logger.util';
 import { initCleanupJob } from './scripts/cleanup-revoked-tokens.js';
