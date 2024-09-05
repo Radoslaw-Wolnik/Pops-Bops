@@ -3,6 +3,7 @@ import UserAudioSample from '../models/audio-sample-user.model';
 import DefaultAudioSample from '../models/audio-sample-default.model';
 import fs from 'fs/promises';
 import path from 'path';
+import { deleteFileFromStorage } from '../utils/delete-file.util';
 
   
 export const saveIconToStorage = async (req: AuthRequestWithFile, res: Response): Promise<void> => {
@@ -53,8 +54,7 @@ export const updateIcon = async (req: AuthRequestWithFile, res: Response): Promi
 
     // Delete the old icon if it exists
     if (audioSample.iconUrl) {
-      const oldIconPath = path.join(__dirname, '..', audioSample.iconUrl);
-      await fs.unlink(oldIconPath).catch(err => console.error('Error deleting old icon:', err));
+      await deleteFileFromStorage(audioSample.iconUrl);
     }
 
     const iconUrl = `/uploads/icons/${isAdmin ? 'default' : 'user'}/${req.file.filename}`;
