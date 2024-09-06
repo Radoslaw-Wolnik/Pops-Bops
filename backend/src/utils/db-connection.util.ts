@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import enviorement from './environment';
+import enviorement from '../config/environment';
 
 // Function to connect to MongoDB
 const connectToMongoDB = async (): Promise<typeof mongoose> => {
@@ -27,6 +27,23 @@ const connectDB = async (): Promise<void> => {
         process.exit(1);
       }
     }
+  }
+};
+
+// function for health check
+export const checkDBHealth = (): string => {
+  const dbStatus = mongoose.connection.readyState;
+  switch (dbStatus) {
+    case 0:
+      return 'Disconnected';
+    case 1:
+      return 'Connected';
+    case 2:
+      return 'Connecting';
+    case 3:
+      return 'Disconnecting';
+    default:
+      return 'Unknown';
   }
 };
 
