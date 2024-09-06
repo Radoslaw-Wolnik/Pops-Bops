@@ -1,7 +1,7 @@
 // src/middleware/error-handler.middleware.ts
 
 import { Request, Response, NextFunction } from 'express';
-import { CustomError } from '../utils/custom-error.util';
+import { CustomError } from '../utils/custom-errors.util';
 import logger from '../utils/logger.util';
 
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
@@ -22,7 +22,7 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
     });
   }
 
-  // Handle mongoose validation errors
+  // Handle Mongoose validation errors
   if (err.name === 'ValidationError') {
     return res.status(400).json({
       status: 'error',
@@ -32,7 +32,7 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
     });
   }
 
-  // Handle mongoose duplicate key errors
+  // Handle MongoDB duplicate key errors
   if (err.name === 'MongoError' && (err as any).code === 11000) {
     const field = Object.keys((err as any).keyValue)[0];
     return res.status(409).json({

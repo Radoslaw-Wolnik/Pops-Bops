@@ -1,4 +1,4 @@
-import express, { Express } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import environment from './config/environment';
 
@@ -9,7 +9,8 @@ import authRoutes from './routes/auth.routes';
 import adminRoutes from './routes/admin.routes';
 import collectionRoutes from './routes/collection.routes'
 
-// import { errorHandler } from './middleware/error-handler.middleware';
+import { errorHandler } from './middleware/error-handler.middleware';
+
 
 const app: Express = express();
 
@@ -31,6 +32,12 @@ app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/collection', collectionRoutes);
 
-// app.use(errorHandler); set this up to use custom error handler
+// Catch-all route for undefined endpoints
+app.use((req: Request, res: Response) => {
+  res.status(404).json({ message: 'Not Found' });
+});
+
+// Apply the custom error handler middleware after all routes
+app.use(errorHandler);
 
 export default app;
