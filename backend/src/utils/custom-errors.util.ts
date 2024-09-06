@@ -43,3 +43,28 @@ export class InternalServerError extends CustomError {
     super(message, 500);
   }
 }
+
+
+export class ExpiredTokenError extends CustomError {
+  constructor(message: string = 'Token has expired') {
+    super(message, 401);
+  }
+}
+
+export class InvalidTokenError extends CustomError {
+  constructor(message: string = 'Token is invalid') {
+    super(message, 403);
+  }
+}
+
+export class RateLimitError extends CustomError {
+  constructor(message: string = 'Too many requests. Please try again later.') {
+    super(message, 429); // 429 is the HTTP status code for rate-limiting
+  }
+}
+
+export class ServiceUnavailableError extends CustomError {
+  constructor(message: string = 'Service is currently unavailable') {
+    super(message, 503); // 503 is the HTTP status code for service unavailable
+  }
+}

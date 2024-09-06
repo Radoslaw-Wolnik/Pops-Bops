@@ -4,6 +4,8 @@ import { Response, NextFunction } from 'express';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import RevokedToken from '../models/revoked-token.model';
 import User, { IUserDocument } from '../models/user.model';
+import { UnauthorizedError, ForbiddenError, NotFoundError, ExpiredTokenError, InvalidTokenError, ServiceUnavailableError, InternalServerError } from '../utils/custom-errors.util';
+
 
 // Helper function to generate a short-lived token
 export const generateShortLivedToken = (user: IUserDocument): string => {
@@ -42,20 +44,19 @@ export const setTokenCookie = (res: Response, token: string): void => {
   });
 };
 
+// middleware for authenticating admins
 export const authenticateAdmin = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   const token = req.cookies.token;
 
   if (!token) {
-    res.status(401).json({ message: 'Access denied. No token provided.' });
-    return;
+    throw new UnauthorizedError('Access denied. No token provided.');
   }
 
   try {
     // Check if the token has been revoked
     const revokedToken = await RevokedToken.findOne({ token: token });
     if (revokedToken) {
-      res.status(403).json({ message: 'Token has been revoked.' });
-      return;
+      throw new InvalidTokenError('Token has been revoked.');
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
@@ -64,58 +65,58 @@ export const authenticateAdmin = async (req: AuthRequest, res: Response, next: N
     const user = await User.findById(decoded.user.id);
     
     if (!user) {
-      res.status(404).json({ message: 'User not found.' });
-      return;
+      throw new NotFoundError('User');
     }
 
     if (user.role !== 'admin') {
-      res.status(403).json({ message: 'Access denied. Admin privileges required.' });
-      return;
+      throw new ForbiddenError('Admin privileges required.');
     }
 
     req.user = user;
     next();
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      res.status(403).json({ message: 'Invalid token.' });
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new ExpiredTokenError();
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      throw new InvalidTokenError();
     } else {
-      res.status(500).json({ message: 'Internal server error.' });
+      throw new InternalServerError();
     }
   }
 };
 
+// middleware for general token authentication
 export const authenticateToken = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   const token = req.cookies.token;
 
   if (!token) {
-    res.status(401).json({ message: 'Access denied. No token provided.' });
-    return;
+    throw new UnauthorizedError('Access denied. No token provided.');
   }
 
   try {
     // Check if the token has been revoked
     const revokedToken = await RevokedToken.findOne({ token: token });
     if (revokedToken) {
-      res.status(403).json({ message: 'Token has been revoked.' });
-      return;
+      throw new InvalidTokenError('Token has been revoked.');
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
 
     const user = await User.findById(decoded.user.id);
     if (!user) {
-      res.status(404).json({ message: 'User not found.' });
-      return;
+      throw new NotFoundError('User');
     }
 
     req.user = user; // Attach the full user object
     next();
 
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      res.status(403).json({ message: 'Invalid token.' });
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new ExpiredTokenError();
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      throw new InvalidTokenError();
     } else {
-      res.status(500).json({ message: 'Internal server error.' });
+      throw new InternalServerError();
     }
   }
 };
@@ -124,8 +125,7 @@ export const refreshToken = async (req: AuthRequest, res: Response): Promise<voi
   const token = req.cookies.token;
 
   if (!token) {
-    res.status(401).json({ message: 'No token provided' });
-    return;
+    throw new UnauthorizedError('No token provided.');
   }
 
   try {
@@ -133,8 +133,7 @@ export const refreshToken = async (req: AuthRequest, res: Response): Promise<voi
     const user = await User.findById(decoded.user.id);
 
     if (!user) {
-      res.status(404).json({ message: 'User not found' });
-      return;
+      throw new NotFoundError('User');
     }
 
     /* Check if the user's email is verified
@@ -148,7 +147,13 @@ export const refreshToken = async (req: AuthRequest, res: Response): Promise<voi
 
     res.json({ message: 'Token refreshed successfully', user: { id: user._id, role: user.role } });
   } catch (error) {
-    res.status(403).json({ message: 'Invalid token' });
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new ExpiredTokenError();
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      throw new InvalidTokenError();
+    } else {
+      throw new InternalServerError();
+    }
   }
 };
 
@@ -157,22 +162,20 @@ export const handlePostRegistrationAuth = async (req: AuthRequest, res: Response
   const shortLivedToken = req.cookies.shortLivedToken;
 
   if (!shortLivedToken) {
-    return next(); // Proceed to next middleware if no short-lived token
+    throw new UnauthorizedError('No short-lived token provided.');
   }
 
   try {
     const decoded = jwt.verify(shortLivedToken, process.env.JWT_SECRET!) as JwtPayload;
     
     if (!decoded.shortLived) {
-      next();
-      return; // Not a short-lived token, proceed to next middleware
+      throw new InvalidTokenError('Invalid short-lived token.');
     }
 
     const user = await User.findById(decoded.userId);
 
     if (!user) {
-      res.status(404).json({ message: 'User not found' });
-      return;
+      throw new NotFoundError('User');
     }
 
     // Clear the short-lived token cookie
@@ -189,13 +192,14 @@ export const handlePostRegistrationAuth = async (req: AuthRequest, res: Response
     next();
 
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      // Clear the invalid short-lived token and proceed
-      res.clearCookie('shortLivedToken');
-      next();
+    // clear invalid short-lived token
+    res.clearCookie('shortLivedToken');
+    if (error instanceof jwt.TokenExpiredError) {
+      throw new ExpiredTokenError();
+    } else if (error instanceof jwt.JsonWebTokenError) {
+      throw new InvalidTokenError('Invalid or expired short-lived token.');
     } else {
-      console.error('Error in post-registration auth:', error);
-      res.status(500).send('Server error');
+      throw new InternalServerError();
     }
   }
 };
