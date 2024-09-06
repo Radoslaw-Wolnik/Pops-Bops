@@ -6,6 +6,7 @@ import connectDB from './utils/db-connection.util.js';
 import environment from './config/environment.js';
 import logger from './utils/logger.util';
 import { initCleanupJob } from './scripts/cleanup-revoked-tokens.js';
+import { gracefulShutdown } from './utils/server.util';
 
 // Set port from environment or fallback to 5000
 const PORT: number = environment.app.port || 5000;
@@ -20,33 +21,8 @@ const startServer = async () => {
     
     const server: http.Server = http.createServer(app);
     server.listen(PORT, () => {
-      console.log(`Server running in ${environment.app.nodeEnv} mode on port ${PORT}`);
+      logger.info(`Server running in ${environment.app.nodeEnv} mode on port ${PORT}`);
     });
-
-    // Graceful shutdown logic for SIGTERM and SIGINT signals
-    const exitHandler = async (exitCode: number) => {
-      try {
-        logger.info('Closing HTTP server.');
-        await new Promise((resolve, reject) => {
-          server.close((err) => {
-            if (err) {
-              logger.error('Error closing HTTP server:', err);
-              return reject(err);
-            }
-            resolve(true);
-          });
-        });
-
-        logger.info('Closing MongoDB connection.');
-        await mongoose.connection.close();
-
-        logger.info('Exiting process.');
-        process.exit(exitCode);
-      } catch (error) {
-        logger.error('Error during graceful shutdown:', error);
-        process.exit(1);
-      }
-    };
 
     // Global error handler for uncaught exceptions
     process.on('uncaughtException', (error: Error) => {
@@ -63,13 +39,13 @@ const startServer = async () => {
     // Graceful shutdown on SIGTERM (e.g., Docker, Heroku)
     process.on('SIGTERM', () => {
       logger.info('SIGTERM signal received. Shutting down gracefully.');
-      exitHandler(0);
+      gracefulShutdown(server, 0);
     });
 
     // Graceful shutdown on SIGINT (e.g., Ctrl+C)
     process.on('SIGINT', () => {
       logger.info('SIGINT signal received. Shutting down gracefully.');
-      exitHandler(0);
+      gracefulShutdown(server, 0);
     });
 
     
