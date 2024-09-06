@@ -51,7 +51,7 @@ const startServer = async () => {
     
 
   } catch (error) {
-    console.error('Failed to start the server:', (error as Error).message);
+    logger.error('Failed to start the server:', error);
     process.exit(1);
   }
 };
