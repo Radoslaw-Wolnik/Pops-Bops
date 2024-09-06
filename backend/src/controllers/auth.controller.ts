@@ -1,5 +1,5 @@
 // src/controllers/authController.ts
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import crypto from 'crypto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
@@ -10,6 +10,7 @@ import environment from '../config/environment';
 import sendEmail from '../services/email.service';
 import AuthRequest from '../../types/global';
 import { MongoError } from 'mongodb';
+import { ValidationError, UnauthorizedError, NotFoundError, ConflictError } from '../utils/custom-errors.util';
 
 interface LoginRequest extends Request {
   body: {
@@ -22,37 +23,30 @@ interface PostRegLoginRequest extends Request {
   user?: IUserDocument; // Set by handlePostRegistrationAuth middleware
 }
 
-export const login = async (req: LoginRequest, res: Response): Promise<void> => {
+export const login = async (req: LoginRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
 
     const { email, password } = req.body;
 
-    // Check if user exists
-    // Find user by email hash
-    const user = await User.findOne({ emailHash: User.hashEmail(email) });
-    if (!user) {
-      res.status(400).json({ message: 'Invalid credentials' });
-      return;
+    if (!email || !password) {
+      throw new ValidationError('Email and password are required');
     }
 
-    // Decrypt the stored email and compare with the provided email
-    const decryptedEmail = user.getDecryptedEmail()
-    if (decryptedEmail !== email) {
-      res.status(400).json({ message: 'Invalid credentials' });
-      return;
+    // Find user by email hash and compare at the same time
+    const user = await User.findOne({ emailHash: User.hashEmail(email) });
+    if (!user) {
+      throw new UnauthorizedError('Invalid credentials');
+    }
+
+    // Check password
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) {
+      throw new UnauthorizedError('Invalid credentials');
     }
 
     // Check if email is verified 
     if (!user.isVerified) {
-      res.status(401).json({ message: 'Please verify your email before logging in' });
-      return;
-    }
-
-    // Check password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      res.status(400).json({ message: 'Invalid credentials' });
-      return;
+      throw new UnauthorizedError('Please verify your email before logging in');
     }
 
     // Create and return JWT token
@@ -64,7 +58,7 @@ export const login = async (req: LoginRequest, res: Response): Promise<void> => 
 
   } catch (error) {
     console.error(error);
-    res.status(500).send('Server error');
+    next(error);
   }
 };
 
@@ -135,11 +129,14 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
   try {
     const { username, email, password } = req.body;
 
+    if (!username || !email || !password) {
+      throw new ValidationError('Username, email, and password are required');
+    }
+
     // Check if user already exists
-    let user = await User.findOne({ emailHash: User.hashEmail(email) });
-    if (user) {
-      res.status(400).json({ message: 'User already exists' });
-      return;
+    const existingUser = await User.findOne({ emailHash: User.hashEmail(email) });
+    if (existingUser) {
+      throw new ConflictError('User already exists');
     }
 
     // Check if username is already taken
@@ -151,27 +148,19 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
     }
     */
 
-    // Hash password
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
-
-
+    const user = new User({ 
+      username, 
+      email,  // Will be automatically encrypted when saved
+      password, // This will be hashed automatically before saving
+      role: 'user'
+    });
 
     // Create verification token
     const verificationToken = crypto.randomBytes(20).toString('hex');
     const verificationTokenExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
 
-    // Create new user
-    user = new User({
-      username,
-      password: hashedPassword,
-      verificationToken,
-      verificationTokenExpires,
-      role: 'user'
-    });
-
-    // Set encrypted email
-    user.setEncryptedEmail(email);
+    user.verificationToken = verificationToken;
+    user.verificationTokenExpires = new Date(verificationTokenExpires);
 
     await user.save();
 
@@ -248,7 +237,7 @@ export const sendVerificationEmail = async (req: AuthRequest, res: Response): Pr
 
     const verificationUrl = `${environment.app.frontend}/verify-email/${verificationToken}`;
 
-    const decryptedEmail = req.user.getDecryptedEmail();
+    const decryptedEmail = await req.user.getDecryptedEmail();
     
     await sendEmail({
       to: decryptedEmail,

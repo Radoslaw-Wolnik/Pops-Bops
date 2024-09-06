@@ -1,7 +1,8 @@
 // models/User.ts
 import mongoose, { Document, Types, Model } from 'mongoose';
+import bcrypt from 'bcrypt';
 import { encrypt, decrypt, hashEmail as hashinghelper } from '../utils/encryption.util';
-//import isEmail from 'validator/lib/isEmail';
+import isEmail from 'validator/lib/isEmail';
 
 export interface IUserDocument extends Document {
   _id: Types.ObjectId;
@@ -16,14 +17,13 @@ export interface IUserDocument extends Document {
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
   role: 'user' | 'admin';
-  setEncryptedEmail(email: string): void;
-  getDecryptedEmail(): string;
-  updateEncryptedEmail(email: string): void;
+  getDecryptedEmail(): Promise<string>;
+  comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
 // Extend the IUserDocument interface to include static methods
 export interface IUserModel extends Model<IUserDocument> {
-  hashEmail(email: string): string;
+  hashEmail(email: string): Promise<string>;
 }
 
 const userSchema = new mongoose.Schema<IUserDocument>({
@@ -38,12 +38,6 @@ const userSchema = new mongoose.Schema<IUserDocument>({
   },
   email: { 
     type: String, 
-    required: true, 
-    unique: true
-  },
-  /* email is already hashed here i think but not sure - if not could be validated
-  email: { 
-    type: String, 
     required: [true, 'Email is required'],
     unique: true,
     validate: {
@@ -51,9 +45,11 @@ const userSchema = new mongoose.Schema<IUserDocument>({
       message: 'Invalid email format'
     }
   },
-  */
-  emailHash: { type: String, index: true }, // For faster lookups
-  password: { type: String, required: true }, // idk if minlenght here becouse its propably hashed and salted already
+  emailHash: { type: String, index: true, unique: true }, // For faster lookups
+  password: { 
+    type: String, 
+    required: true,
+   },
   profilePicture: { 
     type: String,
     validate: {
@@ -72,16 +68,8 @@ const userSchema = new mongoose.Schema<IUserDocument>({
   role: { type: String, enum: ['user', 'admin'], default: 'user' }
 });
 
-userSchema.methods.setEncryptedEmail = function(email: string) {
-  try {
-    this.email = encrypt(email);
-    this.emailHash = hashinghelper(email);
-  } catch (error) {
-    throw new Error('Failed to set encrypted email');
-  }
-};
 
-userSchema.methods.getDecryptedEmail = function() {
+userSchema.methods.getDecryptedEmail = async function(): Promise<string> {
   try {
     return decrypt(this.email);
   } catch (error) {
@@ -89,12 +77,44 @@ userSchema.methods.getDecryptedEmail = function() {
   }
 };
 
-userSchema.methods.updateEncryptedEmail = function(email: string) {
-  this.setEncryptedEmail(email);
+userSchema.statics.hashEmail = async function(email: string): Promise<string> {
+  return hashinghelper(email);
 };
 
-userSchema.statics.hashEmail = function(email: string) {
-  return hashinghelper(email);
+// Hash password and encrypt email before saving
+userSchema.pre('save', async function(this: IUserDocument, next) {
+  if (this.isModified('password')) {
+    if (this.password.length < 8) {
+      return next(new Error('Password must be at least 8 characters long'));
+    }
+    try {
+      const salt = await bcrypt.genSalt(10);
+      this.password = await bcrypt.hash(this.password, salt);
+    } catch (error) {
+      return next(error instanceof Error ? error : new Error('Failed to hash password'));
+    }
+  }
+
+  if (this.isModified('email')) {
+    try {
+      const encryptedEmail = await encrypt(this.email);
+      this.email = encryptedEmail;
+      this.emailHash = await hashinghelper(encryptedEmail);
+    } catch (error) {
+      return next(new Error('Failed to encrypt email'));
+    }
+  }
+
+  next();
+});
+
+// Method to compare password
+userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+  try {
+    return await bcrypt.compare(candidatePassword, this.password);
+  } catch (error) {
+    throw new Error('Failed to compare password');
+  }
 };
 
 const User = mongoose.model<IUserDocument, IUserModel>('User', userSchema);
