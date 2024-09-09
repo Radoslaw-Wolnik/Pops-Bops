@@ -1,7 +1,7 @@
 // models/User.ts
 import mongoose, { Document, Types, Model } from 'mongoose';
 import bcrypt from 'bcrypt';
-import { encrypt, decrypt, hashEmail as hashinghelper } from '../utils/encryption.util';
+import { encrypt, decrypt, hashEmail } from '../utils/encryption.util';
 import isEmail from 'validator/lib/isEmail';
 
 export interface IUserDocument extends Document {
@@ -17,16 +17,18 @@ export interface IUserDocument extends Document {
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
   role: 'user' | 'admin';
+  createdAt: Date;
+  updatedAt: Date;
   getDecryptedEmail(): Promise<string>;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
 
 // Extend the IUserDocument interface to include static methods
 export interface IUserModel extends Model<IUserDocument> {
-  hashEmail(email: string): Promise<string>;
+  findByEmail(email: string): Promise<IUserDocument | null>;
 }
 
-const userSchema = new mongoose.Schema<IUserDocument>({
+const userSchema = new mongoose.Schema<IUserDocument, IUserModel>({
   username: { 
     type: String, 
     required: true, 
@@ -49,6 +51,7 @@ const userSchema = new mongoose.Schema<IUserDocument>({
   password: { 
     type: String, 
     required: true,
+    minlength: [8, 'Password must be at least 8 characters long']
    },
   profilePicture: { 
     type: String,
@@ -66,10 +69,12 @@ const userSchema = new mongoose.Schema<IUserDocument>({
   resetPasswordExpires: Date,
 
   role: { type: String, enum: ['user', 'admin'], default: 'user' }
-});
+  },
+  { timestamps: true }
+);
 
 
-userSchema.methods.getDecryptedEmail = async function(): Promise<string> {
+userSchema.methods.getDecryptedEmail = async function(this: IUserDocument): Promise<string> {
   try {
     return decrypt(this.email);
   } catch (error) {
@@ -77,16 +82,15 @@ userSchema.methods.getDecryptedEmail = async function(): Promise<string> {
   }
 };
 
-userSchema.statics.hashEmail = async function(email: string): Promise<string> {
-  return hashinghelper(email);
+
+userSchema.statics.findByEmail = async function(this: IUserModel, email: string): Promise<IUserDocument | null> {
+  const emailHash = await hashEmail(email);
+  return this.findOne({ emailHash });
 };
 
 // Hash password and encrypt email before saving
 userSchema.pre('save', async function(this: IUserDocument, next) {
   if (this.isModified('password')) {
-    if (this.password.length < 8) {
-      return next(new Error('Password must be at least 8 characters long'));
-    }
     try {
       const salt = await bcrypt.genSalt(10);
       this.password = await bcrypt.hash(this.password, salt);
@@ -99,7 +103,7 @@ userSchema.pre('save', async function(this: IUserDocument, next) {
     try {
       const encryptedEmail = await encrypt(this.email);
       this.email = encryptedEmail;
-      this.emailHash = await hashinghelper(encryptedEmail);
+      this.emailHash = await hashEmail(encryptedEmail);
     } catch (error) {
       return next(new Error('Failed to encrypt email'));
     }
@@ -109,7 +113,7 @@ userSchema.pre('save', async function(this: IUserDocument, next) {
 });
 
 // Method to compare password
-userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
+userSchema.methods.comparePassword = async function(this: IUserDocument, candidatePassword: string): Promise<boolean> {
   try {
     return await bcrypt.compare(candidatePassword, this.password);
   } catch (error) {
