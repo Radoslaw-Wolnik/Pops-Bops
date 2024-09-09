@@ -1,7 +1,8 @@
 // adminController.ts
 import { Response } from 'express';
+import bcrypt from 'bcrypt'; // where is it used and wheather it should be?
+
 import User from '../models/user.model';
-import bcrypt from 'bcrypt';
 
 export const getAdmins = async (req: AuthRequest, res: Response): Promise<void> => {
   try {

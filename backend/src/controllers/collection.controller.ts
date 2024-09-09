@@ -2,6 +2,7 @@ import { Response } from 'express';
 import Collection from '../models/collection.model';
 import { AudioSample, IAudioSampleDocument } from '../models/audio-sample.model';
 import mongoose, { Types } from 'mongoose';
+import { NotFoundError, UnauthorizedError, ValidationError } from '../utils/custom-errors.util';
 
 export const getUserCollections = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -41,6 +42,10 @@ interface CreateCollectionRequest extends AuthRequest {
 export const createCollection = async (req: CreateCollectionRequest, res: Response): Promise<void> => {
   try {
     const { name } = req.body;
+    if (!name) {
+      throw new ValidationError('Collection name is required');
+    }
+    
     const newCollection = new Collection({
       user: req.user!.id,
       name

@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 
 import { AudioSample } from '../models/audio-sample.model';
 import DefaultAudioSample from '../models/audio-sample-default.model';
@@ -6,36 +6,39 @@ import UserAudioSample from '../models/audio-sample-user.model';
 import Collection from '../models/collection.model';
 
 import { deleteFileFromStorage } from '../utils/delete-file.util';
+import { ValidationError } from '../utils/custom-errors.util';
 
-export const getMainPageSamples = async (_req: Request, res: Response): Promise<void> => {
+export const getMainPageSamples = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const samples = await DefaultAudioSample.find({ forMainPage: true });
     res.json(samples);
   } catch (error) {
-    console.error('Error fetching main page samples:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error);
   }
 };
 
-export const getUserSamples = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getUserSamples = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const samples = await UserAudioSample.find({ user: req.user!.id });
     res.json(samples);
   } catch (error) {
     console.error('Error fetching user samples:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error);
   }
 };
 
 
-export const saveAudioSampleWithIcon = async (req: AuthRequestWithFiles, res: Response): Promise<void> => {
+export const saveAudioSampleWithIcon = async (req: AuthRequestWithFiles, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { name } = req.body;
+    if (!name) {
+      throw new ValidationError('Sample name is required');
+    }
+
     const isAdmin = req.user!.role === 'admin';
     
     if (!req.files || !Array.isArray(req.files) && (!req.files['audio'] || !req.files['icon'])) {
-      res.status(400).json({ message: 'Both audio and icon files are required' });
-      return;
+      throw new ValidationError('Both audio and icon files are required');
     }
 
     // Assuming req.files is not an array
@@ -58,8 +61,7 @@ export const saveAudioSampleWithIcon = async (req: AuthRequestWithFiles, res: Re
     await audioSample.save();
     res.status(201).json(audioSample);
   } catch (error) {
-    console.error('Error saving audio sample with icon:', error);
-    res.status(500).json({ message: 'Error saving audio sample with icon' });
+    next(error);
   }
 };
 

@@ -33,7 +33,7 @@ export const login = async (req: LoginRequest, res: Response, next: NextFunction
     }
 
     // Find user by email hash and compare at the same time
-    const user = await User.findOne({ emailHash: User.hashEmail(email) });
+    const user = await User.findByEmail(email);
     if (!user) {
       throw new UnauthorizedError('Invalid credentials');
     }
@@ -134,7 +134,7 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
     }
 
     // Check if user already exists
-    const existingUser = await User.findOne({ emailHash: User.hashEmail(email) });
+    const existingUser = await User.findByEmail(email);
     if (existingUser) {
       throw new ConflictError('User already exists');
     }
@@ -332,11 +332,10 @@ export const requestPasswordReset = async (req: RequestPasswordResetRequest, res
   try {
     const { email } = req.body;
 
-    const user = await User.findOne({ emailHash: User.hashEmail(email) });
+    const user = await User.findByEmail(email);
 
     if (!user) {
-      res.status(404).json({ message: 'User not found' });
-      return;
+      throw new NotFoundError('User');
     }
 
     const resetToken = crypto.randomBytes(20).toString('hex');
