@@ -68,3 +68,13 @@ export class ServiceUnavailableError extends CustomError {
     super(message, 503); // 503 is the HTTP status code for service unavailable
   }
 }
+
+export class UploadError extends CustomError {
+  constructor(message: string = 'File upload failed') {
+    super(message, 400);
+  }
+}
+
+// error for deleting a thing
+// await fs.unlink(req.file.path).catch(err => console.error('Error deleting uploaded file:', err));
+// also there should be an error for uploading - if not succesfull 
