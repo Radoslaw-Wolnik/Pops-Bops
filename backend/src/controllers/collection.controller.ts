@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express';
 import Collection from '../models/collection.model';
 import { AudioSample, IAudioSampleDocument } from '../models/audio-sample.model';
 import mongoose, { Types } from 'mongoose';
-import { NotFoundError, UnauthorizedError, ValidationError, InternalServerError, CustomError } from '../utils/custom-errors.util';
+import { NotFoundError, UnauthorizedError, ValidationError, InternalServerError, CustomError, BadRequestError } from '../utils/custom-errors.util';
 
 export const getUserCollections = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -103,7 +103,7 @@ export const addToCollection = async (req: AddToCollectionRequest, res: Response
 
     // Ensure all sampleIds are valid ObjectIds
     if (!Array.isArray(sampleIds) || sampleIds.some(id => !Types.ObjectId.isValid(id))) {
-      throw new ValidationError('Invalid sample IDs');
+      throw new BadRequestError('Invalid sample IDs');
     }
     
     

@@ -86,3 +86,39 @@ export class AuthenticationError extends CustomError {
     super(message, 401);
   }
 }
+
+export class BadRequestError extends CustomError {
+  constructor(message: string = 'Bad request') {
+    super(message, 400);
+  }
+}
+
+export class ResourceExistsError extends CustomError {
+  constructor(resource: string) {
+    super(`${resource} already exists`, 409);
+  }
+}
+
+export class PaymentRequiredError extends CustomError {
+  constructor(message: string = 'Payment required') {
+    super(message, 402);
+  }
+}
+
+export class TooManyRequestsError extends CustomError {
+  constructor(message: string = 'Too many requests') {
+    super(message, 429);
+  }
+}
+
+export class MethodNotAllowedError extends CustomError {
+  constructor(message: string = 'Method not allowed') {
+    super(message, 405);
+  }
+}
+
+export class GoneError extends CustomError {
+  constructor(message: string = 'Resource no longer available') {
+    super(message, 410);
+  }
+}

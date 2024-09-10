@@ -10,7 +10,7 @@ import environment from '../config/environment';
 import sendEmail from '../services/email.service';
 import AuthRequest from '../../types/global';
 import { MongoError } from 'mongodb';
-import { ValidationError, UnauthorizedError, NotFoundError, ConflictError, InternalServerError, AuthenticationError, CustomError } from '../utils/custom-errors.util';
+import { ValidationError, UnauthorizedError, NotFoundError, ConflictError, InternalServerError, AuthenticationError, CustomError, BadRequestError, ResourceExistsError, GoneError } from '../utils/custom-errors.util';
 
 interface LoginRequest extends Request {
   body: {
@@ -29,7 +29,7 @@ export const login = async (req: LoginRequest, res: Response, next: NextFunction
     const { email, password } = req.body;
 
     if (!email || !password) {
-      throw new ValidationError('Email and password are required');
+      throw new BadRequestError('Email and password are required');
     }
 
     // Find user by email hash and compare at the same time
@@ -126,13 +126,13 @@ export const register = async (req: RegisterRequest, res: Response, next: NextFu
     const { username, email, password } = req.body;
 
     if (!username || !email || !password) {
-      throw new ValidationError('Username, email, and password are required');
+      throw new BadRequestError('Username, email, and password are required');
     }
 
     // Check if user already exists
     const existingUser = await User.findByEmail(email);
     if (existingUser) {
-      throw new ConflictError('User already exists');
+      throw new ResourceExistsError('User already exists');
     }
 
     // Check if username is already taken
@@ -188,12 +188,13 @@ export const register = async (req: RegisterRequest, res: Response, next: NextFu
       if ((error as any).keyPattern) {
         field = Object.keys((error as any).keyPattern)[0];
       }
-      next(new ConflictError(`An account with that ${field} already exists.`));
+      next(new ResourceExistsError(`User with that ${field}`));
     } else {
       next(error instanceof CustomError ? error : new InternalServerError('Error registering user'));
     }
   }
 };
+
 
 export const refreshToken = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   // Use the existing refreshToken function from the auth module
@@ -256,7 +257,7 @@ export const verifyEmail = async (req: VerifyEmailRequest, res: Response, next: 
     });
 
     if (!user) {
-      throw new ValidationError('Invalid or expired verification token');
+      throw new GoneError('Verification token has expired or is invalid');
     }
 
     user.isVerified = true;

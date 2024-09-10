@@ -1,7 +1,7 @@
 // adminController.ts
 import { Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt'; // where is it used and wheather it should be?
-import { NotFoundError, InternalServerError, ValidationError, ConflictError, CustomError } from '../utils/custom-errors.util';
+import { NotFoundError, InternalServerError, ValidationError, CustomError, ResourceExistsError } from '../utils/custom-errors.util';
 
 import User from '../models/user.model';
 
@@ -54,7 +54,7 @@ export const addAdmin = async (req: AddAdminRequest, res: Response, next: NextFu
     res.status(201).json(adminWithoutPassword);
   } catch (error) {
     if (error instanceof Error && error.name === 'MongoError' && (error as any).code === 11000) {
-      next(new ConflictError('An admin with that username or email already exists'));
+      next(new ResourceExistsError('An admin with that username or email already exists'));
     } else {
       next(error instanceof CustomError ? error : new InternalServerError('Error adding admin'));
     }
