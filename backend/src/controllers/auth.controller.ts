@@ -287,13 +287,12 @@ export const changePassword = async (req: ChangePasswordRequest, res: Response, 
     const { currentPassword, newPassword } = req.body;
     // im not sure about bcrypt.compare becouse the current password wont be salted
 
-    const isMatch = await bcrypt.compare(currentPassword, req.user.password);
+    const isMatch = await req.user.comparePassword(currentPassword);
     if (!isMatch) {
       throw new ValidationError('Current password is incorrect');
     }
 
-    const salt = await bcrypt.genSalt(10);
-    req.user.password = await bcrypt.hash(newPassword, salt);
+    req.user.password = newPassword;
     await req.user.save();
 
     res.json({ message: 'Password changed successfully' });
@@ -366,8 +365,7 @@ export const resetPassword = async (req: ResetPasswordRequest, res: Response, ne
       throw new ValidationError('Invalid or expired reset token');
     }
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(password, salt);
+    user.password = password;
     user.resetPasswordToken = undefined;
     user.resetPasswordExpires = undefined;
     await user.save();
