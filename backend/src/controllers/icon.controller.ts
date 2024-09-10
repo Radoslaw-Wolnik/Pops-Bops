@@ -1,16 +1,14 @@
-import { Response } from 'express';
+import { Response, NextFunction } from 'express';
 import UserAudioSample from '../models/audio-sample-user.model';
 import DefaultAudioSample from '../models/audio-sample-default.model';
-import fs from 'fs/promises';
-import path from 'path';
 import { deleteFileFromStorage } from '../utils/delete-file.util';
+import { ValidationError, NotFoundError, InternalServerError, UnauthorizedError, CustomError } from '../utils/custom-errors.util';
 
   
-export const saveIconToStorage = async (req: AuthRequestWithFile, res: Response): Promise<void> => {
+export const saveIconToStorage = async (req: AuthRequestWithFile, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.file) {
-      res.status(400).json({ message: 'No file uploaded' });
-      return;
+      throw new ValidationError('No file uploaded');
     }
   
     const isAdmin = req.user && req.user.role === 'admin';
@@ -23,35 +21,45 @@ export const saveIconToStorage = async (req: AuthRequestWithFile, res: Response)
       iconPath: relativePath
     });
   } catch (error) {
-    console.error('Error saving icon:', error);
-    res.status(500).json({ message: 'Server error' });
+    if (req.file) {
+      await deleteFileFromStorage(req.file.path);
+    }
+    next(error instanceof CustomError ? error : new InternalServerError('Error saving icon'));
   }
 };
 
 
 
-export const updateIcon = async (req: AuthRequestWithFile, res: Response): Promise<void> => {
+export const updateIcon = async (req: AuthRequestWithFile, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.file) {
-      res.status(400).json({ message: 'Icon file is required' });
-      return;
+      throw new ValidationError('Icon file is required');
+    }
+
+    if (!req.user) {
+      throw new UnauthorizedError('User not authenticated'); // will never happen
     }
 
     const audioSampleId = req.params.id;
-    const isAdmin = req.user && req.user.role === 'admin';
+    const isAdmin = req.user.role === 'admin';
     
     let audioSample;
     if (isAdmin) {
       audioSample = await DefaultAudioSample.findById(audioSampleId);
     } else {
-      audioSample = await UserAudioSample.findById(audioSampleId);
+      audioSample = await UserAudioSample.findOne({ _id: audioSampleId, user: req.user!._id });
     }
 
     if (!audioSample) {
-      res.status(404).json({ message: 'Audio sample not found' });
-      return;
+      throw new NotFoundError('Audio sample');
     }
 
+    if (!isAdmin) {
+      if (!('user' in audioSample) || audioSample.user.toString() !== req.user._id.toString()) {
+        throw new UnauthorizedError('Not authorized to update this audio sample');
+      }
+    }
+    
     // Delete the old icon if it exists
     if (audioSample.iconUrl) {
       await deleteFileFromStorage(audioSample.iconUrl);
@@ -73,10 +81,16 @@ export const updateIcon = async (req: AuthRequestWithFile, res: Response): Promi
         { new: true }
       );
     }
+
+    if (!updatedAudioSample) {
+      throw new NotFoundError('Audio sample');
+    }
   
     res.status(200).json(updatedAudioSample);
   } catch (error) {
-    console.error('Error updating audio sample icon:', error);
-    res.status(500).json({ message: 'Error updating audio sample icon' });
+    if (req.file) {
+      await deleteFileFromStorage(req.file.path);
+    }
+    next(error instanceof CustomError ? error : new InternalServerError('Error updating audio sample icon'));
   }
 };

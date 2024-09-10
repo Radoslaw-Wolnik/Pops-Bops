@@ -10,7 +10,7 @@ import environment from '../config/environment';
 import sendEmail from '../services/email.service';
 import AuthRequest from '../../types/global';
 import { MongoError } from 'mongodb';
-import { ValidationError, UnauthorizedError, NotFoundError, ConflictError } from '../utils/custom-errors.util';
+import { ValidationError, UnauthorizedError, NotFoundError, ConflictError, InternalServerError, AuthenticationError, CustomError } from '../utils/custom-errors.util';
 
 interface LoginRequest extends Request {
   body: {
@@ -62,11 +62,10 @@ export const login = async (req: LoginRequest, res: Response, next: NextFunction
   }
 };
 
-export const postRegistrationLogin = async (req: PostRegLoginRequest, res: Response): Promise<void> => {
+export const postRegistrationLogin = async (req: PostRegLoginRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(401).json({ message: 'Unauthorized' });
-      return;
+      throw new UnauthorizedError('Unauthorized');
     }
 
     // User is already authenticated via short-lived token
@@ -76,26 +75,23 @@ export const postRegistrationLogin = async (req: PostRegLoginRequest, res: Respo
     });
 
   } catch (error) {
-    console.error(error);
-    res.status(500).send('Server error');
+    next(error instanceof CustomError ? error : new InternalServerError('Error in post-registration login'));
   }
 };
 
 
-export const logout = async (req: AuthRequest, res: Response): Promise<void> => {
+export const logout = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     //const token = req.headers.authorization.split(' ')[1];
     //const token = extractToken(req);
     const token = req.cookies.token;
     if (!token) {
-      res.status(400).json({ message: 'No token provided.' });
-      return;
+      throw new ValidationError('No token provided');
     }
 
     const decodedToken = jwt.decode(token);
     if (!decodedToken) {
-      res.status(400).json({ message: 'Invalid token.' });
-      return;
+      throw new ValidationError('Invalid token');
     }
 
     // Add the token to the revoked tokens list
@@ -109,11 +105,11 @@ export const logout = async (req: AuthRequest, res: Response): Promise<void> => 
     res.clearCookie('token', { httpOnly: true, secure: true, sameSite: 'strict' });
     res.status(200).json({ message: 'Logout successful' });
   } catch (error) {
-    console.error('Logout error:', error);
-    if (error as any === 11000) { // Duplicate key error
-      res.status(400).json({ message: 'Token already revoked.' });
+    if (error instanceof Error && (error as any).code === 11000) {
+      next(new ConflictError('Token already revoked'));
+    } else {
+      next(error instanceof CustomError ? error : new InternalServerError('Error during logout'));
     }
-    res.status(500).json({ message: 'Server error during logout' });
   }
 };
 
@@ -125,7 +121,7 @@ interface RegisterRequest extends Request {
   };
 }
 
-export const register = async (req: RegisterRequest, res: Response): Promise<void> => {
+export const register = async (req: RegisterRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { username, email, password } = req.body;
 
@@ -169,7 +165,7 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
     setShortLivedTokenCookie(res, shortLivedToken);
 
     const verificationUrl = `${environment.app.frontend}/verify-email/${verificationToken}`;
-    console.log('Attempting to send email to:', user.email);
+    // console.log('Attempting to send email to:', user.email);
     //console.log('Verification URL:', verificationUrl);
     await sendEmail({
       to: email,
@@ -187,47 +183,35 @@ export const register = async (req: RegisterRequest, res: Response): Promise<voi
       message: 'User registered. Please check your email to verify your account.'
     });
   } catch (error) {
-    if (error instanceof Error) {
-      // Check if it's a MongoDB duplicate key error
-      if ((error as any).code === 11000) {
-        let field = 'field';
-        if ((error as any).keyPattern) {
-          field = Object.keys((error as any).keyPattern)[0];
-        }
-        res.status(409).json({ 
-          message: `An account with that ${field} already exists.`,
-          field: field
-        });
-      } else {
-        console.error('Error in registration process:', error);
-        res.status(500).json({ message: 'Server error' });
+    if (error instanceof Error && (error as any).code === 11000) {
+      let field = 'field';
+      if ((error as any).keyPattern) {
+        field = Object.keys((error as any).keyPattern)[0];
       }
+      next(new ConflictError(`An account with that ${field} already exists.`));
     } else {
-      console.error('Unknown error in registration process');
-      res.status(500).json({ message: 'Server error' });
+      next(error instanceof CustomError ? error : new InternalServerError('Error registering user'));
     }
   }
 };
 
-export const refreshToken = async (req: AuthRequest, res: Response): Promise<void> => {
+export const refreshToken = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   // Use the existing refreshToken function from the auth module
   try {
     await refreshAuthToken(req, res);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to refresh token', error: (error as Error).message });
+    next(error instanceof CustomError ? error : new InternalServerError('Failed to refresh token'));
   }
 };
 
-export const sendVerificationEmail = async (req: AuthRequest, res: Response): Promise<void> => {
+export const sendVerificationEmail = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(500).json({ message: 'Internal server error: User not attached to request' });
-      return;
+      throw new InternalServerError('User not attached to request');
     }
 
     if (req.user.isVerified) {
-      res.status(400).json({ message: 'Email already verified' });
-      return;
+      throw new ConflictError('Email already verified');
     }
 
     const verificationToken = crypto.randomBytes(20).toString('hex');
@@ -252,8 +236,7 @@ export const sendVerificationEmail = async (req: AuthRequest, res: Response): Pr
 
     res.json({ message: 'Verification email sent' });
   } catch (error) {
-    console.error('Error sending verification email:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error instanceof CustomError ? error : new InternalServerError('Error sending verification email'));
   }
 };
 
@@ -263,7 +246,7 @@ interface VerifyEmailRequest extends Request {
   };
 }
 
-export const verifyEmail = async (req: VerifyEmailRequest, res: Response): Promise<void> => {
+export const verifyEmail = async (req: VerifyEmailRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { token } = req.params;
 
@@ -273,8 +256,7 @@ export const verifyEmail = async (req: VerifyEmailRequest, res: Response): Promi
     });
 
     if (!user) {
-      res.status(400).json({ message: 'Invalid or expired verification token' });
-      return;
+      throw new ValidationError('Invalid or expired verification token');
     }
 
     user.isVerified = true;
@@ -284,8 +266,7 @@ export const verifyEmail = async (req: VerifyEmailRequest, res: Response): Promi
 
     res.json({ message: 'Email verified successfully. You can now log in.' });
   } catch (error) {
-    console.error('Error verifying email:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error instanceof CustomError ? error : new InternalServerError('Error verifying email'));
   }
 };
 
@@ -296,19 +277,18 @@ interface ChangePasswordRequest extends AuthRequest {
   };
 }
 
-export const changePassword = async (req: ChangePasswordRequest, res: Response): Promise<void> => {
+export const changePassword = async (req: ChangePasswordRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     if (!req.user) {
-      res.status(500).json({ message: 'Internal server error: User not attached to request' });
-      return;
+      throw new InternalServerError('User not attached to request');
     }
 
     const { currentPassword, newPassword } = req.body;
+    // im not sure about bcrypt.compare becouse the current password wont be salted
 
     const isMatch = await bcrypt.compare(currentPassword, req.user.password);
     if (!isMatch) {
-      res.status(400).json({ message: 'Current password is incorrect' });
-      return;
+      throw new ValidationError('Current password is incorrect');
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -317,8 +297,7 @@ export const changePassword = async (req: ChangePasswordRequest, res: Response):
 
     res.json({ message: 'Password changed successfully' });
   } catch (error) {
-    console.error('Error changing password:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error instanceof CustomError ? error : new InternalServerError('Error changing password'));
   }
 };
 
@@ -328,8 +307,9 @@ interface RequestPasswordResetRequest extends Request {
   };
 }
 
-export const requestPasswordReset = async (req: RequestPasswordResetRequest, res: Response): Promise<void> => {
+export const requestPasswordReset = async (req: RequestPasswordResetRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
+    
     const { email } = req.body;
 
     const user = await User.findByEmail(email);
@@ -358,8 +338,7 @@ export const requestPasswordReset = async (req: RequestPasswordResetRequest, res
 
     res.json({ message: 'Password reset email sent' });
   } catch (error) {
-    console.error('Error requesting password reset:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error instanceof CustomError ? error : new InternalServerError('Error requesting password reset'));
   }
 };
 
@@ -372,7 +351,7 @@ interface ResetPasswordRequest extends Request {
   };
 }
 
-export const resetPassword = async (req: ResetPasswordRequest, res: Response): Promise<void> => {
+export const resetPassword = async (req: ResetPasswordRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { token } = req.params;
     const { password } = req.body;
@@ -383,8 +362,7 @@ export const resetPassword = async (req: ResetPasswordRequest, res: Response): P
     });
 
     if (!user) {
-      res.status(400).json({ message: 'Invalid or expired reset token' });
-      return;
+      throw new ValidationError('Invalid or expired reset token');
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -395,7 +373,6 @@ export const resetPassword = async (req: ResetPasswordRequest, res: Response): P
 
     res.json({ message: 'Password reset successful' });
   } catch (error) {
-    console.error('Error resetting password:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error instanceof CustomError ? error : new InternalServerError('Error resetting password'));
   }
 };

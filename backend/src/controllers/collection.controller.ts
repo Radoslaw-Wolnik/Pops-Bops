@@ -1,34 +1,31 @@
-import { Response } from 'express';
+import { Response, NextFunction } from 'express';
 import Collection from '../models/collection.model';
 import { AudioSample, IAudioSampleDocument } from '../models/audio-sample.model';
 import mongoose, { Types } from 'mongoose';
-import { NotFoundError, UnauthorizedError, ValidationError } from '../utils/custom-errors.util';
+import { NotFoundError, UnauthorizedError, ValidationError, InternalServerError, CustomError } from '../utils/custom-errors.util';
 
-export const getUserCollections = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getUserCollections = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const collections = await Collection.find({ user: req.user!.id }).populate('samples');
     res.json(collections);
   } catch (error) {
-    console.error('Error fetching user collections:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(new InternalServerError('Error fetching user collections'));
   }
 };
 
-export const getCollectionById = async (req: AuthRequest, res: Response): Promise<void> => {
+export const getCollectionById = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const collectionId = req.params.id;
     const userId = req.user!._id;
 
     const collection = await Collection.findOne({ _id: collectionId, user: userId }).populate('samples');
     if (!collection) {
-      res.status(404).json({ message: 'Collection not found or not authorized to access' });
-      return;
+      throw new NotFoundError('Collection');
     }
 
     res.json(collection);
   } catch (error) {
-    console.error('Error fetching collection:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error instanceof CustomError ? error : new InternalServerError('Error fetching collection'));
   }
 };
 
@@ -39,7 +36,7 @@ interface CreateCollectionRequest extends AuthRequest {
 }
   
 
-export const createCollection = async (req: CreateCollectionRequest, res: Response): Promise<void> => {
+export const createCollection = async (req: CreateCollectionRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { name } = req.body;
     if (!name) {
@@ -53,12 +50,11 @@ export const createCollection = async (req: CreateCollectionRequest, res: Respon
     await newCollection.save();
     res.status(201).json(newCollection);
   } catch (error) {
-    console.error('Error creating collection:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error instanceof CustomError ? error : new InternalServerError('Error creating collection'));
   }
 };
 
-export const updateCollection = async (req: AuthRequest, res: Response): Promise<void> => {
+export const updateCollection = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const collectionId = req.params.id;
     const userId = req.user!._id;
@@ -71,14 +67,12 @@ export const updateCollection = async (req: AuthRequest, res: Response): Promise
     );
 
     if (!updatedCollection) {
-      res.status(404).json({ message: 'Collection not found or not authorized to update' });
-      return;
+      throw new NotFoundError('Collection');
     }
 
     res.json(updatedCollection);
   } catch (error) {
-    console.error('Error updating collection:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error instanceof CustomError ? error : new InternalServerError('Error updating collection'));
   }
 };
 
@@ -92,27 +86,24 @@ interface AddToCollectionRequest extends AuthRequest {
 }
 
 
-export const addToCollection = async (req: AddToCollectionRequest, res: Response): Promise<void> => {
+export const addToCollection = async (req: AddToCollectionRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { sampleIds } = req.body;
     const userId = req.user!._id;
 
     const collection = await Collection.findById(req.params.id);
     if (!collection) {
-      res.status(404).json({ message: 'Collection not found' });
-      return;
+      throw new NotFoundError('Collection');
     }
 
     // Check if the authenticated user owns the collection
     if (collection.user.toString() !== userId.toString()) {
-      res.status(403).json({ message: 'Not authorized to modify this collection' });
-      return;
+      throw new UnauthorizedError('Not authorized to modify this collection');
     }
 
     // Ensure all sampleIds are valid ObjectIds
     if (!Array.isArray(sampleIds) || sampleIds.some(id => !Types.ObjectId.isValid(id))) {
-      res.status(400).json({ message: 'Invalid sample IDs' });
-      return;
+      throw new ValidationError('Invalid sample IDs');
     }
     
     
@@ -124,7 +115,7 @@ export const addToCollection = async (req: AddToCollectionRequest, res: Response
         { sampleType: 'DefaultAudioSample' },
         { sampleType: 'UserAudioSample', user: userId } as any // by using any were telling ts to trust us
       ] // but tbh in UserAudioSample there is user field dumb dumb
-    } as any).exec();
+    }).exec();
 
     // Explicitly type the foundSamples and map to _id
     // const typedFoundSamples = foundSamples as IAudioSampleDocument[];
@@ -139,8 +130,7 @@ export const addToCollection = async (req: AddToCollectionRequest, res: Response
     );
 
     if (missingSamples.length > 0) {
-      res.status(404).json({ message: 'One or more samples not found', missingSamples });
-      return;
+      throw new NotFoundError(`One or more samples not found: ${missingSamples.join(', ')}`);
     }
 
     collection.samples.push(...foundSampleIds);
@@ -148,12 +138,11 @@ export const addToCollection = async (req: AddToCollectionRequest, res: Response
 
     res.json(collection);
   } catch (error) {
-    console.error('Error adding to collection:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error instanceof CustomError ? error : new InternalServerError('Error adding to collection'));
   }
 };
 
-export const deleteCollection = async (req: AuthRequest, res: Response): Promise<void> => {
+export const deleteCollection = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const collectionId = req.params.id;
     const userId = req.user!._id;
@@ -164,26 +153,23 @@ export const deleteCollection = async (req: AuthRequest, res: Response): Promise
     });
 
     if (!deletedCollection) {
-      res.status(404).json({ message: 'Collection not found or not authorized to delete' });
-      return;
+      throw new NotFoundError('Collection');
     }
 
     res.json({ message: 'Collection deleted successfully' });
   } catch (error) {
-    console.error('Error deleting collection:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error instanceof CustomError ? error : new InternalServerError('Error deleting collection'));
   }
 };
 
-export const removeFromCollection = async (req: AuthRequest, res: Response): Promise<void> => {
+export const removeFromCollection = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { collectionId, sampleId } = req.params;
     const userId = req.user!._id;
 
     const collection = await Collection.findOne({ _id: collectionId, user: userId });
     if (!collection) {
-      res.status(404).json({ message: 'Collection not found or not authorized' });
-      return;
+      throw new NotFoundError('Collection');
     }
 
     collection.samples = collection.samples.filter(sample => sample.toString() !== sampleId);
@@ -191,7 +177,6 @@ export const removeFromCollection = async (req: AuthRequest, res: Response): Pro
 
     res.json({ message: 'Sample removed from collection successfully' });
   } catch (error) {
-    console.error('Error removing sample from collection:', error);
-    res.status(500).json({ message: 'Server error' });
+    next(error instanceof CustomError ? error : new InternalServerError('Error removing sample from collection'));
   }
 };

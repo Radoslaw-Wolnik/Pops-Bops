@@ -75,6 +75,14 @@ export class UploadError extends CustomError {
   }
 }
 
-// error for deleting a thing
-// await fs.unlink(req.file.path).catch(err => console.error('Error deleting uploaded file:', err));
-// also there should be an error for uploading - if not succesfull 
+export class DatabaseError extends CustomError {
+  constructor(message: string = 'Database operation failed') {
+    super(message, 500);
+  }
+}
+
+export class AuthenticationError extends CustomError {
+  constructor(message: string = 'Authentication failed') {
+    super(message, 401);
+  }
+}

@@ -1,31 +1,30 @@
-import { Request, Response } from 'express';
-import fs from 'fs/promises';
+import { NextFunction, Request, Response } from 'express';
 import path from 'path';
 
-import User, { IUserDocument } from '../models/user.model';
-import { ValidationError, UnauthorizedError, NotFoundError, UploadError } from '../utils/custom-errors.util';
+import User from '../models/user.model';
+import { ValidationError, UnauthorizedError, NotFoundError, UploadError, InternalServerError, CustomError } from '../utils/custom-errors.util';
 import { deleteFileFromStorage } from '../utils/delete-file.util';
 
-export const getUserOwnProfile = async (req: AuthRequest, res: Response): Promise<void> => {
-  console.log("backend is trying");
-  //console.log('data: ', req.user);
-  
-  if (!req.user) {
-    throw new UnauthorizedError('User not authenticated');
+
+export const getUserOwnProfile = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user) {
+      throw new UnauthorizedError('User not authenticated');
+    }
+
+    // create new object without the password
+    const userWithoutPassword = req.user.toObject();
+    delete userWithoutPassword.password;
+
+    userWithoutPassword.email = await req.user.getDecryptedEmail();
+
+    res.json(userWithoutPassword);
+  } catch (error) {
+    next(error instanceof CustomError ? error : new InternalServerError('Error fetching user profile'));
   }
-
-  // Create a new object without the password
-  const userWithoutPassword = req.user.toObject();
-  delete userWithoutPassword.password;
-
-  // Get the decrypted email using the model's method
-  userWithoutPassword.email = req.user.getDecryptedEmail();
-
-  res.json(userWithoutPassword);
-
 };
 
-export const saveProfilePicture = async (req: AuthRequestWithFile, res: Response): Promise<void> => {
+export const saveProfilePicture = async (req: AuthRequestWithFile, res: Response, next: NextFunction): Promise<void> => {
   try {
     // i would like to delete this becouse we have already checked that based on the authToken middleware before in routes
     // but i need it - othervise ts error
@@ -53,22 +52,15 @@ export const saveProfilePicture = async (req: AuthRequestWithFile, res: Response
       profilePicture: relativePath
     });
   } catch (error) {
-    console.error('Error saving profile picture:', error);
-    // If an error occurs, attempt to delete the uploaded file
     if (req.file) {
-      // should insted use the delete-file util
-      await deleteFileFromStorage(req.file.path)
+      await deleteFileFromStorage(req.file.path);
     }
-    if (error instanceof UploadError) {
-      res.status(error.statusCode).json({ message: error.message });
-    } else {
-      res.status(500).json({ message: 'Server error', error: (error as Error).message });
-    }
+    next(error instanceof CustomError ? error : new InternalServerError('Error saving profile picture'));
   }
 };
 
 
-export const getOtherUserProfile = async (req: Request, res: Response): Promise<void> => {
+export const getOtherUserProfile = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const user = await User.findById(req.params.userId).select('-password');
     if (!user) {
@@ -76,11 +68,7 @@ export const getOtherUserProfile = async (req: Request, res: Response): Promise<
     }
     res.json(user);
   }  catch (error) {
-    console.error('Error fetching user profile:', error);
-    if (error instanceof NotFoundError) {
-      res.status(error.statusCode).json({ message: error.message });
-    } else {
-      res.status(500).json({ message: 'Server error' });
-    }
+    // console.error('Error fetching user profile:', error);
+    next(error instanceof CustomError ? error : new InternalServerError('Error fetching user profile'));
   }
 };

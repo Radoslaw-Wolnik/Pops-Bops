@@ -6,14 +6,14 @@ import UserAudioSample from '../models/audio-sample-user.model';
 import Collection from '../models/collection.model';
 
 import { deleteFileFromStorage } from '../utils/delete-file.util';
-import { ValidationError } from '../utils/custom-errors.util';
+import { ValidationError, NotFoundError, InternalServerError, UnauthorizedError, CustomError } from '../utils/custom-errors.util';
 
 export const getMainPageSamples = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const samples = await DefaultAudioSample.find({ forMainPage: true });
     res.json(samples);
   } catch (error) {
-    next(error);
+    next(new InternalServerError('Error fetching main page samples'));
   }
 };
 
@@ -22,8 +22,7 @@ export const getUserSamples = async (req: AuthRequest, res: Response, next: Next
     const samples = await UserAudioSample.find({ user: req.user!.id });
     res.json(samples);
   } catch (error) {
-    console.error('Error fetching user samples:', error);
-    next(error);
+    next(new InternalServerError('Error fetching user samples'));
   }
 };
 
@@ -61,18 +60,25 @@ export const saveAudioSampleWithIcon = async (req: AuthRequestWithFiles, res: Re
     await audioSample.save();
     res.status(201).json(audioSample);
   } catch (error) {
-    next(error);
+    if (error instanceof CustomError) {
+      next(error);
+    } else {
+      next(new InternalServerError('Error saving audio sample with icon'));
+    }
   }
 };
 
-export const saveAudioSample = async (req: AuthRequestWithFile, res: Response): Promise<void> => {
+export const saveAudioSample = async (req: AuthRequestWithFile, res: Response, next: NextFunction): Promise<void> => {
   try {
     const { name } = req.body;
+    if (!name) {
+      throw new ValidationError('Sample name is required');
+    }
+
     const isAdmin = req.user!.role === 'admin';
     
     if (!req.file) {
-      res.status(400).json({ message: 'Audio file is required' });
-      return;
+      throw new ValidationError('Audio file is required');
     }
 
     const audioFile = req.file;
@@ -91,12 +97,15 @@ export const saveAudioSample = async (req: AuthRequestWithFile, res: Response): 
     await audioSample.save();
     res.status(201).json(audioSample);
   } catch (error) {
-    console.error('Error saving audio sample:', error);
-    res.status(500).json({ message: 'Error saving audio sample' });
+    if (error instanceof CustomError) {
+      next(error);
+    } else {
+      next(new InternalServerError('Error saving audio sample'));
+    }
   }
 };
 
-export const updateAudioSample = async (req: AuthRequestWithFile, res: Response): Promise<void> => {
+export const updateAudioSample = async (req: AuthRequestWithFile, res: Response, next: NextFunction): Promise<void> => {
   try {
     const sampleId = req.params.id;
     const isAdmin = req.user!.role === 'admin';
@@ -112,18 +121,20 @@ export const updateAudioSample = async (req: AuthRequestWithFile, res: Response)
     
 
     if (!updatedSample) {
-      res.status(404).json({ message: 'Sample not found or not authorized to update' });
-      return;
+      throw new NotFoundError('Audio sample');
     }
 
     res.json(updatedSample);
   } catch (error) {
-    console.error('Error updating audio sample:', error);
-    res.status(500).json({ message: 'Server error' });
+    if (error instanceof CustomError) {
+      next(error);
+    } else {
+      next(new InternalServerError('Error updating audio sample'));
+    }
   }
 };
 
-export const deleteAudioSample = async (req: AuthRequest, res: Response): Promise<void> => {
+export const deleteAudioSample = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const sampleId = req.params.id;
     const isAdmin = req.user!.role === 'admin';
@@ -133,8 +144,7 @@ export const deleteAudioSample = async (req: AuthRequest, res: Response): Promis
     
 
     if (!deletedSample) {
-      res.status(404).json({ message: 'Sample not found or not authorized to delete' });
-      return;
+      throw new NotFoundError('Audio sample');
     }
 
     if (deletedSample.sampleType === 'UserAudioSample') {
@@ -156,7 +166,10 @@ export const deleteAudioSample = async (req: AuthRequest, res: Response): Promis
 
     res.json({ message: 'Sample deleted successfully' });
   } catch (error) {
-    console.error('Error deleting audio sample:', error);
-    res.status(500).json({ message: 'Server error' });
+    if (error instanceof CustomError) {
+      next(error);
+    } else {
+      next(new InternalServerError('Error deleting audio sample'));
+    }
   }
 };
