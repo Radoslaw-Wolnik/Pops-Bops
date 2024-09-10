@@ -79,33 +79,3 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
     message: environment.app.nodeEnv === 'production' ? 'Internal Server Error' : err.message
   });
 };
-
-
-// A utility to wrap Multer middleware and handle errors
-export const multerErrorHandler = (multerMiddleware: any) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    multerMiddleware(req, res, (err: any) => {
-      if (err) {
-        next(err);  // Pass the error to the next middleware (can be a custom handler)
-      } else {
-        next();  // No errors, proceed to the next middleware
-      }
-    });
-  };
-};
-
-/*prev with only single
-export const multerErrorHandler = (multerMiddleware: any) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    multerMiddleware(req, res, (err: any) => {
-      if (err instanceof multer.MulterError) {
-        next(err);  // Pass Multer errors to the centralized error handler
-      } else if (err) {
-        next(err);  // Handle any other type of error
-      } else {
-        next();  // No errors, proceed to the next middleware
-      }
-    });
-  };
-};
-*/
