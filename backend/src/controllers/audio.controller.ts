@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 
-import { AudioSample } from '../models/audio-sample.model';
+import { AudioSample, IAudioSampleDocument } from '../models/audio-sample.model';
 import DefaultAudioSample from '../models/audio-sample-default.model';
 import UserAudioSample from '../models/audio-sample-user.model';
 import Collection from '../models/collection.model';
@@ -149,8 +149,13 @@ export const deleteAudioSample = async (req: AuthRequest, res: Response, next: N
       throw new MethodNotAllowedError('Default samples can only be deleted by admins');
     }
 
-    if (sample.sampleType === 'UserAudioSample' && sample.user.toString() !== req.user!._id.toString() && !isAdmin) {
-      throw new UnauthorizedError('Not authorized to delete this audio sample');
+    // Use a type guard to check if the sample is a UserAudioSample
+    if (sample.sampleType === 'UserAudioSample') {
+      // Now TypeScript knows that sample is a UserAudioSample
+      const userSample = sample as IAudioSampleDocument & { user: any };
+      if (userSample.user.toString() !== req.user!._id.toString() && !isAdmin) {
+        throw new UnauthorizedError('Not authorized to delete this audio sample');
+      }
     }
 
     await AudioSample.findByIdAndDelete(sampleId);
