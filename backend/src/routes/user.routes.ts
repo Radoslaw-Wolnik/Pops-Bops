@@ -6,7 +6,7 @@ import {
 } from '../controllers/user.controller.js';
 import  { authenticateToken } from '../middleware/auth.middleware.js';
 import { uploadProfilePicture } from '../middleware/upload.middleware.js';
-
+import { multerErrorHandler } from '../middleware/error-handler.middleware.js';
 
 const router: Router = express.Router();
 
@@ -14,8 +14,7 @@ const router: Router = express.Router();
 router.get('/me', authenticateToken, getUserOwnProfile);
 
 //router.put('/upload-profile-picture', authenticateToken, upload.single('profilePicture'), saveProfilePicture);
-router.put('/upload-profile-picture', authenticateToken, uploadProfilePicture, saveProfilePicture);
-
+router.put('/upload-profile-picture', authenticateToken, multerErrorHandler(uploadProfilePicture), saveProfilePicture);
 
 
 export default router;

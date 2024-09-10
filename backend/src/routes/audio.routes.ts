@@ -11,24 +11,24 @@ import {
   deleteAudioSample
 } from '../controllers/audio.controller.js';
 
-import { uploadAudioAndIcon } from '../middleware/upload-combined.middleware.js';
-import { uploadAudio } from '../middleware/upload.middleware.js';
+import { uploadAudio, uploadAudioAndIcon } from '../middleware/upload.middleware.js';
+import { multerErrorHandler } from '../middleware/error-handler.middleware.js';
 
 const router: Router = express.Router();
 
 router.get('/main-samples', getMainPageSamples);
 router.get('/my-samples', authenticateToken, getUserSamples);
 
-router.post('/audio-sample-with-icon', authenticateToken, uploadAudioAndIcon, saveAudioSampleWithIcon);
-router.post('/audio-sample', authenticateToken, uploadAudio, saveAudioSample);
+router.post('/upload/audio', authenticateToken, multerErrorHandler(uploadAudio), saveAudioSample);
+router.post('/upload/audio-with-icon', authenticateToken, multerErrorHandler(uploadAudioAndIcon), saveAudioSampleWithIcon);
 
 router.put('/audio-sample/:id', authenticateToken, updateAudioSample);
 
 router.delete('/audio-sample/:id', authenticateToken, deleteAudioSample);
 
 // Admin routes
-router.post('/default-audio-sample-with-icon', authenticateAdmin, uploadAudioAndIcon, saveAudioSampleWithIcon);
-router.post('/default-audio-sample', authenticateAdmin, uploadAudio, saveAudioSample);
+router.post('/upload/default-audio', authenticateAdmin, multerErrorHandler(uploadAudio), saveAudioSample);
+router.post('/upload/default-audio-with-icon', authenticateAdmin, multerErrorHandler(uploadAudioAndIcon), saveAudioSampleWithIcon);
 router.delete('/default-audio-sample/:id', authenticateAdmin, deleteAudioSample);
 
 export default router;

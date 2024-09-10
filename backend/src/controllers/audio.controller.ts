@@ -6,7 +6,7 @@ import UserAudioSample from '../models/audio-sample-user.model';
 import Collection from '../models/collection.model';
 
 import { deleteFileFromStorage } from '../utils/delete-file.util';
-import { ValidationError, NotFoundError, InternalServerError, UnauthorizedError, CustomError } from '../utils/custom-errors.util';
+import { ValidationError, NotFoundError, InternalServerError, UnauthorizedError, MethodNotAllowedError, CustomError } from '../utils/custom-errors.util';
 
 export const getMainPageSamples = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -138,38 +138,42 @@ export const deleteAudioSample = async (req: AuthRequest, res: Response, next: N
   try {
     const sampleId = req.params.id;
     const isAdmin = req.user!.role === 'admin';
-    const filter = isAdmin ? { _id: sampleId } : { _id: sampleId, user: req.user!._id };
     
-    const deletedSample = await AudioSample.findOneAndDelete(filter);
+    const sample = await AudioSample.findById(sampleId);
     
-
-    if (!deletedSample) {
+    if (!sample) {
       throw new NotFoundError('Audio sample');
     }
 
-    if (deletedSample.sampleType === 'UserAudioSample') {
+    if (sample.sampleType === 'DefaultAudioSample' && !isAdmin) {
+      throw new MethodNotAllowedError('Default samples can only be deleted by admins');
+    }
+
+    if (sample.sampleType === 'UserAudioSample' && sample.user.toString() !== req.user!._id.toString() && !isAdmin) {
+      throw new UnauthorizedError('Not authorized to delete this audio sample');
+    }
+
+    await AudioSample.findByIdAndDelete(sampleId);
+
+    if (sample.sampleType === 'UserAudioSample') {
       await Collection.updateMany(
         { user: req.user!._id },
         { $pull: { samples: sampleId } }
       );
-    } else if (isAdmin && deletedSample.sampleType === 'DefaultAudioSample') {
+    } else if (isAdmin && sample.sampleType === 'DefaultAudioSample') {
       await Collection.updateMany(
         {},
         { $pull: { samples: sampleId } }
       );
     }
 
-    await deleteFileFromStorage(deletedSample.audioUrl);
-    if (deletedSample.iconUrl) {
-      await deleteFileFromStorage(deletedSample.iconUrl);
+    await deleteFileFromStorage(sample.audioUrl);
+    if (sample.iconUrl) {
+      await deleteFileFromStorage(sample.iconUrl);
     }
 
     res.json({ message: 'Sample deleted successfully' });
   } catch (error) {
-    if (error instanceof CustomError) {
-      next(error);
-    } else {
-      next(new InternalServerError('Error deleting audio sample'));
-    }
+    next(error instanceof CustomError ? error : new InternalServerError('Error deleting audio sample'));
   }
 };

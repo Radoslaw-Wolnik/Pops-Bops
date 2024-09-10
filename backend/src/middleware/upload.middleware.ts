@@ -1,6 +1,6 @@
 import multer from 'multer';
 import path from 'path';
-import { Request, NextFunction } from 'express';
+import { Request, NextFunction, RequestHandler } from 'express';
 // Import Multer's FileFilterCallback type
 import { FileFilterCallback } from 'multer';
 
@@ -65,7 +65,7 @@ export const uploadAudio = createMulterUpload(audioStorage, audioFileFilter, 10 
 export const uploadIcon = createMulterUpload(iconStorage, iconFileFilter, 2 * 1024 * 1024);
 
 // Middleware to handle Multer errors
-export const handleMulterError = (err: any, req: Request, res: Response, next: NextFunction) => {
+export const SingleUploadError = (err: any, req: Request, res: Response, next: NextFunction) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       next(new FileSizeTooLargeError(err.field === 'audio' ? 10 * 1024 * 1024 : 2 * 1024 * 1024));
@@ -79,6 +79,5 @@ export const handleMulterError = (err: any, req: Request, res: Response, next: N
   }
 };
 
-
 // Import the combined upload middleware
-export { uploadAudioAndIcon } from './upload-combined.middleware';
+export { uploadAudioAndIcon, CombinedUploadError } from './upload-combined.middleware';

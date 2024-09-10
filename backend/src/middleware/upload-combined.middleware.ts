@@ -1,6 +1,6 @@
 import multer from 'multer';
 import path from 'path';
-import { Request, NextFunction } from 'express';
+import { Request, NextFunction, RequestHandler } from 'express';
 import { FileFilterCallback } from 'multer';
 import { audioFileFilter, iconFileFilter } from './upload.middleware';
 import { FileTypeNotAllowedError, FileSizeTooLargeError, BadRequestError } from '../utils/custom-errors.util';
@@ -54,7 +54,7 @@ export const uploadAudioAndIcon = multer({
 ]);
 
 // Middleware to handle Multer errors for combined upload
-export const handleCombinedMulterError = (err: any, req: Request, res: Response, next: NextFunction) => {
+export const CombinedUploadError = (err: any, req: Request, res: Response, next: NextFunction) => {
   if (err instanceof multer.MulterError) {
     if (err.code === 'LIMIT_FILE_SIZE') {
       next(new FileSizeTooLargeError(10 * 1024 * 1024));
