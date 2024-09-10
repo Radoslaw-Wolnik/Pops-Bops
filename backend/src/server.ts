@@ -27,13 +27,13 @@ const startServer = async () => {
     // Global error handler for uncaught exceptions
     process.on('uncaughtException', (error: Error) => {
       logger.error('Uncaught Exception', { error: error.message, stack: error.stack });
-      process.exit(1);
+      gracefulShutdown(server, 1);
     });
 
     // Global error handler for unhandled promise rejections
     process.on('unhandledRejection', (reason: any, promise: Promise<any>) => {
       logger.error('Unhandled Rejection', { reason, promise });
-      process.exit(1);
+      gracefulShutdown(server, 1);
     });
 
     // Graceful shutdown on SIGTERM (e.g., Docker, Heroku)
