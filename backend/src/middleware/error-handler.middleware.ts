@@ -1,7 +1,7 @@
 // src/middleware/error-handler.middleware.ts
 
 import { Request, Response, NextFunction } from 'express';
-import { CustomError } from '../utils/custom-errors.util';
+import { CustomError, FileTypeNotAllowedError, FileSizeTooLargeError } from '../utils/custom-errors.util';
 import logger from '../utils/logger.util';
 import environment from '../config/environment';
 
@@ -59,6 +59,15 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
       status: 'error',
       statusCode: 401,
       message: 'Token expired'
+    });
+  }
+
+   // Handle Multer errors
+   if (err instanceof FileTypeNotAllowedError || err instanceof FileSizeTooLargeError) {
+    return res.status(400).json({
+      status: 'error',
+      statusCode: 400,
+      message: err.message
     });
   }
 

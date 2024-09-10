@@ -122,3 +122,15 @@ export class GoneError extends CustomError {
     super(message, 410);
   }
 }
+
+export class FileTypeNotAllowedError extends CustomError {
+  constructor(allowedTypes: string[]) {
+    super(`File type not allowed. Allowed types are: ${allowedTypes.join(', ')}`, 400);
+  }
+}
+
+export class FileSizeTooLargeError extends CustomError {
+  constructor(maxSize: number) {
+    super(`File size too large. Maximum allowed size is ${maxSize / (1024 * 1024)}MB`, 400);
+  }
+}

@@ -1,9 +1,10 @@
 import multer from 'multer';
 import path from 'path';
-import { Request } from 'express';
-
+import { Request, NextFunction } from 'express';
 // Import Multer's FileFilterCallback type
 import { FileFilterCallback } from 'multer';
+
+import { FileTypeNotAllowedError, FileSizeTooLargeError, BadRequestError } from '../utils/custom-errors.util';
 
 
 // Define a more specific type for the callback function
@@ -34,63 +35,50 @@ const iconStorage = createStorage('icons');
 const profilePictureStorage = createStorage('profile-picture', false);
 
 
-export const audioFileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
-  const allowedTypes = /wav|mp3|ogg/;
-  const mimetype = allowedTypes.test(file.mimetype);
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  if (mimetype && extname) {
-    cb(null, true);
+
+const createFileFilter = (allowedTypes: RegExp, errorMessage: string) => 
+  (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
+    const mimetype = allowedTypes.test(file.mimetype);
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    if (mimetype && extname) {
+      cb(null, true);
+    } else {
+      cb(new FileTypeNotAllowedError([...allowedTypes.source.matchAll(/\w+/g)].map(m => m[0])));
+    }
+  };
+
+export const audioFileFilter = createFileFilter(/wav|mp3|ogg/, "File upload only supports audio files (wav, mp3, ogg)");
+export const iconFileFilter = createFileFilter(/png/, "File upload only supports images (png)");
+export const pictureFileFilter = createFileFilter(/jpeg|jpg|png|gif/, "File upload only supports image files (jpeg, jpg, png, gif)");
+
+
+
+const createMulterUpload = (storage: multer.StorageEngine, fileFilter: multer.Options['fileFilter'], maxSize: number) => 
+  multer({
+    storage: storage,
+    fileFilter: fileFilter,
+    limits: { fileSize: maxSize },
+  }).single('file');
+
+export const uploadProfilePicture = createMulterUpload(profilePictureStorage, pictureFileFilter, 5 * 1024 * 1024);
+export const uploadAudio = createMulterUpload(audioStorage, audioFileFilter, 10 * 1024 * 1024);
+export const uploadIcon = createMulterUpload(iconStorage, iconFileFilter, 2 * 1024 * 1024);
+
+// Middleware to handle Multer errors
+export const handleMulterError = (err: any, req: Request, res: Response, next: NextFunction) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      next(new FileSizeTooLargeError(err.field === 'audio' ? 10 * 1024 * 1024 : 2 * 1024 * 1024));
+    } else {
+      next(new BadRequestError(err.message));
+    }
+  } else if (err instanceof Error) {
+    next(err);
   } else {
-    cb(new Error("Error: File upload only supports audio files (wav, mp3, ogg)"));
+    next(new BadRequestError('Unknown error during file upload'));
   }
 };
 
-export const iconFileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
-  const allowedTypes = /png/;
-  const mimetype = allowedTypes.test(file.mimetype);
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-
-  if (mimetype && extname) {
-    cb(null, true);
-  } else {
-    cb(new Error("Error: File upload only supports images (png)"));
-  }
-};
-
-const pictureFileFilter = (req: Request, file: Express.Multer.File, cb: FileFilterCallback) => {
-  const allowedTypes = /jpeg|jpg|png|gif/;
-  const mimetype = allowedTypes.test(file.mimetype);
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-
-  if (mimetype && extname) {
-    cb(null, true);
-  } else {
-    cb(new Error("Error: File upload only supports audio files (wav, mp3, ogg)"));
-  }
-};
-
-
-const audioUpload = multer({
-  storage: audioStorage,
-  fileFilter: audioFileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 }
-});
-
-const iconUpload = multer({
-  storage: iconStorage,
-  fileFilter: iconFileFilter,
-  limits: { fileSize: 2 * 1024 * 1024 }
-});
-
-const profilePictureUpload = multer({
-  storage: profilePictureStorage,
-  fileFilter: pictureFileFilter,
-  limits: { fileSize: 5 * 1024 * 1024 }
-});
-
-export const uploadProfilePicture = profilePictureUpload.single('profilePicture');
-export const uploadAudio = audioUpload.single('audio');
-export const uploadIcon = iconUpload.single('icon');
 
 // Import the combined upload middleware
 export { uploadAudioAndIcon } from './upload-combined.middleware';
