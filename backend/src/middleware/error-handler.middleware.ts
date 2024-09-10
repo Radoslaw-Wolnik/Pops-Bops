@@ -3,8 +3,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { CustomError } from '../utils/custom-errors.util';
 import logger from '../utils/logger.util';
+import environment from '../config/environment';
 
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
+  // Log the error
   logger.error(`Error: ${err.message}`, { 
     stack: err.stack,
     method: req.method,
@@ -14,6 +16,7 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
     params: req.params,
   });
 
+  // Handle custom error instances
   if (err instanceof CustomError) {
     return res.status(err.statusCode).json({
       status: 'error',
@@ -42,10 +45,28 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
     });
   }
 
+  // Handle JWT errors
+  if (err.name === 'JsonWebTokenError') {
+    return res.status(401).json({
+      status: 'error',
+      statusCode: 401,
+      message: 'Invalid token'
+    });
+  }
+
+  if (err.name === 'TokenExpiredError') {
+    return res.status(401).json({
+      status: 'error',
+      statusCode: 401,
+      message: 'Token expired'
+    });
+  }
+
   // Default to 500 server error
-  res.status(500).json({
+  const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
+  res.status(statusCode).json({
     status: 'error',
-    statusCode: 500,
-    message: 'Internal Server Error'
+    statusCode: statusCode,
+    message: environment.app.nodeEnv === 'production' ? 'Internal Server Error' : err.message
   });
 };
