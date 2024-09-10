@@ -6,7 +6,7 @@ import {
 } from '../controllers/user.controller.js';
 import  { authenticateToken } from '../middleware/auth.middleware.js';
 import { uploadProfilePicture } from '../middleware/upload.middleware.js';
-import { multerErrorHandler } from '../middleware/error.middleware.js';
+import { multerErrorHandler } from '../middleware/multer.middleware.js';
 
 const router: Router = express.Router();
 

@@ -5,7 +5,7 @@ import {
   updateIcon
 } from "../controllers/icon.controller.js";
 import { uploadIcon } from '../middleware/upload.middleware.js';
-import { multerErrorHandler } from '../middleware/error.middleware.js';
+import { multerErrorHandler } from '../middleware/multer.middleware.js';
 
 const router: Router = express.Router();
 
