@@ -9,7 +9,7 @@ import authRoutes from './routes/auth.routes';
 import adminRoutes from './routes/admin.routes';
 import collectionRoutes from './routes/collection.routes'
 
-import { errorHandler } from './middleware/error-handler.middleware';
+import { errorHandler } from './middleware/error.middleware';
 
 
 const app: Express = express();

@@ -12,7 +12,7 @@ import {
 } from '../controllers/audio.controller.js';
 
 import { uploadAudio, uploadAudioAndIcon } from '../middleware/upload.middleware.js';
-import { multerErrorHandler } from '../middleware/error-handler.middleware.js';
+import { multerErrorHandler } from '../middleware/error.middleware.js';
 
 const router: Router = express.Router();
 
