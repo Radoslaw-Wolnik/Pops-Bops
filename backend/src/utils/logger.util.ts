@@ -1,5 +1,5 @@
-import devLogger from './devLogger.util';
-import prodLogger from './prodLogger.util';
+import devLogger from './logger-dev.util';
+import prodLogger from './logger-prod.util';
 
 const logger = process.env.NODE_ENV === 'production' ? prodLogger : devLogger;
 
