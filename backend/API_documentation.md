@@ -4,6 +4,7 @@
 - [Data Models](#data-models)
 - [Global Types](#global-types)
 - [Authentication](#authentication)
+- [Error handling](#error-handling)
 - [Admin Routes](#admin-routes)
 - [Audio Routes](#audio-routes)
 - [Collection Routes](#collection-routes)
@@ -73,6 +74,28 @@ Authentication requirement is indicated for each endpoint as follows:
  - 👑 Admin authentication required
 
 
+## Error Handling
+
+All endpoints now use a centralized error handling system. Errors are returned in the following format:
+
+```json
+{
+  "status": "error",
+  "statusCode": number,
+  "message": string
+}
+```
+
+Common status codes:
+ - 400: Bad Request
+ - 401: Unauthorized
+ - 403: Forbidden
+ - 404: Not Found
+ - 409: Conflict
+ - 429: Too Many Requests
+ - 500: Internal Server Error
+
+
 ## Admin Routes
 
 ### Get All Admins
@@ -110,48 +133,48 @@ Response: ApiResponse<UserAudioSample[]>
 
 ### Save Audio Sample with Icon
 ```typescript
-🔒 POST /audio/audio-sample-with-icon
+🔒 POST /audio/upload/sample-with-icon
 Body: FormData (name: string, audio: File, icon: File)
 Response: ApiResponse<UserAudioSample>
 ```
 
 ### Save Audio Sample
 ```typescript
-🔒 POST /audio/audio-sample
+🔒 POST /audio/upload/sample
 Body: FormData (name: string, audio: File)
 Response: ApiResponse<UserAudioSample>
 ```
 
 ### Update Audio Sample
 ```typescript
-🔒 PUT /audio/audio-sample/:id
+🔒 PUT /audio/sample/:id
 Body: { name?: string; settings?: Record<string, any> }
 Response: ApiResponse<UserAudioSample>
 ```
 
 ### Delete Audio Sample
 ```typescript
-🔒 DELETE /audio/audio-sample/:id
+🔒 DELETE /audio/sample/:id
 Response: ApiResponse<{ message: string }>
 ```
 
 ### Save Default Audio Sample with Icon (Admin)
 ```typescript
-👑 POST /audio/default-audio-sample-with-icon
+👑 POST /audio/upload/default-sample-with-icon
 Body: FormData (name: string, audio: File, icon: File, forMainPage: boolean)
 Response: ApiResponse<DefaultAudioSample>
 ```
 
 ### Save Default Audio Sample (Admin)
 ```typescript
-👑 POST /audio/default-audio-sample
+👑 POST /audio/upload/default-sample
 Body: FormData (name: string, audio: File, forMainPage: boolean)
 Response: ApiResponse<DefaultAudioSample>
 ```
 
 ### Delete Default Audio Sample (Admin)
 ```typescript
-👑 DELETE /audio/default-audio-sample/:id
+👑 DELETE /audio/default-sample/:id
 Response: ApiResponse<{ message: string }>
 ```
 
@@ -276,28 +299,28 @@ Response: ApiResponse<{ message: string }>
 
 ### Upload Icon
 ```typescript
-🔒 POST /icon/upload-icon
+🔒 POST /icon/upload
 Body: FormData
 Response: ApiResponse<{ iconPath: string }>
 ```
 
 ### Upload Default Icon (Admin)
 ```typescript
-👑 POST /icon/upload-default-icon
+👑 POST /icon/upload-default
 Body: FormData
 Response: ApiResponse<{ iconPath: string }>
 ```
 
 ### Update Icon
 ```typescript
-🔒 PATCH /icon/update-icon/:id
+🔒 PATCH /icon/update/:id
 Body: FormData
 Response: ApiResponse<AudioSample>
 ```
 
 ### Update Default Icon (Admin)
 ```typescript
-👑 PATCH /icon/update-default-icon/:id
+👑 PATCH /icon/update-default/:id
 Body: FormData
 Response: ApiResponse<AudioSample>
 ```
@@ -317,34 +340,9 @@ Body: FormData
 Response: ApiResponse<{ profilePicture: string }>
 ```
 
-## Error Responses
-All endpoints may return the following error responses:
-
-### 
-```typescript
-{
-  error: string;
-  message: string;
-  statusCode: number;
-}
-```
-
-Common status codes:
- - 400: Bad Request
- - 401: Unauthorized
- - 403: Forbidden
- - 404: Not Found
- - 500: Internal Server Error
-
 ## Rate Limiting
 API requests are limited to 100 requests per IP address per hour. Exceeding this limit will result in a 429 (Too Many Requests) error.
 
-## Versioning
-This documentation is for API version 1.0. The base URL for all endpoints is:
-```
-https://api.example.com/api
-// should/will be https://api.example.com/v1
-```
 
 ## Examples
 ### Register a new user
@@ -444,11 +442,25 @@ Response
 }
 ```
 
+## Versioning
+
+This documentation is for API version 1.0. The base URL for all endpoints is:
+```
+https://api.example.com/api
+```
 
 ## Changelog
+
+### Version 1.2 (2024-09-10)
+- Updated error handling to use new custom error classes
+- Updated upload routes to use `/upload` prefix
+- Added logging information
+- Updated authentication and file upload details
+
 ### Version 1.1 (2024-08-28)
- - Updated routes and controllers to match the latest implementation
- - Added new endpoints for icon management and collection operations
- - Clarified authentication requirements for each endpoint
+- Updated routes and controllers to match the latest implementation
+- Added new endpoints for icon management and collection operations
+- Clarified authentication requirements for each endpoint
+
 ### Version 1.0 (2024-08-27)
- - Initial API release
+- Initial API release

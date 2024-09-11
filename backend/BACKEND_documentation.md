@@ -131,7 +131,7 @@ interface IRevokedTokenDocument extends Document {
 
 ## Database Connection
 
-The database connection is managed in the `database.ts` file. It uses environment variables for configuration and includes retry logic to handle connection failures.
+The database connection is now managed in the `db-connection.util.ts` file. It uses environment variables for configuration and includes retry logic to handle connection failures.
 
 ## Database Initialization
 
@@ -144,7 +144,7 @@ This script uses environment variables to set up the users securely.
 
 ## Authentication (auth.ts)
 
-The authentication system is implemented in `src/middleware/auth.ts`. Here are the key components:
+The authentication system is implemented in `src/middleware/auth.middleware.ts`. Here are the key components:
 
 ### Token Generation and Management
 
@@ -171,7 +171,16 @@ The authentication system is implemented in `src/middleware/auth.ts`. Here are t
 
 ## File Upload (upload.ts and uploadCombined.ts)
 
-File upload is managed using Multer, configured in `src/middleware/upload.ts` and `src/middleware/uploadCombined.ts`.
+File upload is now managed using two separate files:
+
+1. `src/middleware/upload.middleware.ts`: Defines the upload configurations for different file types.
+2. `src/middleware/multer.middleware.ts`: Contains the Multer configuration and error handling.
+
+### New Features:
+
+ - Improved error handling for file uploads
+ - Separate configurations for audio, icon, and profile picture uploads
+ - A combined middleware for uploading both audio and icon files simultaneously
 
 ### Storage Configuration
 
@@ -279,6 +288,73 @@ The file includes a commented-out development setup using Ethereal Email for tes
 
 A utility function `cleanupRevokedTokens` is provided in `utils/cleanupRevokedTokens.js`. This function deletes expired revoked tokens from the database. It should be run periodically (e.g., daily) using a task scheduler.
 
+## Error Handling (error.middleware.ts)
+
+A new error handling middleware has been implemented in `src/middleware/error.middleware.ts`. This centralizes error handling and provides consistent error responses across the application.
+
+### Custom Errors
+
+Custom error classes have been implemented in `src/utils/custom-errors.util.ts`. These include:
+
+- `CustomError`: Base class for custom errors
+- `NotFoundError`: For resource not found errors
+- `UnauthorizedError`: For authentication errors
+- `ForbiddenError`: For authorization errors
+- `ValidationError`: For data validation errors
+- `ConflictError`: For duplicate resource errors
+- `InternalServerError`: For unexpected server errors
+- `ExpiredTokenError`: For expired JWT tokens
+- `InvalidTokenError`: For invalid JWT tokens
+- `RateLimitError`: For rate limiting
+- `ServiceUnavailableError`: For temporary service unavailability
+- `UploadError`: For file upload errors
+- `DatabaseError`: For database operation errors
+- `AuthenticationError`: For general authentication issues
+- `BadRequestError`: For malformed requests
+- `ResourceExistsError`: For attempts to create duplicate resources
+- `PaymentRequiredError`: For payment-related issues
+- `TooManyRequestsError`: Another option for rate limiting
+- `MethodNotAllowedError`: For unsupported HTTP methods
+- `GoneError`: For permanently removed resources
+- `FileTypeNotAllowedError`: For unsupported file types in uploads
+- `FileSizeTooLargeError`: For files exceeding size limits
+
+## Logging (logger.util.ts)
+
+A new logging utility has been implemented in `src/utils/logger.util.ts` using Winston. This provides structured logging with different log levels for various environments.
+
+### Usage:
+```typescript
+import logger from './utils/logger.util';
+
+logger.info('Server started on port 3000');
+logger.error('An error occurred', { error: err });
+logger.debug('Debug message', { someData: data });
+```
+
+## Environment Configuration
+
+The environment configuration has been split into separate files for better organization:
+
+- `src/config/database.config.ts`
+- `src/config/email.config.ts`
+- `src/config/app.config.ts`
+- `src/config/auth.config.ts`
+
+These are then combined in `src/config/environment.ts` for easy import throughout the application.
+
+## Scripts
+
+New scripts have been added for database management and secret rotation:
+
+- `npm run populate`: Populates the database with initial data
+- `npm run backup`: Creates a database backup
+- `npm run restore`: Restores the database from a backup
+- `npm run rotate-secrets`: Rotates encryption keys
+- `npm run start-rotation`: Starts the secret rotation process
+- `npm run check-rotation`: Checks the status of the rotation process
+- `npm run cleanup-rotation`: Cleans up after the rotation process
+
 
 ## Important Notes
 
@@ -286,30 +362,43 @@ A utility function `cleanupRevokedTokens` is provided in `utils/cleanupRevokedTo
 2. **Token Management**: Implement a strategy for token rotation and revocation in case of security breaches.
 3. **File Upload**: Regularly clean up unused uploaded files to manage storage.
 4. **Email**: In production, use a reliable email service provider to ensure deliverability.
-5. **Error Handling**: Implement comprehensive error handling and logging throughout these systems.
 
 - The discriminator pattern used for AudioSamples allows for efficient querying of both default and user samples from a single collection while maintaining separate schemas.
 - Proper indexing should be implemented on frequently queried fields (like `user` in UserAudioSample and Collection) to improve performance.
 
 
 ## To Do
-- [ ] change project structure / names
-- [ ] make congfig into database.config.ts, email.config.ts, app.config.ts mby
-- [ ] in my controllers should i make more usage of the delete util?
-
+- [x] change project structure / names
+- [x] make congfig into database.config.ts, email.config.ts, app.config.ts mby
+- [x] in my controllers should i make more usage of the delete util?
+- [x] Ensure consistent use of the new error handling and logging systems across all controllers
+- [ ] Implement proper indexing on frequently queried fields in the database
+- [ ] Set up a task scheduler for periodic cleanup of revoked tokens and unused uploaded files
 
 ```sh
 backend/
+├── dist/
+│   └── ... 
+├── mongo/
+│   ├── Dockerfile
+│   ├── init-mongo-containers.sh
+│   ├── init-mongo-swarm.sh
+│   ├── init-mongo.js
+│   └── mongod.conf
 ├── src/
 │   ├── config/
+│   │   ├── app.config.ts
+│   │   ├── auth.config.ts
 │   │   ├── database.config.ts
 │   │   ├── email.config.ts
-│   │   └── app.config.ts
+│   │   ├── enviorement.ts
+│   │   └── get-env-value.ts
 │   ├── controllers/
 │   │   ├── admin.controller.ts
 │   │   ├── audio.controller.ts
 │   │   ├── auth.controller.ts
 │   │   ├── collection.controller.ts
+│   │   ├── health.controller.ts
 │   │   ├── icon.controller.ts
 │   │   └── user.controller.ts
 │   ├── routes/
@@ -317,65 +406,53 @@ backend/
 │   │   ├── audio.routes.ts
 │   │   ├── auth.routes.ts
 │   │   ├── collection.routes.ts
+│   │   ├── health.routes.ts
 │   │   ├── icon.routes.ts
 │   │   └── user.routes.ts
 │   ├── models/
+│   │   ├── audio-sample-default.model.ts
+│   │   ├── audio-sample-user.model.ts
 │   │   ├── audio-sample.model.ts
 │   │   ├── collection.model.ts
-│   │   ├── default-audio-sample.model.ts
 │   │   ├── revoked-token.model.ts
-│   │   ├── user.model.ts
-│   │   └── user-audio-sample.model.ts
+│   │   └── user.model.ts
 │   ├── middleware/
 │   │   ├── auth.middleware.ts
-│   │   ├── error-handler.middleware.ts
-│   │   ├── upload.middleware.ts
-│   │   └── upload-combined.middleware.ts
+│   │   ├── error.middleware.ts
+│   │   ├── multer.middleware.ts
+│   │   ├── request-id.middleware.ts
+│   │   └── upload.middleware.ts
 │   ├── services/
-│   │   └── cache.service.ts
+│   │   ├── email.service.ts
+│   │   └── cache.service.js
 │   ├── utils/
-│   │   ├── cleanup-revoked-tokens.util.ts
+│   │   ├── custom-errors.util.ts
+│   │   ├── db-connection.util.ts
 │   │   ├── delete-file.util.ts
 │   │   ├── encryption.util.ts
-│   │   └── send-email.util.ts
-│   ├── types/
-│   │   └── global.d.ts
+│   │   ├── health.util.ts
+│   │   ├── logger-dev.util.ts
+│   │   ├── logger-prod.util.ts
+│   │   ├── logger.util.ts
+│   │   ├── sanitize.util.ts
+│   │   └── server.util.ts
+│   ├── scripts/
+│   │   ├── database/
+│   │   │   ├── populatedb/
+│   │   │   │   └── ...
+│   │   │   ├── backup-database.ts
+│   │   │   ├── populate-database.ts
+│   │   │   └── restore-database.ts
+│   │   ├── cleanup-revoked-tokens.ts
+│   │   ├── manage-rotation.ts
+│   │   └── rotate-secrets.ts
 │   ├── app.ts
 │   └── server.ts
-├── scripts/
-│   ├── backup-database.ts
-│   ├── manage-rotation.ts
-│   ├── populate-database.ts
-│   ├── restore-database.ts
-│   └── rotate-secrets.ts
+├── types/
+│   └── global.d.ts
 ├── uploads/
-│   └── ... (same as before)
-├── mongo/
-│   └── ... (same as before)
+│   └── ... 
 ├── Dockerfile
-├── nodemon.json
-└── package.json
+├── package.json
+└── tsconfig.json
 ```
-
-To use this middleware, add it to your app.ts after all your routes: (error)
-// src/app.ts
-
-import express from 'express';
-import { errorHandler } from './middleware/error-handler.middleware';
-
-const app = express();
-
-// ... your routes and other middleware ...
-
-app.use(errorHandler);
-
-export default app;
-
-
-To use logger in the aplication
-import logger from './utils/logger.util';
-
-// In your code
-logger.info('Server started on port 3000');
-logger.error('An error occurred', { error: err });
-logger.debug('Debug message', { someData: data });
