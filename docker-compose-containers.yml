@@ -37,6 +37,11 @@ services:
       - "traefik.http.routers.dashboard.service=api@internal"
       - "traefik.http.routers.dashboard.entrypoints=websecure"
       - "traefik.http.routers.dashboard.tls=true"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   frontend:
     image: frontend-image:latest
@@ -67,6 +72,11 @@ services:
       # New in Traefik 3.0: You can add middlewares more easily
 #      - "traefik.http.routers.frontend.middlewares=frontend-compress"
 #      - "traefik.http.middlewares.frontend-compress.compress=true"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   backend:
     image: backend-image:latest
@@ -102,6 +112,11 @@ services:
       - "traefik.http.routers.backend.tls=true"
       - "traefik.http.services.backend.loadbalancer.server.port=5000"
       - "traefik.docker.network=backend-network"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   mongo:
     image: mongo-image:6.0
@@ -119,6 +134,11 @@ services:
       - backend-network
     labels:
       - "traefik.docker.network=backend-network"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   redis:
     image: redis:6.2
@@ -128,6 +148,11 @@ services:
       - backend-network
     labels:
       - "traefik.docker.network=backend-network"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
 networks:
   frontend-network:
