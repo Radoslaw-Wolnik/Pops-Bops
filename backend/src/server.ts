@@ -14,10 +14,14 @@ const PORT: number = environment.app.port || 5000;
 const startServer = async () => {
   try {
     // Connect to the database
+    const startTime = Date.now();
     await connectDB();
+    const connectionTime = Date.now() - startTime;
+    logger.info('Connected to database', { connectionTimeMs: connectionTime });
 
     // Initialize background jobs
     await initCleanupJob();
+    logger.info('Background jobs initialized');
     
     const server: http.Server = http.createServer(app);
     server.listen(PORT, () => {
@@ -51,7 +55,11 @@ const startServer = async () => {
     
 
   } catch (error) {
-    logger.error('Failed to start the server:', error);
+    logger.error('Failed to start the server:', {
+      error,
+      stack: (error as Error).stack,
+      memoryUsage: process.memoryUsage()
+    });
     process.exit(1);
   }
 };
