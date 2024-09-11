@@ -11,6 +11,7 @@ import adminRoutes from './routes/admin.routes';
 import collectionRoutes from './routes/collection.routes'
 
 import { errorHandler } from './middleware/error.middleware';
+import { addRequestId } from './middleware/request-id.middleware';
 
 
 
@@ -26,6 +27,9 @@ app.use(cors({
 app.use(express.json());
 
 app.use('/uploads', express.static('uploads'));
+
+// Add the request ID middleware here, after basic middleware but before routes
+app.use(addRequestId);
 
 // Use logger middleware for all requests
 app.use(logger.logRequest);
