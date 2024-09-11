@@ -45,6 +45,7 @@ logger.logRequest = (req: Request, res: Response, next: NextFunction) => {
     ip: req.ip,
     userId: (req as any).user?.id, // Assuming you attach user to req in auth middleware
     userAgent: req.get('User-Agent'),
+    requestId: req.id,
   });
   next();
 };
