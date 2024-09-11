@@ -11,6 +11,7 @@ import sendEmail from '../services/email.service';
 import AuthRequest from '../../types/global';
 import { MongoError } from 'mongodb';
 import { ValidationError, UnauthorizedError, NotFoundError, ConflictError, InternalServerError, AuthenticationError, CustomError, BadRequestError, ResourceExistsError, GoneError } from '../utils/custom-errors.util';
+import logger from '../utils/logger.util';
 
 interface LoginRequest extends Request {
   body: {
@@ -41,6 +42,7 @@ export const login = async (req: LoginRequest, res: Response, next: NextFunction
     // Check password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      logger.warn('Failed login attempt', { email: req.body.email });
       throw new UnauthorizedError('Invalid credentials');
     }
 
@@ -52,10 +54,9 @@ export const login = async (req: LoginRequest, res: Response, next: NextFunction
     // Create and return JWT token
     const token = generateToken(user);
     setTokenCookie(res, token);
-    res.json({ message: 'Login successful', user: { id: user._id, role: user.role } });
-    // http
-    // res.json({ token, user: { id: user._id, username: user.username, role: user.role } });
 
+    logger.info('User logged in successfully', { userId: user._id });
+    res.json({ message: 'Login successful', user: { id: user._id, role: user.role } });
   } catch (error) {
     console.error(error);
     next(error);
@@ -103,6 +104,7 @@ export const logout = async (req: AuthRequest, res: Response, next: NextFunction
 
     //res.clearCookie('token');
     res.clearCookie('token', { httpOnly: true, secure: true, sameSite: 'strict' });
+    logger.info('User logged out', { userId: req.user?.id });
     res.status(200).json({ message: 'Logout successful' });
   } catch (error) {
     if (error instanceof Error && (error as any).code === 11000) {
@@ -159,6 +161,7 @@ export const register = async (req: RegisterRequest, res: Response, next: NextFu
     user.verificationTokenExpires = new Date(verificationTokenExpires);
 
     await user.save();
+    logger.info('New user registered', { userId: user._id, username: user.username });
 
     // Generate a short-lived token and set it as a cookie
     const shortLivedToken = generateShortLivedToken(user);
@@ -263,7 +266,9 @@ export const verifyEmail = async (req: VerifyEmailRequest, res: Response, next: 
     user.isVerified = true;
     user.verificationToken = undefined;
     user.verificationTokenExpires = undefined;
+
     await user.save();
+    logger.info('User email verified', { userId: user._id });
 
     res.json({ message: 'Email verified successfully. You can now log in.' });
   } catch (error) {
@@ -336,6 +341,7 @@ export const requestPasswordReset = async (req: RequestPasswordResetRequest, res
       `
     });
 
+    logger.info('Requested password reset for', { email: email });
     res.json({ message: 'Password reset email sent' });
   } catch (error) {
     next(error instanceof CustomError ? error : new InternalServerError('Error requesting password reset'));

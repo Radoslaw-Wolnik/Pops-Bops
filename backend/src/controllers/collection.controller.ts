@@ -3,6 +3,7 @@ import Collection from '../models/collection.model';
 import { AudioSample, IAudioSampleDocument } from '../models/audio-sample.model';
 import mongoose, { Types } from 'mongoose';
 import { NotFoundError, UnauthorizedError, ValidationError, InternalServerError, CustomError, BadRequestError } from '../utils/custom-errors.util';
+import logger from '../utils/logger.util';
 
 export const getUserCollections = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -48,6 +49,7 @@ export const createCollection = async (req: CreateCollectionRequest, res: Respon
       name
     });
     await newCollection.save();
+    logger.info('New collection created', { collectionId: newCollection._id, userId: req.user!.id });
     res.status(201).json(newCollection);
   } catch (error) {
     next(error instanceof CustomError ? error : new InternalServerError('Error creating collection'));
@@ -136,6 +138,12 @@ export const addToCollection = async (req: AddToCollectionRequest, res: Response
     collection.samples.push(...foundSampleIds);
     await collection.save();
 
+    logger.info('Samples added to collection', { 
+      collectionId: collection._id, 
+      userId: req.user!._id, 
+      samplesAdded: foundSampleIds.length 
+    });
+
     res.json(collection);
   } catch (error) {
     next(error instanceof CustomError ? error : new InternalServerError('Error adding to collection'));
@@ -156,6 +164,7 @@ export const deleteCollection = async (req: AuthRequest, res: Response, next: Ne
       throw new NotFoundError('Collection');
     }
 
+    logger.info('Collection deleted', { collectionId: deletedCollection._id, userId: req.user!._id });
     res.json({ message: 'Collection deleted successfully' });
   } catch (error) {
     next(error instanceof CustomError ? error : new InternalServerError('Error deleting collection'));

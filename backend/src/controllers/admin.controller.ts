@@ -2,12 +2,14 @@
 import { Response, NextFunction } from 'express';
 import bcrypt from 'bcrypt'; // where is it used and wheather it should be?
 import { NotFoundError, InternalServerError, ValidationError, CustomError, ResourceExistsError } from '../utils/custom-errors.util';
+import logger from '../utils/logger.util';
 
 import User from '../models/user.model';
 
 export const getAdmins = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
     const admins = await User.find({ role: 'admin' }).select('-password');
+    logger.info('Admin list retrieved', { userId: req.user?.id, count: admins.length });
     res.json(admins);
   } catch (error) {
     next(new InternalServerError('Error fetching admins'));
@@ -21,6 +23,7 @@ export const deleteAdmin = async (req: AuthRequest, res: Response, next: NextFun
     if (!deletedAdmin) {
       throw new NotFoundError('Admin');
     }
+    logger.warn('Admin account deleted', { deletedAdminId: id, deletedBy: req.user?.id });
     res.status(204).send();
   } catch (error) {
     next(error instanceof CustomError ? error : new InternalServerError('Error deleting admin'));
@@ -42,14 +45,15 @@ export const addAdmin = async (req: AddAdminRequest, res: Response, next: NextFu
       throw new ValidationError('Username, password, and email are required');
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
     const newAdmin = new User({
       username,
       email,
-      password: hashedPassword,
+      password: password,
       role: 'admin'
     });
     await newAdmin.save();
+    logger.info('New admin account created', { newAdminId: newAdmin._id, createdBy: req.user?.id });
+
     const { password: _, ...adminWithoutPassword } = newAdmin.toObject();
     res.status(201).json(adminWithoutPassword);
   } catch (error) {

@@ -4,7 +4,7 @@ import path from 'path';
 import User from '../models/user.model';
 import { ValidationError, UnauthorizedError, NotFoundError, UploadError, InternalServerError, CustomError } from '../utils/custom-errors.util';
 import { deleteFileFromStorage } from '../utils/delete-file.util';
-
+import logger from '../utils/logger.util';
 
 export const getUserOwnProfile = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -18,6 +18,7 @@ export const getUserOwnProfile = async (req: AuthRequest, res: Response, next: N
 
     userWithoutPassword.email = await req.user.getDecryptedEmail();
 
+    logger.debug('User retrieved own profile', { userId: req.user!._id });
     res.json(userWithoutPassword);
   } catch (error) {
     next(error instanceof CustomError ? error : new InternalServerError('Error fetching user profile'));
@@ -47,6 +48,7 @@ export const saveProfilePicture = async (req: AuthRequestWithFile, res: Response
     req.user.profilePicture = relativePath;
     await req.user.save();
 
+    logger.info('User updated profile picture', { userId: req.user!._id });
     res.json({
       message: 'Profile picture updated successfully',
       profilePicture: relativePath

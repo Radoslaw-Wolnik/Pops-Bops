@@ -7,10 +7,12 @@ import Collection from '../models/collection.model';
 
 import { deleteFileFromStorage } from '../utils/delete-file.util';
 import { ValidationError, NotFoundError, InternalServerError, UnauthorizedError, MethodNotAllowedError, CustomError } from '../utils/custom-errors.util';
+import logger from '../utils/logger.util';
 
 export const getMainPageSamples = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const samples = await DefaultAudioSample.find({ forMainPage: true });
+    logger.debug('Main page samples retrieved', { count: samples.length });
     res.json(samples);
   } catch (error) {
     next(new InternalServerError('Error fetching main page samples'));
@@ -58,6 +60,11 @@ export const saveAudioSampleWithIcon = async (req: AuthRequestWithFiles, res: Re
     });
 
     await audioSample.save();
+    logger.info('New audio sample with icon saved', { 
+      sampleId: audioSample._id, 
+      userId: req.user!._id, 
+      isAdmin: req.user!.role === 'admin' 
+    });
     res.status(201).json(audioSample);
   } catch (error) {
     if (error instanceof CustomError) {
@@ -176,7 +183,12 @@ export const deleteAudioSample = async (req: AuthRequest, res: Response, next: N
     if (sample.iconUrl) {
       await deleteFileFromStorage(sample.iconUrl);
     }
-
+    
+    logger.info('Audio sample deleted', { 
+      sampleId, 
+      userId: req.user!._id, 
+      isAdmin: req.user!.role === 'admin' 
+    });
     res.json({ message: 'Sample deleted successfully' });
   } catch (error) {
     next(error instanceof CustomError ? error : new InternalServerError('Error deleting audio sample'));
