@@ -6,6 +6,7 @@ import path from 'path';
 // Extend the Logger interface to include our custom method
 interface CustomLogger extends winston.Logger {
   logRequest(req: Request, res: Response, next: NextFunction): void;
+  logEvent(event: string, details?: any): void;
 }
 
 const logDir = path.join(__dirname, '..', '..', 'logs');
@@ -47,5 +48,17 @@ logger.logRequest = (req: Request, res: Response, next: NextFunction) => {
   });
   next();
 };
+
+
+logger.logEvent = (event: string, details?: any) => {
+  logger.info(`Event: ${event}`, { event, details });
+};
+
+// Convenience methods for common log levels
+['error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'].forEach((level) => {
+  (logger as any)[level] = (message: string, meta?: any) => {
+    logger.log(level, message, meta);
+  };
+});
 
 export default logger;
