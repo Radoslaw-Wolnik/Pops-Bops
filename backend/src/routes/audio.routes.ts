@@ -19,16 +19,16 @@ const router: Router = express.Router();
 router.get('/main-samples', getMainPageSamples);
 router.get('/my-samples', authenticateToken, getUserSamples);
 
-router.post('/upload/audio', authenticateToken, multerErrorHandler(uploadAudio), saveAudioSample);
-router.post('/upload/audio-with-icon', authenticateToken, multerErrorHandler(uploadAudioAndIcon), saveAudioSampleWithIcon);
+router.post('/upload/sample', authenticateToken, multerErrorHandler(uploadAudio), saveAudioSample);
+router.post('/upload/sample-with-icon', authenticateToken, multerErrorHandler(uploadAudioAndIcon), saveAudioSampleWithIcon);
 
-router.put('/audio-sample/:id', authenticateToken, updateAudioSample);
+router.put('/sample/:id', authenticateToken, updateAudioSample);
 
-router.delete('/audio-sample/:id', authenticateToken, deleteAudioSample);
+router.delete('/sample/:id', authenticateToken, deleteAudioSample);
 
 // Admin routes
-router.post('/upload/default-audio', authenticateAdmin, multerErrorHandler(uploadAudio), saveAudioSample);
-router.post('/upload/default-audio-with-icon', authenticateAdmin, multerErrorHandler(uploadAudioAndIcon), saveAudioSampleWithIcon);
-router.delete('/default-audio-sample/:id', authenticateAdmin, deleteAudioSample);
+router.post('/upload/default-sample', authenticateAdmin, multerErrorHandler(uploadAudio), saveAudioSample);
+router.post('/upload/default-sample-with-icon', authenticateAdmin, multerErrorHandler(uploadAudioAndIcon), saveAudioSampleWithIcon);
+router.delete('/default-sample/:id', authenticateAdmin, deleteAudioSample);
 
 export default router;
