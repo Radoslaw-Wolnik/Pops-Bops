@@ -94,3 +94,29 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
   // Send the response
   res.status(statusCode).json(response);
 };
+
+
+/* Sample logging in high-traffic production enviorements
+const SAMPLE_RATE = 0.1; // Log 10% of errors with full details
+
+export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {
+  const shouldLogDetails = Math.random() < SAMPLE_RATE;
+
+  if (shouldLogDetails) {
+    const sanitizedBody = sanitizeData(req.body);
+    const sanitizedQuery = sanitizeData(req.query);
+    const sanitizedParams = sanitizeData(req.params);
+
+    logger.error(`Error: ${err.message}`, {
+      stack: err.stack,
+      body: sanitizedBody,
+      query: sanitizedQuery,
+      params: sanitizedParams
+    });
+  } else {
+    logger.error(`Error: ${err.message}`, { stack: err.stack });
+  }
+
+  // ... rest of your error handling logic
+};
+*/
