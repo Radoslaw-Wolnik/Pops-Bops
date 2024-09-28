@@ -44,46 +44,6 @@ export const setTokenCookie = (res: Response, token: string): void => {
   });
 };
 
-// middleware for authenticating admins
-export const authenticateAdmin = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  const token = req.cookies.token;
-
-  if (!token) {
-    throw new UnauthorizedError('Access denied. No token provided.');
-  }
-
-  try {
-    // Check if the token has been revoked
-    const revokedToken = await RevokedToken.findOne({ token: token });
-    if (revokedToken) {
-      throw new InvalidTokenError('Token has been revoked.');
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
-    
-    // Fetch the user from the database to get the most up-to-date role information
-    const user = await User.findById(decoded.user.id);
-    
-    if (!user) {
-      throw new NotFoundError('User');
-    }
-
-    if (user.role !== 'admin') {
-      throw new ForbiddenError('Admin privileges required.');
-    }
-
-    req.user = user;
-    next();
-  } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      throw new ExpiredTokenError();
-    } else if (error instanceof jwt.JsonWebTokenError) {
-      throw new InvalidTokenError();
-    } else {
-      throw new InternalServerError();
-    }
-  }
-};
 
 // middleware for general token authentication
 export const authenticateToken = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {

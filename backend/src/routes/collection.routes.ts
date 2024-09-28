@@ -12,25 +12,26 @@ import {
 
 const router: Router = express.Router();
 
+router.use(authenticateToken);
 // Get all collections for the authenticated user
-router.get('/', authenticateToken, getUserCollections);
+router.get('/', getUserCollections);
 
 // Get a specific collection by ID
-router.get('/:id', authenticateToken, getCollectionById);
+router.get('/:id', getCollectionById);
 
 // Create a new collection
-router.post('/', authenticateToken, createCollection);
+router.post('/', createCollection);
 
 // Update a collection
-router.put('/:id', authenticateToken, updateCollection);
+router.put('/:id', updateCollection);
 
 // Delete a collection
-router.delete('/:id', authenticateToken, deleteCollection);
+router.delete('/:id', deleteCollection);
 
 // Add samples to a collection
-router.post('/:id/add', authenticateToken, addToCollection);
+router.post('/:id/add', addToCollection);
 
 // Remove a sample from a collection
-router.delete('/:collectionId/samples/:sampleId', authenticateToken, removeFromCollection);
+router.delete('/:collectionId/samples/:sampleId', removeFromCollection);
 
 export default router;
