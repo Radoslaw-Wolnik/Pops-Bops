@@ -5,6 +5,8 @@ interface ICollectionDocument extends Document {
   user: Types.ObjectId;
   name: string;
   samples: Types.ObjectId[];
+  collaborators: mongoose.Types.ObjectId[];
+  isPublic: boolean;
 }
 
 const CollectionSchema = new Schema<ICollectionDocument>({
@@ -30,7 +32,9 @@ const CollectionSchema = new Schema<ICollectionDocument>({
       },
       message: props => `Audio sample with id ${props.value} does not exist!`
     }
-  }]
+  }],
+  collaborators: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+  isPublic: { type: Boolean, default: false },
 });
 
 export default mongoose.model<ICollectionDocument>('Collection', CollectionSchema);

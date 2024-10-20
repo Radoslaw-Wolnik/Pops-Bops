@@ -7,8 +7,8 @@ export interface IAudioSampleDocument extends Document {
   iconUrl: string;
   createdAt?: Date;
   sampleType: 'DefaultAudioSample' | 'UserAudioSample';
+  isPublic: boolean;
 }
-
 
 const AudioSampleSchema = new Schema<IAudioSampleDocument>({
   name: { 
@@ -37,7 +37,9 @@ const AudioSampleSchema = new Schema<IAudioSampleDocument>({
       message: props => `${props.value} is not a valid icon URL!`
     }
   },
-  createdAt: { type: Date, default: Date.now }
+  createdAt: { type: Date, default: Date.now },
+  isPublic: { type: Boolean, default: false },
+
 }, { discriminatorKey: 'sampleType' });
 
 export const AudioSample = mongoose.model<IAudioSampleDocument>('AudioSample', AudioSampleSchema);

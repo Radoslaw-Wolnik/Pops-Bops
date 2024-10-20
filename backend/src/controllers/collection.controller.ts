@@ -56,27 +56,6 @@ export const createCollection = async (req: CreateCollectionRequest, res: Respon
   }
 };
 
-export const updateCollection = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
-  try {
-    const collectionId = req.params.id;
-    const userId = req.user!._id;
-    const { name } = req.body;
-
-    const updatedCollection = await Collection.findOneAndUpdate(
-      { _id: collectionId, user: userId },
-      { name },
-      { new: true }
-    );
-
-    if (!updatedCollection) {
-      throw new NotFoundError('Collection');
-    }
-
-    res.json(updatedCollection);
-  } catch (error) {
-    next(error instanceof CustomError ? error : new InternalServerError('Error updating collection'));
-  }
-};
 
 interface AddToCollectionRequest extends AuthRequest {
   body: {
@@ -187,5 +166,44 @@ export const removeFromCollection = async (req: AuthRequest, res: Response, next
     res.json({ message: 'Sample removed from collection successfully' });
   } catch (error) {
     next(error instanceof CustomError ? error : new InternalServerError('Error removing sample from collection'));
+  }
+};
+
+
+export const updateCollection = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { id } = req.params;
+    const { name, isPublic, collaborators } = req.body;
+    const userId = req.user!._id;
+
+    const collection = await Collection.findOneAndUpdate(
+      { _id: id, user: userId },
+      { name, isPublic, collaborators },
+      { new: true }
+    );
+
+    if (!collection) {
+      throw new NotFoundError('Collection not found');
+    }
+
+    res.json(collection);
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getCollectionsByUser = async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const userId = req.user!._id;
+    const collections = await Collection.find({
+      $or: [
+        { user: userId },
+        { collaborators: userId },
+        { isPublic: true }
+      ]
+    });
+    res.json(collections);
+  } catch (error) {
+    next(error);
   }
 };
