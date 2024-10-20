@@ -381,3 +381,54 @@ export const resetPassword = async (req: ResetPasswordRequest, res: Response, ne
     next(error instanceof CustomError ? error : new InternalServerError('Error resetting password'));
   }
 };
+
+
+export const deactivateAccount = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    const { token } = req.params;
+
+    const user = await User.findOne({
+      deactivationToken: token,
+      deactivationExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      throw new BadRequestError('Invalid or expired deactivation token');
+    }
+
+    user.deactivated = new Date();
+    user.deactivationToken = undefined;
+    user.deactivationExpires = undefined;
+    await user.save();
+
+    logger.info('Account deactivated', { userId: user._id });
+    res.json({ message: 'Account deactivated successfully' });
+  } catch (error) {
+    next(error instanceof CustomError ? error : new InternalServerError('Error deactivating account'));
+  }
+};
+
+export const reactivateAccount = async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { token } = req.params;
+
+    const user = await User.findOne({
+      deactivationToken: token,
+      deactivationExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      throw new NotFoundError('Invalid or expired reactivation token');
+    }
+
+    user.deactivated = undefined;
+    user.deactivationToken = undefined;
+    user.deactivationExpires = undefined;
+
+    await user.save();
+
+    res.json({ message: 'Account reactivated successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
