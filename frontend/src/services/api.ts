@@ -112,14 +112,6 @@ export const createAudioSample = async (data: FormData): Promise<AudioSample> =>
   }
 };
 
-export const updateAudioSample = async (sampleId: string, data: Partial<AudioSample>): Promise<AudioSample> => {
-  try {
-    const response = await api.put<ApiResponse<AudioSample>>(`/audio/sample/${sampleId}`, data);
-    return handleResponse(response);
-  } catch (error) {
-    throw handleError(error);
-  }
-};
 
 export const deleteAudioSample = async (sampleId: string): Promise<void> => {
   try {
@@ -148,14 +140,6 @@ export const createCollection = async (name: string): Promise<Collection> => {
   }
 };
 
-export const updateCollection = async (collectionId: string, data: Partial<Collection>): Promise<Collection> => {
-  try {
-    const response = await api.put<ApiResponse<Collection>>(`/collections/${collectionId}`, data);
-    return handleResponse(response);
-  } catch (error) {
-    throw handleError(error);
-  }
-};
 
 export const deleteCollection = async (collectionId: string): Promise<void> => {
   try {
@@ -192,5 +176,39 @@ export const updateCollectionOrder = async (collectionIds: string[]): Promise<vo
   await api.put('/collections/order', { collectionIds });
 };
 
+export const updateAudioSample = async (sampleId: string, data: Partial<AudioSample>): Promise<AudioSample> => {
+  const response = await api.put(`/audio/${sampleId}`, data);
+  return response.data;
+};
+
+export const searchPublicSamples = async (query: string): Promise<AudioSample[]> => {
+  const response = await api.get(`/audio/public?query=${encodeURIComponent(query)}`);
+  return response.data;
+};
+
+export const updateCollection = async (collectionId: string, data: Partial<Collection>): Promise<Collection> => {
+  const response = await api.put(`/collections/${collectionId}`, data);
+  return response.data;
+};
+
+export const getCollectionsByUser = async (): Promise<Collection[]> => {
+  const response = await api.get('/collections/user');
+  return response.data;
+};
+
+export const getPublicSamples = async (page: number = 1, limit: number = 20): Promise<AudioSample[]> => {
+  const response = await api.get(`/audio/public?page=${page}&limit=${limit}`);
+  return response.data;
+};
+
+export const getPublicCollections = async (page: number = 1, limit: number = 20): Promise<Collection[]> => {
+  const response = await api.get(`/collections/public?page=${page}&limit=${limit}`);
+  return response.data;
+};
+
+export const searchPublicContent = async (query: string, type: 'samples' | 'collections', page: number = 1, limit: number = 20): Promise<AudioSample[] | Collection[]> => {
+  const response = await api.get(`/search/public?query=${encodeURIComponent(query)}&type=${type}&page=${page}&limit=${limit}`);
+  return response.data;
+};
 
 export default api;

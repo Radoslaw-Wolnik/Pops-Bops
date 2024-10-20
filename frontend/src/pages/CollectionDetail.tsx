@@ -124,3 +124,145 @@ export const CollectionDetailPage: React.FC = () => {
     </div>
   );
 };
+
+
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { getCollectionsByUser, updateCollection, removeFromCollection, addToCollection } from '../services/api';
+import { Collection, User } from '../types';
+import { Button } from './Button';
+import { Input } from './Input';
+import { useAuth } from '../hooks/useAuth';
+
+export const CollectionDetailPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const [collection, setCollection] = useState<Collection | null>(null);
+  const [name, setName] = useState('');
+  const [isPublic, setIsPublic] = useState(false);
+  const [collaborators, setCollaborators] = useState<string[]>([]);
+  const [newCollaborator, setNewCollaborator] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (id) {
+      fetchCollection(id);
+    }
+  }, [id]);
+
+  const fetchCollection = async (collectionId: string) => {
+    try {
+      const collections = await getCollectionsByUser();
+      const foundCollection = collections.find(c => c._id === collectionId);
+      if (foundCollection) {
+        setCollection(foundCollection);
+        setName(foundCollection.name);
+        setIsPublic(foundCollection.isPublic);
+        setCollaborators(foundCollection.collaborators.map((c: User) => c.email));
+      } else {
+        setError('Collection not found');
+      }
+    } catch (err) {
+      setError('Failed to fetch collection. Please try again.');
+    }
+  };
+
+  const handleUpdateCollection = async () => {
+    if (!collection) return;
+    try {
+      const updatedCollection = await updateCollection(collection._id, { name, isPublic, collaborators });
+      setCollection(updatedCollection);
+      setError(null);
+    } catch (err) {
+      setError('Failed to update collection. Please try again.');
+    }
+  };
+
+  const handleAddCollaborator = async () => {
+    if (!collection || !newCollaborator) return;
+    try {
+      const updatedCollection = await updateCollection(collection._id, {
+        collaborators: [...collaborators, newCollaborator]
+      });
+      setCollection(updatedCollection);
+      setCollaborators([...collaborators, newCollaborator]);
+      setNewCollaborator('');
+      setError(null);
+    } catch (err) {
+      setError('Failed to add collaborator. Please try again.');
+    }
+  };
+
+  const handleRemoveCollaborator = async (email: string) => {
+    if (!collection) return;
+    try {
+      const updatedCollection = await updateCollection(collection._id, {
+        collaborators: collaborators.filter(c => c !== email)
+      });
+      setCollection(updatedCollection);
+      setCollaborators(collaborators.filter(c => c !== email));
+      setError(null);
+    } catch (err) {
+      setError('Failed to remove collaborator. Please try again.');
+    }
+  };
+
+  if (!collection) return <div className="text-center">Loading...</div>;
+
+  const isOwner = user?._id === collection.user;
+
+  return (
+    <div className="max-w-4xl mx-auto mt-8">
+      <h1 className="text-2xl font-bold mb-4">Collection: {collection.name}</h1>
+      {error && <div className="text-red-500 mb-4">{error}</div>}
+      
+      {isOwner && (
+        <div className="mb-8">
+          <Input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="mr-2 mb-2"
+          />
+          <label className="mr-4">
+            <input
+              type="checkbox"
+              checked={isPublic}
+              onChange={(e) => setIsPublic(e.target.checked)}
+            />
+            Public
+          </label>
+          <Button onClick={handleUpdateCollection}>Update Collection</Button>
+        </div>
+      )}
+
+      <h2 className="text-xl font-semibold mb-4">Collaborators</h2>
+      {collaborators.map((email) => (
+        <div key={email} className="flex items-center mb-2">
+          <span>{email}</span>
+          {isOwner && (
+            <Button onClick={() => handleRemoveCollaborator(email)} variant="destructive" className="ml-2">
+              Remove
+            </Button>
+          )}
+        </div>
+      ))}
+
+      {isOwner && (
+        <div className="mt-4">
+          <Input
+            type="email"
+            value={newCollaborator}
+            onChange={(e) => setNewCollaborator(e.target.value)}
+            placeholder="Collaborator email"
+            className="mr-2"
+          />
+          <Button onClick={handleAddCollaborator}>Add Collaborator</Button>
+        </div>
+      )}
+
+      {/* Rest of the component (samples list, etc.) */}
+    </div>
+  );
+};
