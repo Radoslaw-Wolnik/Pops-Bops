@@ -1,62 +1,41 @@
-// --- user releted types ---
-
+// User related types
 export interface User {
   _id: string;
   username: string;
-  profilePicture?: string;
-  // role: 'user' | 'admin'; mby here
-}
-  
-export interface FullUser extends User {
   email: string;
-  isVerified?: boolean;
+  profilePicture?: string;
   role: 'user' | 'admin';
+  isVerified: boolean;
 }
 
-// sending user data
 export interface LoginCredentials {
   email: string;
   password: string;
 }
 
-export interface LoginFetch {
-  _id: string;
-  role: 'user' | 'admin';
-}
-
-// creating user 
-export interface RegisterUserData {
+export interface RegisterData {
   username: string;
   email: string;
   password: string;
 }
 
-export interface RegisterAdminData {
-  username: string;
-  email: string;
-  password: string;
-}
-
-//  --- audio related ---
-
+// Audio related types
 export interface AudioSample {
   _id: string;
   name: string;
   audioUrl: string;
   iconUrl: string;
   forMainPage: boolean;
-  settings: AudioSettings; // not sure for settings if we will record most of them
+  user?: string; // Only for UserAudioSamples
 }
 
 export interface AudioSettings {
-  // Add any specific audio settings here
   volume: number;
   pitch: number;
-  // ... other settings
+  // Add other settings as needed
 }
 
-
-// collections
+// Collection related types
 export interface Collection {
   _id: string;
   user: string;
@@ -64,18 +43,31 @@ export interface Collection {
   samples: AudioSample[];
 }
 
-/*
-// New type for admin list response
-export type AdminListResponse = User[];
-
-// New type for API responses
+// API response types
 export interface ApiResponse<T> {
   data: T;
   message?: string;
 }
 
-// Error response type
 export interface ErrorResponse {
   message: string;
+  errors?: string[];
 }
-  */
+
+// Auth context types
+export interface AuthContextType {
+  user: User | null;
+  loading: boolean;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
+  logout: () => Promise<void>;
+  updateUser: (user: User) => void;
+}
+
+// Modal context types
+export interface ModalContextType {
+  isOpen: boolean;
+  content: React.ReactNode;
+  openModal: (content: React.ReactNode) => void;
+  closeModal: () => void;
+}

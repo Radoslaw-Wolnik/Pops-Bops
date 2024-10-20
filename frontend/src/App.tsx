@@ -1,71 +1,36 @@
-
 import React from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-
-import LandingPageLayout from './layouts/LandingPageLayout'
-
-import HomePage from './pages/HomePage';
-import About from './pages/About';
-import VerifyEmail from './pages/VerifyEmail';
-import ResetPassword from './pages/RestPassword';
-import Profile from './pages/Profile';
-
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './contexts/AuthContext';
+import { Layout } from './components/Layout';
+import { HomePage } from './pages/HomePage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { CreateSamplePage } from './pages/CreateSamplePage';
+import { CollectionsPage } from './pages/CollectionsPage';
+import { CollectionDetailPage } from './pages/CollectionDetailPage';
+import { SearchPage } from './pages/SearchPage';
 import ProtectedRoute from './components/ProtectedRoute';
 
-import AudioGenerator from './pages/AudioGeneratorPage';
-import PresetManagerPage from './pages/SampleManagerPage';
-import CollectionPage from './pages/CollectionPage';
-import CreateSamplePage from './pages/CreateSamplePage';
-
-import AdminAddDefaultSoundPage from './pages/AdminAddDefaultSoundPage';
-import AdminManagementPage from './pages/AdminManagementPage';
-import TokenRefresh from './components/TokenRefresh';
-
-import './style/All.css'
-import './style/Modal.css'
-
-const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <LandingPageLayout />,
-    children: [
-      { path: '/', element: <HomePage /> },
-      { path: '/about', element: <About /> },
-      { path: '/verify-email/:token', element: <VerifyEmail /> },
-      { path: '/reset-password/:token', element: <ResetPassword /> },
-      {
-        path: '/profile/:userId?',
-        element: <ProtectedRoute><Profile /></ProtectedRoute>
-      },
-      { path: '/generate', element: <ProtectedRoute><AudioGenerator /></ProtectedRoute> },
-      { path: '/collections', element: <ProtectedRoute><CollectionPage /></ProtectedRoute> },
-      { path: '/preset-manage', element: <ProtectedRoute><PresetManagerPage /></ProtectedRoute> },
-      { path: '/create-sample', element: <ProtectedRoute><CreateSamplePage /></ProtectedRoute> },
-    
-      { path: '/admin/add-default-sound', element: <ProtectedRoute><AdminAddDefaultSoundPage /></ProtectedRoute> },
-      { path: '/admin/manage', element: <ProtectedRoute><AdminManagementPage /></ProtectedRoute> }
-    ],
-  },
-]);
-
-// prev
-//const App: React.FC = () => <RouterProvider router={router} />;
-
-// now
-const App: React.FC = () => (
-  <>
-    <TokenRefresh />
-    <RouterProvider router={router} />
-  </>
-);
-
-/* The normal AuthProvider context folded app look
- * const App: React.FC = () => (
- *   <AuthProvider>
- *     <TokenRefresh />
- *     <RouterProvider router={router} />
- *   </AuthProvider>
- * );
- */
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <Router>
+        <Layout>
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/register" element={<RegisterPage />} />
+            <Route path="/search" element={<SearchPage />} />
+            <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+            <Route path="/create" element={<ProtectedRoute><CreateSamplePage /></ProtectedRoute>} />
+            <Route path="/collections" element={<ProtectedRoute><CollectionsPage /></ProtectedRoute>} />
+            <Route path="/collections/:id" element={<ProtectedRoute><CollectionDetailPage /></ProtectedRoute>} />
+          </Routes>
+        </Layout>
+      </Router>
+    </AuthProvider>
+  );
+};
 
 export default App;

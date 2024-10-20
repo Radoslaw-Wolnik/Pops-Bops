@@ -1,243 +1,196 @@
-// frontend/src/services/api.ts
-import axios, { AxiosInstance, AxiosError, AxiosResponse, AxiosRequestConfig } from 'axios';
-import { User, FullUser, LoginCredentials, RegisterUserData, Collection, AudioSample, RegisterAdminData, LoginFetch } from '../types';
+// src/services/api.ts
 
-import { getEnv } from '../config/enviorement'
-const env = await getEnv();
-// const API_URL: string = import.meta.env.VITE_API_URL;
+import axios, { AxiosResponse } from 'axios';
+import { User, LoginCredentials, RegisterData, AudioSample, Collection, ApiResponse, ErrorResponse } from '../types';
 
-// Create a more flexible Axios instance with generics
+const API_URL = import.meta.env.VITE_API_URL || 'https://api.example.com';
+
 const api = axios.create({
-  baseURL: env.API_URL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-  withCredentials: true, // This is crucial for sending cookies
+  baseURL: API_URL,
+  withCredentials: true,
 });
 
-// Type assertion for methods
-const typedApi = api as {
-  get: <T = any>(url: string, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
-  post: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
-  put: <T = any>(url: string, data?: any, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
-  delete: <T = any>(url: string, config?: AxiosRequestConfig) => Promise<AxiosResponse<T>>;
-} & AxiosInstance;
+// Helper function to handle API responses
+const handleResponse = <T>(response: AxiosResponse<ApiResponse<T>>): T => {
+  return response.data.data;
+};
 
-
-// Custom ApiError class
-export class ApiError extends Error {
-  constructor(public statusCode: number, message: string) {
-    super(message);
-    this.name = 'ApiError';
-  }
-}
-
-// Global error handler
-const handleApiError = (error: AxiosError): never => {
+// Helper function to handle errors
+const handleError = (error: any): never => {
   if (error.response) {
-    const statusCode = error.response.status;
-    const errorMessage = typeof error.response.data === 'object' && error.response.data !== null
-      ? (error.response.data as any).message || 'An error occurred'
-      : 'An error occurred';
-
-    switch (statusCode) {
-      case 400:
-        throw new ApiError(400, 'Bad request. Please check your input.');
-      case 401:
-        throw new ApiError(401, 'Unauthorized. Please log in.');
-      case 403:
-        throw new ApiError(403, 'Forbidden. You do not have permission to perform this action.');
-      case 404:
-        throw new ApiError(404, 'Resource not found.');
-      case 500:
-        throw new ApiError(500, 'Internal server error. Please try again later.');
-      default:
-        throw new ApiError(statusCode, errorMessage);
-    }
-  } else if (error.request) {
-    throw new ApiError(0, 'No response received from server');
-  } else {
-    throw new ApiError(0, error.message);
+    throw error.response.data as ErrorResponse;
   }
+  throw error;
 };
 
-
-// API function wrapper for consistent error handling
-const apiRequest = async <T>(
-  method: 'get' | 'post' | 'put' | 'delete',
-  url: string,
-  data?: any,
-  config?: AxiosRequestConfig
-): Promise<T> => {
+// Auth endpoints
+export const login = async (credentials: LoginCredentials): Promise<User> => {
   try {
-    let response: AxiosResponse<T>;
-    switch (method) {
-      case 'get':
-        response = await typedApi.get<T>(url, config);
-        break;
-      case 'post':
-        response = await typedApi.post<T>(url, data, config);
-        break;
-      case 'put':
-        response = await typedApi.put<T>(url, data, config);
-        break;
-      case 'delete':
-        response = await typedApi.delete<T>(url, config);
-        break;
-    }
-    return response.data;
+    const response = await api.post<ApiResponse<User>>('/auth/login', credentials);
+    return handleResponse(response);
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      handleApiError(error);
-    }
-    throw error;
+    throw handleError(error);
   }
 };
 
-/* API arrow functions can be changed to use explecitly async keyword but it is not necessary
- * without:
- * export const logout = async (): Promise<void> => 
- *   apiRequest('post', '/auth/logout');
- * with:
- * export const logout = async (): Promise<void> => {
- *   await apiRequest('post', '/auth/logout');
- * };
- * or if it returns sth then
- *   return await ...
-*/
-
-// ---- API functions ----
-
-export const login = async (credentials: LoginCredentials): Promise<{ message: string, user: LoginFetch }> => {
+export const register = async (data: RegisterData): Promise<User> => {
   try {
-    // const response = await typedApi.post<{ message: string, user: LoginFetch }>('/auth/login', credentials);
-    // return response;
-    return await apiRequest('post', '/auth/login', credentials);
+    const response = await api.post<ApiResponse<User>>('/auth/register', data);
+    return handleResponse(response);
   } catch (error) {
-    if (error instanceof ApiError) {
-      switch (error.statusCode) {
-        case 400:
-          throw new ApiError(400, 'Invalid credentials');
-        case 401:
-          throw new ApiError(401, 'Please verify your email before logging in');
-        default:
-          throw error;
-      }
-    }
-    throw error;
+    throw handleError(error);
   }
 };
 
-export const logout = async (): Promise<void> => 
-  apiRequest('post', '/auth/logout');
-
-export const register = async (userData: RegisterUserData): Promise<{ message: string }> => {
+export const logout = async (): Promise<void> => {
   try {
-    return await apiRequest('post', '/auth/register', userData);
+    await api.post('/auth/logout');
   } catch (error) {
-    if (error instanceof ApiError) {
-      switch (error.statusCode) {
-        case 400:
-          throw new ApiError(400, 'Email already in use');
-        case 401:
-          throw new ApiError(400, 'Username already taken');
-        default:
-          throw error;
-      }
-    }
-    throw error;
+    throw handleError(error);
   }
 };
 
-export const refreshAuthToken = async (): Promise<{ message: string, user: LoginFetch }> => {
+export const getCurrentUser = async (): Promise<User> => {
   try {
-    return await apiRequest('post', '/auth/refresh-token');
+    const response = await api.get<ApiResponse<User>>('/users/me');
+    return handleResponse(response);
   } catch (error) {
-    throw(error);
+    throw handleError(error);
   }
 };
 
-export const changePassword = (data: { currentPassword: string; newPassword: string }): Promise<void> => 
-  apiRequest('put', '/auth/change-password', data);
+// User endpoints
+export const updateProfile = async (userId: string, data: Partial<User>): Promise<User> => {
+  try {
+    const response = await api.put<ApiResponse<User>>(`/users/${userId}`, data);
+    return handleResponse(response);
+  } catch (error) {
+    throw handleError(error);
+  }
+};
 
-export const sendVerificationEmail = (): Promise<void> => 
-  apiRequest('post', '/auth/send-verification');
+export const uploadProfilePicture = async (file: File): Promise<string> => {
+  try {
+    const formData = new FormData();
+    formData.append('profilePicture', file);
+    const response = await api.put<ApiResponse<string>>('/users/upload-profile-picture', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    throw handleError(error);
+  }
+};
 
-export const verifyEmail = (token: string): Promise<void> => 
-  apiRequest('get', `/auth/verify-email/${token}`);
+// Audio sample endpoints
+export const getMainPageSamples = async (): Promise<AudioSample[]> => {
+  try {
+    const response = await api.get<ApiResponse<AudioSample[]>>('/audio/main-samples');
+    return handleResponse(response);
+  } catch (error) {
+    throw handleError(error);
+  }
+};
 
-export const requestPasswordReset = (email: string): Promise<{ message: string }> =>
-  apiRequest('post', '/auth/request-password-reset', email);
+export const getUserSamples = async (): Promise<AudioSample[]> => {
+  try {
+    const response = await api.get<ApiResponse<AudioSample[]>>('/audio/my-samples');
+    return handleResponse(response);
+  } catch (error) {
+    throw handleError(error);
+  }
+};
 
-export const resetPassword = (token: string): Promise<{ message: string }> => 
-  apiRequest('post', `/auth/reset-password/${token}`);
+export const createAudioSample = async (data: FormData): Promise<AudioSample> => {
+  try {
+    const response = await api.post<ApiResponse<AudioSample>>('/audio/upload/sample-with-icon', data, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return handleResponse(response);
+  } catch (error) {
+    throw handleError(error);
+  }
+};
 
-export const updateUserProfile = (formData: FormData): Promise<User> =>
-  apiRequest('put', '/users/upload-profile-picture', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
+export const updateAudioSample = async (sampleId: string, data: Partial<AudioSample>): Promise<AudioSample> => {
+  try {
+    const response = await api.put<ApiResponse<AudioSample>>(`/audio/sample/${sampleId}`, data);
+    return handleResponse(response);
+  } catch (error) {
+    throw handleError(error);
+  }
+};
+
+export const deleteAudioSample = async (sampleId: string): Promise<void> => {
+  try {
+    await api.delete(`/audio/sample/${sampleId}`);
+  } catch (error) {
+    throw handleError(error);
+  }
+};
+
+// Collection endpoints
+export const getUserCollections = async (): Promise<Collection[]> => {
+  try {
+    const response = await api.get<ApiResponse<Collection[]>>('/collections');
+    return handleResponse(response);
+  } catch (error) {
+    throw handleError(error);
+  }
+};
+
+export const createCollection = async (name: string): Promise<Collection> => {
+  try {
+    const response = await api.post<ApiResponse<Collection>>('/collections', { name });
+    return handleResponse(response);
+  } catch (error) {
+    throw handleError(error);
+  }
+};
+
+export const updateCollection = async (collectionId: string, data: Partial<Collection>): Promise<Collection> => {
+  try {
+    const response = await api.put<ApiResponse<Collection>>(`/collections/${collectionId}`, data);
+    return handleResponse(response);
+  } catch (error) {
+    throw handleError(error);
+  }
+};
+
+export const deleteCollection = async (collectionId: string): Promise<void> => {
+  try {
+    await api.delete(`/collections/${collectionId}`);
+  } catch (error) {
+    throw handleError(error);
+  }
+};
+
+export const addToCollection = async (collectionId: string, sampleIds: string[]): Promise<Collection> => {
+  try {
+    const response = await api.post<ApiResponse<Collection>>(`/collections/${collectionId}/add`, { sampleIds });
+    return handleResponse(response);
+  } catch (error) {
+    throw handleError(error);
+  }
+};
+
+export const removeFromCollection = async (collectionId: string, sampleId: string): Promise<void> => {
+  try {
+    await api.delete(`/collections/${collectionId}/samples/${sampleId}`);
+  } catch (error) {
+    throw handleError(error);
+  }
+};
+
+export const searchSamplesAndCollections = async (query: string): Promise<{ samples: AudioSample[], collections: Collection[] }> => {
+  const response = await api.get(`/search?q=${encodeURIComponent(query)}`);
+  return response.data;
+};
 
 
+export const updateCollectionOrder = async (collectionIds: string[]): Promise<void> => {
+  await api.put('/collections/order', { collectionIds });
+};
 
 
-export const getMe = (): Promise<FullUser> => 
-  apiRequest('get', '/users/me');
-
-export const getOtherUserProfile = (userId: string): Promise<User> => 
-  apiRequest('get', `/users/${userId}`);
-
-export const getMainPageSamples = (): Promise<AudioSample[]> =>
-  apiRequest('get', '/audio/main-samples');
-
-export const getUserSamples = (): Promise<AudioSample[]> =>
-  apiRequest('get', `/audio/my-samples`);
-
-export const deleteUserSample = (sample: AudioSample): Promise<{ message: string }> =>
-  apiRequest('delete', `/audio/sample/${sample._id}`);
-
-export const deleteDefaultSample = (sample: AudioSample): Promise<{ message: string }> =>
-  apiRequest('delete', `/audio/default-sample/${sample._id}`);
-
-export const deleteUserCollection = (collection: Collection): Promise<{ message: string }> =>
-  apiRequest('delete', `/audio/collection/${collection._id}`);
-
-// not sure if it shouldnt be /audio./upload-audio
-export const createAudioSample = (formData: FormData): Promise<AudioSample> =>
-  apiRequest('post', 'audio/user-audio-sample', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
-
-export const updateAudioSampleIcon = (sampleId: string, formData: FormData): Promise<AudioSample> =>
-  apiRequest('put', `/audio/user-audio-sample/${sampleId}/icon`, formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
-
-export const getUserCollections = (): Promise<Collection[]> =>
-  apiRequest('get', '/audio/collections');
-
-export const createCollection = (collectionName: string): Promise<Collection> => 
-  apiRequest('post', '/audio/collections', { name: collectionName });
-
-export const addToCollection = (collectionId: string, audioSampleIds: string[]): Promise<void> => 
-  apiRequest('post', `/audio/collections/${collectionId}/add`, { audioSampleIds });
-
-
-
-
-
-// admin ---- TODO
-export const addDefaultAudioSample = (formData: FormData): Promise<AudioSample> =>
-  apiRequest('post', '/admin/samples', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  });
-
-export const getAdmins = async (): Promise<User[]> =>
-  apiRequest('get', '/admin/users');
-
-export const deleteAdmin = async (id: string): Promise<void> =>
-  apiRequest('delete', `/admin/users/${id}`);
-
-export const addAdmin = async (adminData: RegisterAdminData): Promise<User> =>
-  apiRequest('post', '/admin/users', adminData);
-
-export default typedApi;
+export default api;

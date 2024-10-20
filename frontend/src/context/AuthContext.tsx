@@ -1,125 +1,61 @@
-import React, { createContext, useState, useCallback } from 'react';
-import { login as apiLogin, logout as apiLogout, register as apiRegister, getMe, ApiError, refreshAuthToken } from '../services/api';
-import { FullUser } from '../types';
+import React, { createContext, useState, useEffect } from 'react';
+import { User } from '../types';
+import { login as apiLogin, register as apiRegister, logout as apiLogout, getCurrentUser } from '../services/api';
 
-
-export interface AuthContextType {
-  user: FullUser | null;
-  loading: boolean;
+interface AuthContextType {
+  user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, username: string, password: string) => Promise<{ message: string }>;
+  register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  updateCurrentUser: (updatedUser: FullUser) => void;
-  refreshToken: () => Promise<void>;
-
-  justRegistered: boolean;
-  clearJustRegistered: () => void;
+  loading: boolean;
 }
 
-export const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<FullUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [justRegistered, setJustRegistered] = useState(false);
 
-  /* when storing token in local storage
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      setToken(token);
-      fetchUserData();
-    } else {
-      setLoading(false);
-    }
-  }, []);*/
-
-  const fetchUserData = useCallback(async () => {
-    try {
-      const response = await getMe();
-      setUser(response);
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-      setUser(null);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  const login = useCallback(async (email: string, password: string) => {
-    try {
-      await apiLogin({email, password});
-      await fetchUserData();
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw error;
-      } else {
-        throw new Error('An unexpected error occurred during login');
+    const initAuth = async () => {
+      try {
+        const currentUser = await getCurrentUser();
+        setUser(currentUser);
+      } catch (error) {
+        console.error('Failed to fetch current user:', error);
+      } finally {
+        setLoading(false);
       }
-    }
-  }, [fetchUserData]);
+    };
 
-  const register = useCallback(async (email: string, username: string, password: string) => {
-    try {
-      const response = await apiRegister({ email, username, password });
-      if (response){
-        await login(email, password);
-        setJustRegistered(true);
-      }
-      return response;
-    } catch (error) {
-      if (error instanceof ApiError) {
-        throw error;
-      } else {
-        throw new Error('An unexpected error occurred during registration');
-      }
-    }
+    initAuth();
   }, []);
 
-  const logout = useCallback(async () => {
-    try {
-      await apiLogout();
-    } catch (error) {
-      console.error('Logout failed:', error);
-    } finally {
-      setUser(null);
-    }
-  }, []);
+  const login = async (email: string, password: string) => {
+    const loggedInUser = await apiLogin(email, password);
+    setUser(loggedInUser);
+  };
 
-  const refreshToken = useCallback(async () => {
-    try {
-      await refreshAuthToken();
-      await fetchUserData();
-    } catch (error) {
-      // Handle error (e.g., redirect to login page)
-      console.error('Failed to refresh token:', error);
-      logout();
-    }
-  }, []);
+  const register = async (username: string, email: string, password: string) => {
+    const registeredUser = await apiRegister(username, email, password);
+    setUser(registeredUser);
+  };
 
-  const updateCurrentUser = useCallback((updatedUser: FullUser) => {
-    setUser(updatedUser);
-  }, []);
+  const logout = async () => {
+    await apiLogout();
+    setUser(null);
+  };
 
-  const clearJustRegistered = useCallback(() => {
-    setJustRegistered(false);
-  }, []);
-
-  const contextValue: AuthContextType = {
+  const value = {
     user,
-    loading,
     login,
     register,
     logout,
-    updateCurrentUser,
-    refreshToken,
-
-    justRegistered,
-    clearJustRegistered,
+    loading
   };
 
   return (
-    <AuthContext.Provider value={contextValue}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
