@@ -74,3 +74,19 @@ export const getOtherUserProfile = async (req: Request, res: Response, next: Nex
     next(error instanceof CustomError ? error : new InternalServerError('Error fetching user profile'));
   }
 };
+
+export const updateLastActiveTime = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user) {
+      throw new UnauthorizedError('User not authenticated');
+    }
+
+    req.user.lastTimeActive = new Date();
+    await req.user.save();
+
+    res.json({ message: 'Last active time updated successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
