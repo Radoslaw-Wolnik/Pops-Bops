@@ -8,7 +8,7 @@ import User, { IUserDocument } from '../models/user.model';
 import { generateToken, setTokenCookie, refreshToken as refreshAuthToken, generateShortLivedToken, setShortLivedTokenCookie } from '../middleware/auth.middleware';
 import environment from '../config/environment';
 import sendEmail from '../services/email.service';
-import AuthRequest from '../../types/global';
+// import AuthRequest from '../../types/global';
 import { MongoError } from 'mongodb';
 import { ValidationError, UnauthorizedError, NotFoundError, ConflictError, InternalServerError, AuthenticationError, CustomError, BadRequestError, ResourceExistsError, GoneError } from '../utils/custom-errors.util';
 import logger from '../utils/logger.util';
