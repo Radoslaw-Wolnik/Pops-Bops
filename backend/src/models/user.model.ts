@@ -19,6 +19,10 @@ export interface IUserDocument extends Document {
   role: 'user' | 'admin';
   createdAt: Date;
   updatedAt: Date;
+  lastTimeActive: Date;
+  deactivated?: Date;
+  deactivationToken?: string;
+  deactivationExpires?: Date;
   getDecryptedEmail(): Promise<string>;
   comparePassword(candidatePassword: string): Promise<boolean>;
 }
@@ -67,6 +71,10 @@ const userSchema = new mongoose.Schema<IUserDocument, IUserModel>({
 
   resetPasswordToken: { type: String },
   resetPasswordExpires: Date,
+  deactivationToken: { type: String },
+  deactivationExpires: Date,
+
+  lastTimeActive: Date,
 
   role: { type: String, enum: ['user', 'admin'], default: 'user' }
   },
