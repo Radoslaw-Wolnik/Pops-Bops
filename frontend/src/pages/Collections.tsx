@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { getUserCollections, createCollection, deleteCollection, updateCollectionOrder } from '../services/api';
 import { Collection } from '../types';
-import { Button } from './Button';
-import { Input } from './Input';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
 import { useInView } from 'react-intersection-observer';
 
 const ITEMS_PER_PAGE = 10;

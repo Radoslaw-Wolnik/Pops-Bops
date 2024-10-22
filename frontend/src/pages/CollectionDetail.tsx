@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getUserCollections, updateCollection, removeFromCollection, addToCollection } from '../services/api';
 import { Collection, AudioSample } from '../types';
-import { Button } from './Button';
-import { Input } from './Input';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
 
 export const CollectionDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();

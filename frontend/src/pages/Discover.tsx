@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { getPublicSamples, getPublicCollections, searchPublicContent } from '../services/api';
 import { AudioSample, Collection } from '../types';
-import { Button } from './Button';
-import { Input } from './Input';
-import { AudioPlayer } from './AudioPlayer';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
+import { AudioPlayer } from '../components/AudioPlayer';
 import { Link } from 'react-router-dom';
 
 export const DiscoverPage: React.FC = () => {

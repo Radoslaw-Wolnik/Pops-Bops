@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { updateProfile, uploadProfilePicture } from '../services/api';
-import { Button } from './Button';
-import { Input } from './Input';
+import { Button } from '../components/Button';
+import { Input } from '../components/Input';
 
 export const ProfilePage: React.FC = () => {
   const { user, updateUser } = useAuth();
